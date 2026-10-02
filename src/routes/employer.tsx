@@ -59,7 +59,15 @@ const EMPTY = {
 };
 
 function EmployerPage() {
-  const { employerJobs, addEmployerJob, applications, findJob, setApplicationStatus, profile } =
+  const {
+    employerJobs,
+    addEmployerJob,
+    applications,
+    findJob,
+    setApplicationStatus,
+    setInterviewMeetingLink,
+    profile,
+  } =
     useAppState();
   const [form, setForm] = useState(EMPTY);
   const [access, setAccess] = useState<AccessFeature[]>([]);
@@ -399,6 +407,29 @@ function EmployerPage() {
                             ))}
                           </SelectContent>
                         </Select>
+                        {a.status === "Interview" ? (
+                          <div className="mt-3 max-w-md">
+                            <label
+                              htmlFor={`meeting-link-${a.jobId}`}
+                              className="block text-sm font-medium"
+                            >
+                              Interview meeting link
+                            </label>
+                            <Input
+                              id={`meeting-link-${a.jobId}`}
+                              type="url"
+                              value={a.interviewMeetingLink ?? ""}
+                              onChange={(event) =>
+                                setInterviewMeetingLink(a.jobId, event.target.value)
+                              }
+                              placeholder="https://meet.google.com/..."
+                              className="mt-1.5"
+                            />
+                            <p className="mt-1 text-xs text-muted-foreground">
+                              This link is visible to you and the candidate in the application tracker.
+                            </p>
+                          </div>
+                        ) : null}
                       </div>
                     </li>
                   );

@@ -12,6 +12,7 @@ import {
   ChevronUp,
   Download,
   ExternalLink,
+  Link2,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -202,6 +203,23 @@ function ApplicationsPage() {
                         Google Meet (Screen-reader &amp; Caption friendly)
                       </p>
                     </div>
+
+                    {a.interviewMeetingLink ? (
+                      <a
+                        href={a.interviewMeetingLink}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-brand hover:underline"
+                      >
+                        <Link2 className="size-4" />
+                        Join interview meeting
+                        <ExternalLink className="size-3.5" />
+                      </a>
+                    ) : (
+                      <p className="mt-3 text-xs text-muted-foreground">
+                        Your employer will add the meeting link here.
+                      </p>
+                    )}
 
                     {/* Calendar & Email Buttons */}
                     <div className="mt-4 flex flex-wrap items-center gap-2 pt-1">

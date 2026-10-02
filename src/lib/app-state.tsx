@@ -103,6 +103,8 @@ export type Application = {
   interviewTime?: string;
   interviewLocation?: string;
   interviewFormat?: string;
+  /** Video-call URL supplied by the employer once an interview is scheduled. */
+  interviewMeetingLink?: string;
   accommodationsConfirmed?: boolean;
   emailSubject?: string;
   emailSnippet?: string;
@@ -266,6 +268,7 @@ type State = {
   applications: Application[];
   apply: (app: Omit<Application, "status" | "date" | "nextStep"> & { nextStep?: string }) => void;
   setApplicationStatus: (jobId: string, status: ApplicationStatus, nextStep?: string) => void;
+  setInterviewMeetingLink: (jobId: string, meetingLink: string) => void;
   hasApplied: (jobId: string) => boolean;
   getApplication: (jobId: string) => Application | undefined;
   employerJobs: Job[];
@@ -683,6 +686,12 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       setApplications((prev) =>
         prev.map((a) =>
           a.jobId === jobId ? { ...a, status, nextStep: nextStep ?? NEXT_STEPS[status] } : a,
+        ),
+      ),
+    setInterviewMeetingLink: (jobId, meetingLink) =>
+      setApplications((prev) =>
+        prev.map((a) =>
+          a.jobId === jobId ? { ...a, interviewMeetingLink: meetingLink.trim() } : a,
         ),
       ),
     hasApplied: (jobId) => applications.some((a) => a.jobId === jobId),
