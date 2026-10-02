@@ -59,7 +59,7 @@ export function useTextToSpeech() {
     };
   }, []);
 
-  const play = useCallback((text: string) => {
+  const play = useCallback((text: string, rate = 1) => {
     if (!("speechSynthesis" in window)) return;
     if (state === "paused") {
       window.speechSynthesis.resume();
@@ -69,7 +69,7 @@ export function useTextToSpeech() {
     window.speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(text);
     u.lang = "en-IN";
-    u.rate = 1;
+    u.rate = Math.max(0.5, Math.min(2, rate));
     u.onend = () => setState("idle");
     window.speechSynthesis.speak(u);
     setState("speaking");

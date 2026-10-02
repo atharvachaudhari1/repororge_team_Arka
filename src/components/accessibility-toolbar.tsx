@@ -14,6 +14,7 @@ import {
   Waves,
   X,
   BookOpen,
+  ScanLine,
 } from "lucide-react";
 import { useAppState, type FontSize, type MotionPref, type AccessibilityPreset } from "@/lib/app-state";
 import { Button } from "@/components/ui/button";
@@ -59,6 +60,10 @@ export function AccessibilityToolbar() {
     activePreset,
     applyPreset,
     setVoiceAssistantOpen,
+    readingRuler,
+    setReadingRuler,
+    ttsRate,
+    setTtsRate,
   } = useAppState();
 
   const [open, setOpen] = useState(false);
@@ -69,7 +74,7 @@ export function AccessibilityToolbar() {
     const text = (main?.innerText || "").replace(/\s+/g, " ").trim().slice(0, 4000);
     if (text) {
       setCaptionText(text.slice(0, 250));
-      tts.play(text);
+      tts.play(text, ttsRate);
     }
   };
 
@@ -227,6 +232,18 @@ export function AccessibilityToolbar() {
                 <BookOpen aria-hidden="true" className="size-3.5" />
                 {dyslexiaFont ? "Font On" : "Dyslexia"}
               </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant={readingRuler ? "default" : "outline"}
+                aria-pressed={readingRuler}
+                className="h-8 gap-1.5 px-2.5 text-xs"
+                onClick={() => setReadingRuler(!readingRuler)}
+                aria-label="Toggle focus reading ruler"
+              >
+                <ScanLine aria-hidden="true" className="size-3.5" />
+                {readingRuler ? "Ruler On" : "Ruler"}
+              </Button>
             </Group>
 
             <Group label="Captions" id="a11y-captions">
@@ -256,6 +273,21 @@ export function AccessibilityToolbar() {
                     <Volume2 aria-hidden="true" className="size-3.5" />
                     Read aloud
                   </Button>
+                  <div className="flex items-center gap-0.5" role="group" aria-label="Speech speed">
+                    {[0.8, 1, 1.25].map((speed) => (
+                      <Button
+                        key={speed}
+                        type="button"
+                        size="sm"
+                        variant={ttsRate === speed ? "default" : "outline"}
+                        className="h-8 px-1.5 text-[11px]"
+                        onClick={() => setTtsRate(speed)}
+                        aria-label={`Speech rate ${speed}x`}
+                      >
+                        {speed}x
+                      </Button>
+                    ))}
+                  </div>
                   {tts.state !== "idle" ? (
                     <Button
                       type="button"

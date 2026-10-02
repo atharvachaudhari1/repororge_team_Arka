@@ -16,6 +16,7 @@ import { Toaster } from "../components/ui/sonner";
 import { CareerAssistant } from "../components/career-assistant";
 import { LiveCaptions } from "../components/live-captions";
 import { VoiceAssistantModal } from "../components/voice-assistant-modal";
+import { ReadingRuler } from "../components/reading-ruler";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
 function NotFoundComponent() {
@@ -147,6 +148,7 @@ function RootComponent() {
           <SiteFooter />
           <LiveCaptions />
           <VoiceAssistantModal />
+          <ReadingRuler />
           <CareerAssistant />
           <Toaster />
         </div>

@@ -5,6 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import {
   AlertTriangle,
+  Award,
   Loader2,
   MessageSquareText,
   Mic,
@@ -15,6 +16,7 @@ import {
 import { useAppState } from "@/lib/app-state";
 import { generateInterviewFeedback, generateInterviewQuestions } from "@/lib/ai.functions";
 import { useTextToSpeech, useVoiceSearch } from "@/lib/speech";
+import { InterviewReadinessCertificateModal } from "./interview-readiness-certificate";
 
 export function InterviewCoach() {
   const {
@@ -28,6 +30,7 @@ export function InterviewCoach() {
   } = useAppState();
   const [loadingQuestions, setLoadingQuestions] = useState(false);
   const [loadingFeedback, setLoadingFeedback] = useState(false);
+  const [certOpen, setCertOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const genQuestions = useServerFn(generateInterviewQuestions);
@@ -241,9 +244,20 @@ export function InterviewCoach() {
               {" • "}
               {currentQuestion.category}
             </p>
-            <Button onClick={startPractice} variant="outline" size="sm" className="min-h-9">
-              New set
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={() => setCertOpen(true)}
+                variant="outline"
+                size="sm"
+                className="min-h-9 gap-1.5 border-brand/40 text-brand hover:bg-brand/10"
+              >
+                <Award className="size-3.5" />
+                Readiness Report
+              </Button>
+              <Button onClick={startPractice} variant="outline" size="sm" className="min-h-9">
+                New set
+              </Button>
+            </div>
           </div>
 
           <div className="rounded-md border border-border bg-secondary/50 p-4">
@@ -361,12 +375,28 @@ export function InterviewCoach() {
                 </Button>
               )}
               {session.currentQuestionIndex === session.questions.length - 1 && (
-                <p className="mt-4 text-sm font-medium text-success">
-                  You've completed all questions in this set. Start a new set any time.
-                </p>
+                <div className="mt-4 pt-3 border-t border-border/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                  <p className="text-sm font-medium text-success flex items-center gap-1.5">
+                    <Award className="size-4" />
+                    You've completed all questions in this interview set!
+                  </p>
+                  <Button
+                    onClick={() => setCertOpen(true)}
+                    className="gap-1.5 bg-brand text-brand-foreground"
+                  >
+                    <Award className="size-4" />
+                    View Readiness Certificate
+                  </Button>
+                </div>
               )}
             </div>
           )}
+
+          <InterviewReadinessCertificateModal
+            open={certOpen}
+            onOpenChange={setCertOpen}
+            session={session}
+          />
         </div>
       )}
     </section>

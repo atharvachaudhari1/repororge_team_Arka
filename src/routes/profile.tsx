@@ -32,6 +32,7 @@ import { useAppState, type Profile } from "@/lib/app-state";
 import { ACCESS_PREFERENCE_OPTIONS, normalisePrefs } from "@/lib/accessibility";
 import { parseResumeText, DEMO_RESUMES, type ParsedResume } from "@/lib/resume-parser";
 import { extractResumeText } from "@/lib/resume-file";
+import { AccessibleResumeExportModal } from "@/components/accessible-resume-export";
 
 export const Route = createFileRoute("/profile")({
   head: () => ({
@@ -79,6 +80,7 @@ function ProfilePage() {
   const [form, setForm] = useState<Profile>(profile);
   const [isScanning, setIsScanning] = useState(false);
   const [extractedData, setExtractedData] = useState<ParsedResume | null>(null);
+  const [exportOpen, setExportOpen] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => setForm(profile), [profile]);
@@ -136,11 +138,25 @@ function ProfilePage() {
             Ableo: Where Ability Meets Opportunity. Your profile matches you to inclusive jobs without barriers.
           </p>
         </div>
-        <Badge variant="outline" className="self-start sm:self-center gap-1.5 py-1 px-3 border-brand/40 bg-brand/5 text-brand">
-          <ShieldCheck className="size-4" />
-          <span>Private by default</span>
-        </Badge>
+        <div className="flex flex-wrap items-center gap-2 self-start sm:self-center">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-8 gap-1.5 text-xs font-semibold border-brand/50 text-brand hover:bg-brand/10"
+            onClick={() => setExportOpen(true)}
+          >
+            <FileCheck className="size-3.5" />
+            Export Accessible Resume
+          </Button>
+          <Badge variant="outline" className="gap-1.5 py-1 px-3 border-brand/40 bg-brand/5 text-brand">
+            <ShieldCheck className="size-4" />
+            <span>Private by default</span>
+          </Badge>
+        </div>
       </div>
+
+      <AccessibleResumeExportModal open={exportOpen} onOpenChange={setExportOpen} />
 
       {/* Completion Meter */}
       <div className="surface-card mt-6 p-4">

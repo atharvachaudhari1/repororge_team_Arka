@@ -26,6 +26,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { scoreJob } from "@/lib/matching";
 import { accessibilityFit } from "@/lib/accessibility";
+import { MatchExplainerModal } from "@/components/match-explainer-modal";
+import { EmployerAccessibilityAuditModal } from "@/components/employer-accessibility-audit";
 
 /** Map access feature keys to disability category icons */
 function getDisabilityIcons(access: string[]): { icon: typeof Eye; label: string }[] {
@@ -42,6 +44,8 @@ function getDisabilityIcons(access: string[]): { icon: typeof Eye; label: string
 export function JobCard({ job }: { job: Job }) {
   const { isSaved, toggleSaved, profile } = useAppState();
   const [showWhy, setShowWhy] = useState(false);
+  const [explainOpen, setExplainOpen] = useState(false);
+  const [auditOpen, setAuditOpen] = useState(false);
   const saved = isSaved(job.id);
   const match = scoreJob(profile, job);
   const a11y = accessibilityFit(profile.accessibilityPreferences, job);
@@ -135,10 +139,15 @@ export function JobCard({ job }: { job: Job }) {
           </span>
         )}
 
-        <span className="inline-flex items-center gap-1 rounded-full bg-brand/15 px-3 py-1 text-xs font-bold text-brand">
+        <button
+          type="button"
+          onClick={() => setExplainOpen(true)}
+          className="inline-flex items-center gap-1 rounded-full bg-brand/15 px-3 py-1 text-xs font-bold text-brand hover:bg-brand/25 transition-colors cursor-pointer"
+          title="Explain match score with AI"
+        >
           <Sparkles className="size-3.5" />
-          {match.total}% Skills Fit
-        </span>
+          {match.total}% Skills Fit &bull; Ask AI
+        </button>
 
         {/* Disability category icons */}
         {disabilityIcons.map(({ icon: Icon, label }) => (
@@ -255,10 +264,20 @@ export function JobCard({ job }: { job: Job }) {
       {/* Actions */}
       <div className="mt-4 flex flex-wrap items-center justify-between gap-2.5 pt-1">
         <span className="text-xs text-muted-foreground">Posted {job.posted}</span>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            className="gap-1 text-xs text-muted-foreground hover:text-foreground h-8"
+            onClick={() => setAuditOpen(true)}
+          >
+            <ShieldCheck className="size-3.5 text-brand" />
+            Audit
+          </Button>
           <Button asChild size="sm" variant="outline">
             <Link to="/jobs/$jobId" params={{ jobId: job.id }}>
-              View Details & Accommodations
+              View Details &amp; Accommodations
             </Link>
           </Button>
           <Button asChild size="sm" className="gap-1 bg-brand text-brand-foreground hover:bg-brand/90 font-medium">
@@ -269,6 +288,18 @@ export function JobCard({ job }: { job: Job }) {
           </Button>
         </div>
       </div>
+
+      <MatchExplainerModal
+        open={explainOpen}
+        onOpenChange={setExplainOpen}
+        match={match}
+        accessibilityFitScore={a11y.score}
+      />
+      <EmployerAccessibilityAuditModal
+        open={auditOpen}
+        onOpenChange={setAuditOpen}
+        job={job}
+      />
     </article>
   );
 }

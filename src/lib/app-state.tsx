@@ -305,6 +305,12 @@ type State = {
   applyPreset: (preset: AccessibilityPreset) => void;
   voiceAssistantOpen: boolean;
   setVoiceAssistantOpen: (v: boolean) => void;
+  readingRuler: boolean;
+  setReadingRuler: (v: boolean) => void;
+  readingRulerHeight: number;
+  setReadingRulerHeight: (v: number) => void;
+  ttsRate: number;
+  setTtsRate: (v: number) => void;
   accessUpdates: Record<string, AccessFeature[]>;
   updateJobAccess: (jobId: string, keys: AccessFeature[]) => void;
 };
@@ -338,6 +344,9 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const [captionText, setCaptionText] = useState("");
   const [activePreset, setActivePresetState] = useState<AccessibilityPreset>("custom");
   const [voiceAssistantOpen, setVoiceAssistantOpen] = useState(false);
+  const [readingRuler, setReadingRuler] = useState(false);
+  const [readingRulerHeight, setReadingRulerHeight] = useState(60);
+  const [ttsRate, setTtsRate] = useState(1);
   /* Career GPS */
   const [careerAssessment, setCareerAssessment] = useState<CareerAssessment | null>(null);
   const [careerDiscoveries, setCareerDiscoveries] = useState<CareerPathRecommendation[]>([]);
@@ -362,6 +371,9 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       dyslexiaFont: false,
       liveCaptions: false,
       activePreset: "custom" as AccessibilityPreset,
+      readingRuler: false,
+      readingRulerHeight: 60,
+      ttsRate: 1,
       careerAssessment: null as CareerAssessment | null,
       careerDiscoveries: [] as CareerPathRecommendation[],
       selectedCareer: "",
@@ -378,6 +390,9 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     setDyslexiaFont(s.dyslexiaFont ?? false);
     setLiveCaptions(s.liveCaptions ?? false);
     setActivePresetState(s.activePreset ?? "custom");
+    setReadingRuler(s.readingRuler ?? false);
+    setReadingRulerHeight(s.readingRulerHeight ?? 60);
+    setTtsRate(s.ttsRate ?? 1);
     setSavedJobs(s.savedJobs);
     setProfile({ ...EMPTY_PROFILE, ...s.profile });
     setApplications(
@@ -451,6 +466,9 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         dyslexiaFont,
         liveCaptions,
         activePreset,
+        readingRuler,
+        readingRulerHeight,
+        ttsRate,
         savedJobs,
         profile,
         applications,
@@ -475,6 +493,9 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     dyslexiaFont,
     liveCaptions,
     activePreset,
+    readingRuler,
+    readingRulerHeight,
+    ttsRate,
     savedJobs,
     profile,
     applications,
@@ -588,6 +609,12 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     applyPreset,
     voiceAssistantOpen,
     setVoiceAssistantOpen,
+    readingRuler,
+    setReadingRuler,
+    readingRulerHeight,
+    setReadingRulerHeight,
+    ttsRate,
+    setTtsRate,
     savedJobs,
     toggleSaved,
     isSaved: (id) => savedJobs.includes(id),

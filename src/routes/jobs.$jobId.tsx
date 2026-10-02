@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { Bookmark, BookmarkCheck, FileText, LayoutList, RefreshCcw } from "lucide-react";
+import { Bookmark, BookmarkCheck, FileText, LayoutList, RefreshCcw, ShieldCheck, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getJob } from "@/lib/jobs-data";
 import { useAppState } from "@/lib/app-state";
@@ -14,6 +14,8 @@ import { BeforeYouApply } from "@/components/before-you-apply";
 import { EmployerInclusionCard } from "@/components/employer-inclusion";
 import { WorkplaceCompass } from "@/components/workplace-compass";
 import { ConfidenceCheck } from "@/components/confidence-check";
+import { EmployerAccessibilityAuditModal } from "@/components/employer-accessibility-audit";
+import { MatchExplainerModal } from "@/components/match-explainer-modal";
 
 export const Route = createFileRoute("/jobs/$jobId")({
   loader: ({ params }) => {
@@ -56,6 +58,8 @@ function JobDetails() {
   const { jobId } = Route.useParams();
   const { isSaved, toggleSaved, hasApplied, findJob, profile } = useAppState();
   const [accessibleView, setAccessibleView] = useState(false);
+  const [auditOpen, setAuditOpen] = useState(false);
+  const [explainOpen, setExplainOpen] = useState(false);
   // Context first, so employer transparency updates are reflected immediately.
   const job = findJob(jobId) ?? data?.job;
 
@@ -88,6 +92,14 @@ function JobDetails() {
         ← Back to job search
       </Link>
 
+      <EmployerAccessibilityAuditModal job={job} open={auditOpen} onOpenChange={setAuditOpen} />
+      <MatchExplainerModal
+        match={match}
+        open={explainOpen}
+        onOpenChange={setExplainOpen}
+        accessibilityFitScore={fit.score}
+      />
+
       <header className="surface-card mt-4 p-5 sm:p-6">
         <h1 className="text-2xl font-bold sm:text-3xl">{job.title}</h1>
         <p className="mt-2 text-muted-foreground">
@@ -97,6 +109,16 @@ function JobDetails() {
 
         <div className="mt-3 flex flex-wrap items-center gap-2">
           <MatchPill score={match.total} />
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            className="h-7 text-xs gap-1 text-brand font-semibold hover:underline"
+            onClick={() => setExplainOpen(true)}
+          >
+            <Sparkles className="size-3.5" />
+            Explain Match
+          </Button>
           {fit.hasPreferences ? (
             <span className="inline-flex items-center rounded-full bg-brand/15 px-2.5 py-1 text-xs font-semibold text-brand">
               {fit.score}% Accessibility Fit
@@ -124,6 +146,15 @@ function JobDetails() {
             </Button>
           )}
           <BeforeYouApply job={job} profile={profile} />
+          <Button
+            type="button"
+            variant="outline"
+            className="min-h-11 gap-1.5"
+            onClick={() => setAuditOpen(true)}
+          >
+            <ShieldCheck className="size-4 text-brand" />
+            Accessibility Audit
+          </Button>
           <Button
             variant="outline"
             className="min-h-11"
