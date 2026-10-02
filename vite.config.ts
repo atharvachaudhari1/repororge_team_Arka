@@ -15,11 +15,22 @@ export default defineConfig({
     server: {
       allowedHosts: ["repoforge-win.onrender.com"],
     },
+    resolve: {
+      alias: [
+        { find: /^punycode\/$/, replacement: "punycode" },
+      ],
+    },
   },
 
   tanstackStart: {
     // Redirect TanStack Start's bundled server entry to src/server.ts
     // (our SSR error wrapper).
     server: { entry: "server" },
+  },
+
+  nitro: {
+    alias: {
+      "punycode/": "punycode",
+    },
   },
 });

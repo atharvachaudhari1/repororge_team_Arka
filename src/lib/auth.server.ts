@@ -5,16 +5,22 @@ import {
   getRequestIP,
   getRequestHeader,
 } from "@tanstack/react-start/server";
+import { ObjectId } from "mongodb";
 import type { AccountRole, AuthUser } from "./auth.functions";
+import {
+  isMongoConfigured,
+  getMongoDb,
+  checkMongoConnection,
+} from "./mongodb.server";
 
 type UserRow = {
-  id: number;
+  id: number | string;
   full_name: string;
   email: string;
   role: AccountRole;
   password_hash: string;
   password_salt: string;
-  email_verified?: number;
+  email_verified?: number | boolean;
 };
 
 type SqliteDatabase = import("better-sqlite3").Database;
@@ -114,15 +120,26 @@ async function passwordHash(password: string, salt: string) {
   return (await crypto()).scryptSync(password, salt, 64).toString("hex");
 }
 
-async function createSession(db: SqliteDatabase, userId: number) {
+async function createSession(dbOrMongo: SqliteDatabase | "mongo", userId: number | string) {
   const token = (await crypto()).randomBytes(32).toString("hex");
-  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
-  db.prepare("DELETE FROM sessions WHERE expires_at <= ?").run(new Date().toISOString());
-  db.prepare("INSERT INTO sessions (token, user_id, expires_at) VALUES (?, ?, ?)").run(
-    token,
-    userId,
-    expiresAt
-  );
+  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+  if (dbOrMongo === "mongo") {
+    const mongo = await getMongoDb();
+    await mongo.collection("sessions").deleteMany({ expiresAt: { $lte: new Date() } });
+    await mongo.collection("sessions").insertOne({
+      token,
+      userId: userId.toString(),
+      expiresAt,
+      createdAt: new Date(),
+    });
+  } else {
+    dbOrMongo.prepare("DELETE FROM sessions WHERE expires_at <= ?").run(new Date().toISOString());
+    dbOrMongo
+      .prepare("INSERT INTO sessions (token, user_id, expires_at) VALUES (?, ?, ?)")
+      .run(token, userId, expiresAt.toISOString());
+  }
+
   return token;
 }
 
@@ -174,24 +191,51 @@ export function getClientIp(): string {
   }
 }
 
-function recordFailedLoginAttempt(db: SqliteDatabase, key: string): number {
-  const row = db.prepare("SELECT attempts FROM login_attempts WHERE key = ?").get(key) as
+async function recordFailedLoginAttempt(
+  dbOrMongo: SqliteDatabase | "mongo",
+  key: string
+): Promise<number> {
+  const lockDurationMs = 15 * 60 * 1000;
+  const now = new Date();
+
+  if (dbOrMongo === "mongo") {
+    const mongo = await getMongoDb();
+    const existing = await mongo.collection("login_attempts").findOne({ key });
+    const newAttempts = ((existing?.["attempts"] as number) ?? 0) + 1;
+    let lockUntil: Date | null = null;
+    if (newAttempts >= 5) {
+      lockUntil = new Date(Date.now() + lockDurationMs);
+    }
+    await mongo.collection("login_attempts").updateOne(
+      { key },
+      {
+        $set: {
+          attempts: newAttempts,
+          lockUntil,
+          lastAttempt: now,
+        },
+      },
+      { upsert: true }
+    );
+    return newAttempts;
+  }
+
+  const row = dbOrMongo.prepare("SELECT attempts FROM login_attempts WHERE key = ?").get(key) as
     | { attempts: number }
     | undefined;
   const newAttempts = (row?.attempts ?? 0) + 1;
   let lockUntil: string | null = null;
   if (newAttempts >= 5) {
-    // 15-minute temporary lockout
-    lockUntil = new Date(Date.now() + 15 * 60 * 1000).toISOString();
+    lockUntil = new Date(Date.now() + lockDurationMs).toISOString();
   }
-  db.prepare(`
+  dbOrMongo.prepare(`
     INSERT INTO login_attempts (key, attempts, lock_until, last_attempt)
     VALUES (?, ?, ?, ?)
     ON CONFLICT(key) DO UPDATE SET
       attempts = excluded.attempts,
       lock_until = excluded.lock_until,
       last_attempt = excluded.last_attempt
-  `).run(key, newAttempts, lockUntil, new Date().toISOString());
+  `).run(key, newAttempts, lockUntil, now.toISOString());
   return newAttempts;
 }
 
@@ -201,6 +245,51 @@ export async function registerAccountHandler(data: {
   role: AccountRole;
   password: string;
 }) {
+  const salt = (await crypto()).randomBytes(16).toString("hex");
+  const hashed = await passwordHash(data.password, salt);
+
+  if (isMongoConfigured()) {
+    try {
+      const mongo = await getMongoDb();
+      const existing = await mongo.collection("users").findOne({
+        email: data.email.toLowerCase(),
+      });
+      if (existing) {
+        return { ok: false as const, error: "An account already exists for this email address." };
+      }
+      const insertResult = await mongo.collection("users").insertOne({
+        fullName: data.fullName,
+        full_name: data.fullName,
+        email: data.email.toLowerCase(),
+        role: data.role,
+        passwordHash: hashed,
+        password_hash: hashed,
+        passwordSalt: salt,
+        password_salt: salt,
+        emailVerified: false,
+        email_verified: 0,
+        createdAt: new Date(),
+      });
+      const userId = insertResult.insertedId.toString();
+      const token = await createSession("mongo", userId);
+      setSessionCookie(token);
+      return {
+        ok: true as const,
+        user: {
+          id: userId,
+          fullName: data.fullName,
+          email: data.email.toLowerCase(),
+          role: data.role,
+          emailVerified: false,
+        },
+        token,
+      };
+    } catch (err: unknown) {
+      console.warn("MongoDB Atlas registration note (falling back to SQLite if needed):", err);
+    }
+  }
+
+  // SQLite implementation (active if MongoDB is unconfigured or unavailable)
   const db = await getDatabase();
   const existing = db.prepare("SELECT id FROM users WHERE email = ?").get(data.email) as
     | { id: number }
@@ -208,12 +297,11 @@ export async function registerAccountHandler(data: {
   if (existing) {
     return { ok: false as const, error: "An account already exists for this email address." };
   }
-  const salt = (await crypto()).randomBytes(16).toString("hex");
   const result = db
     .prepare(
       "INSERT INTO users (full_name, email, role, password_hash, password_salt, email_verified) VALUES (?, ?, ?, ?, ?, 0)"
     )
-    .run(data.fullName, data.email.toLowerCase(), data.role, await passwordHash(data.password, salt), salt);
+    .run(data.fullName, data.email.toLowerCase(), data.role, hashed, salt);
   const row = db.prepare("SELECT * FROM users WHERE id = ?").get(result.lastInsertRowid) as UserRow;
   const token = await createSession(db, row.id);
   setSessionCookie(token);
@@ -225,13 +313,95 @@ export async function loginAccountHandler(data: {
   password: string;
   role: AccountRole;
 }) {
-  const db = await getDatabase();
   const ip = getClientIp();
   const ipKey = `ip:${ip}`;
   const emailKey = `email:${data.email.toLowerCase()}`;
+
+  if (isMongoConfigured()) {
+    try {
+      const mongo = await getMongoDb();
+      const now = new Date();
+
+      // Check brute-force lockouts in MongoDB
+      const ipLock = await mongo.collection("login_attempts").findOne({
+        key: ipKey,
+        lockUntil: { $gt: now },
+      });
+      const emailLock = await mongo.collection("login_attempts").findOne({
+        key: emailKey,
+        lockUntil: { $gt: now },
+      });
+
+      if (ipLock || emailLock) {
+        const lockUntilDate = (ipLock?.["lockUntil"] || emailLock?.["lockUntil"]) as Date;
+        const remainingMinutes = Math.max(1, Math.ceil((lockUntilDate.getTime() - Date.now()) / (60 * 1000)));
+        return {
+          ok: false as const,
+          error: `Too many failed login attempts. Temporarily locked for security. Please try again in ${remainingMinutes} minute${remainingMinutes === 1 ? "" : "s"} or reset your password.`,
+        };
+      }
+
+      const userDoc = await mongo.collection("users").findOne({
+        email: data.email.toLowerCase(),
+      });
+
+      let authFailed = false;
+      if (!userDoc || userDoc["role"] !== data.role) {
+        authFailed = true;
+      } else {
+        const pHash = String(userDoc["passwordHash"] || userDoc["password_hash"] || "");
+        const pSalt = String(userDoc["passwordSalt"] || userDoc["password_salt"] || "");
+        const expected = Buffer.from(pHash, "hex");
+        const supplied = Buffer.from(await passwordHash(data.password, pSalt), "hex");
+        if (expected.length !== supplied.length || !(await crypto()).timingSafeEqual(expected, supplied)) {
+          authFailed = true;
+        }
+      }
+
+      if (authFailed) {
+        const ipAttempts = await recordFailedLoginAttempt("mongo", ipKey);
+        const emailAttempts = await recordFailedLoginAttempt("mongo", emailKey);
+        const maxAttempts = Math.max(ipAttempts, emailAttempts);
+        if (maxAttempts >= 5) {
+          return {
+            ok: false as const,
+            error:
+              "Too many failed login attempts. Your account has been temporarily locked for 15 minutes. You can reset your password to unlock immediately.",
+          };
+        }
+        const remaining = Math.max(1, 5 - maxAttempts);
+        return {
+          ok: false as const,
+          error: `Incorrect email, password, or portal. (${remaining} attempt${remaining === 1 ? "" : "s"} remaining before lock)`,
+        };
+      }
+
+      // Success: clear lockout counters
+      await mongo.collection("login_attempts").deleteMany({ key: { $in: [ipKey, emailKey] } });
+      const userId = userDoc!["_id"].toString();
+      const token = await createSession("mongo", userId);
+      setSessionCookie(token);
+
+      return {
+        ok: true as const,
+        user: {
+          id: userId,
+          fullName: String(userDoc!["fullName"] || userDoc!["full_name"]),
+          email: String(userDoc!["email"]),
+          role: userDoc!["role"] as AccountRole,
+          emailVerified: Boolean(userDoc!["emailVerified"] ?? userDoc!["email_verified"]),
+        },
+        token,
+      };
+    } catch (err: unknown) {
+      console.warn("MongoDB Atlas login note (falling back to SQLite):", err);
+    }
+  }
+
+  // SQLite fallback
+  const db = await getDatabase();
   const nowIso = new Date().toISOString();
 
-  // Check brute-force lockouts
   const ipLock = db
     .prepare("SELECT attempts, lock_until FROM login_attempts WHERE key = ? AND lock_until > ?")
     .get(ipKey, nowIso) as { attempts: number; lock_until: string } | undefined;
@@ -262,8 +432,8 @@ export async function loginAccountHandler(data: {
   }
 
   if (authFailed) {
-    const ipAttempts = recordFailedLoginAttempt(db, ipKey);
-    const emailAttempts = recordFailedLoginAttempt(db, emailKey);
+    const ipAttempts = await recordFailedLoginAttempt(db, ipKey);
+    const emailAttempts = await recordFailedLoginAttempt(db, emailKey);
     const maxAttempts = Math.max(ipAttempts, emailAttempts);
 
     if (maxAttempts >= 5) {
@@ -281,9 +451,7 @@ export async function loginAccountHandler(data: {
     };
   }
 
-  // Success: clear brute force counters
   db.prepare("DELETE FROM login_attempts WHERE key IN (?, ?)").run(ipKey, emailKey);
-
   const token = await createSession(db, row!.id);
   setSessionCookie(token);
   return { ok: true as const, user: publicUser(row!), token };
@@ -294,6 +462,42 @@ export async function readSessionHandler(data: { token?: string }) {
   const token = cookieToken || data.token;
   if (!token) return { user: null };
 
+  if (isMongoConfigured()) {
+    try {
+      const mongo = await getMongoDb();
+      const sessionDoc = await mongo.collection("sessions").findOne({
+        token,
+        expiresAt: { $gt: new Date() },
+      });
+      if (sessionDoc) {
+        let userDoc = null;
+        try {
+          userDoc = await mongo.collection("users").findOne({
+            _id: new ObjectId(sessionDoc["userId"] as string),
+          });
+        } catch {
+          userDoc = await mongo.collection("users").findOne({
+            id: sessionDoc["userId"],
+          });
+        }
+        if (userDoc) {
+          return {
+            user: {
+              id: userDoc["_id"].toString(),
+              fullName: String(userDoc["fullName"] || userDoc["full_name"]),
+              email: String(userDoc["email"]),
+              role: userDoc["role"] as AccountRole,
+              emailVerified: Boolean(userDoc["emailVerified"] ?? userDoc["email_verified"]),
+            },
+          };
+        }
+      }
+    } catch (err) {
+      console.warn("MongoDB Atlas readSession note:", err);
+    }
+  }
+
+  // SQLite fallback
   const db = await getDatabase();
   const row = db
     .prepare(
@@ -312,6 +516,14 @@ export async function readSessionHandler(data: { token?: string }) {
 export async function logoutAccountHandler(data: { token?: string }) {
   const cookieToken = getSessionCookieToken();
   const token = cookieToken || data.token;
+
+  if (isMongoConfigured() && token) {
+    try {
+      const mongo = await getMongoDb();
+      await mongo.collection("sessions").deleteMany({ token });
+    } catch (err) { void err; }
+  }
+
   const db = await getDatabase();
   if (token) {
     db.prepare("DELETE FROM sessions WHERE token = ?").run(token);
@@ -321,6 +533,34 @@ export async function logoutAccountHandler(data: { token?: string }) {
 }
 
 export async function requestPasswordResetHandler(data: { email: string }) {
+  const resetToken = (await crypto()).randomBytes(32).toString("hex");
+  const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
+
+  if (isMongoConfigured()) {
+    try {
+      const mongo = await getMongoDb();
+      const user = await mongo.collection("users").findOne({ email: data.email.toLowerCase() });
+      if (!user) {
+        return {
+          ok: true as const,
+          message: "If an account exists with this email address, a password reset token has been generated.",
+        };
+      }
+      await mongo.collection("password_resets").insertOne({
+        email: data.email.toLowerCase(),
+        token: resetToken,
+        expiresAt,
+        usedAt: null,
+        createdAt: new Date(),
+      });
+      return {
+        ok: true as const,
+        message: "Password reset instructions generated successfully.",
+        resetToken,
+      };
+    } catch (err) { void err; }
+  }
+
   const db = await getDatabase();
   const user = db.prepare("SELECT id, email FROM users WHERE email = ?").get(data.email.toLowerCase()) as
     | { id: number; email: string }
@@ -333,12 +573,10 @@ export async function requestPasswordResetHandler(data: { email: string }) {
     };
   }
 
-  const resetToken = (await crypto()).randomBytes(32).toString("hex");
-  const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString(); // 1 hour
   db.prepare("INSERT INTO password_resets (email, token, expires_at) VALUES (?, ?, ?)").run(
     data.email.toLowerCase(),
     resetToken,
-    expiresAt
+    expiresAt.toISOString()
   );
 
   return {
@@ -352,6 +590,65 @@ export async function confirmPasswordResetHandler(data: {
   token: string;
   newPassword: string;
 }) {
+  const newSalt = (await crypto()).randomBytes(16).toString("hex");
+  const newHash = await passwordHash(data.newPassword, newSalt);
+
+  if (isMongoConfigured()) {
+    try {
+      const mongo = await getMongoDb();
+      const resetDoc = await mongo.collection("password_resets").findOne({
+        token: data.token,
+        expiresAt: { $gt: new Date() },
+        usedAt: null,
+      });
+
+      if (!resetDoc) {
+        return {
+          ok: false as const,
+          error: "Invalid or expired password reset link. Please request a new reset code.",
+        };
+      }
+
+      const email = String(resetDoc["email"]);
+      const userDoc = await mongo.collection("users").findOne({ email });
+      if (!userDoc) {
+        return { ok: false as const, error: "User account not found." };
+      }
+
+      await mongo.collection("users").updateOne(
+        { email },
+        {
+          $set: {
+            passwordHash: newHash,
+            password_hash: newHash,
+            passwordSalt: newSalt,
+            password_salt: newSalt,
+          },
+        }
+      );
+      await mongo.collection("password_resets").updateOne(
+        { _id: resetDoc["_id"] },
+        { $set: { usedAt: new Date() } }
+      );
+      await mongo.collection("sessions").deleteMany({ userId: userDoc["_id"].toString() });
+      await mongo.collection("login_attempts").deleteMany({ key: `email:${email}` });
+
+      const sessionToken = await createSession("mongo", userDoc["_id"].toString());
+      setSessionCookie(sessionToken);
+      return {
+        ok: true as const,
+        user: {
+          id: userDoc["_id"].toString(),
+          fullName: String(userDoc["fullName"] || userDoc["full_name"]),
+          email: String(userDoc["email"]),
+          role: userDoc["role"] as AccountRole,
+          emailVerified: Boolean(userDoc["emailVerified"] ?? userDoc["email_verified"]),
+        },
+        token: sessionToken,
+      };
+    } catch (err) { void err; }
+  }
+
   const db = await getDatabase();
   const resetRow = db
     .prepare(
@@ -371,8 +668,6 @@ export async function confirmPasswordResetHandler(data: {
     return { ok: false as const, error: "User account not found." };
   }
 
-  const newSalt = (await crypto()).randomBytes(16).toString("hex");
-  const newHash = await passwordHash(data.newPassword, newSalt);
   db.prepare("UPDATE users SET password_hash = ?, password_salt = ? WHERE id = ?").run(
     newHash,
     newSalt,
@@ -380,30 +675,60 @@ export async function confirmPasswordResetHandler(data: {
   );
   db.prepare("UPDATE password_resets SET used_at = ? WHERE id = ?").run(new Date().toISOString(), resetRow.id);
 
-  // Invalidate all old sessions for this user
   db.prepare("DELETE FROM sessions WHERE user_id = ?").run(user.id);
-  // Clear failed login attempts lockouts for this email
   db.prepare("DELETE FROM login_attempts WHERE key LIKE ?").run(`email:${user.email.toLowerCase()}`);
 
-  // Create fresh session and set HttpOnly cookie
   const sessionToken = await createSession(db, user.id);
   setSessionCookie(sessionToken);
   return { ok: true as const, user: publicUser(user), token: sessionToken };
 }
 
 export async function requestEmailVerificationHandler(data: { email: string }) {
-  const db = await getDatabase();
   const code = Math.floor(100000 + Math.random() * 900000).toString();
-  const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
+  const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+
+  if (isMongoConfigured()) {
+    try {
+      const mongo = await getMongoDb();
+      await mongo.collection("email_verifications").insertOne({
+        email: data.email.toLowerCase(),
+        code,
+        expiresAt,
+        createdAt: new Date(),
+      });
+      return { ok: true as const, message: "Verification code generated.", code };
+    } catch (err) { void err; }
+  }
+
+  const db = await getDatabase();
   db.prepare("INSERT INTO email_verifications (email, code, expires_at) VALUES (?, ?, ?)").run(
     data.email.toLowerCase(),
     code,
-    expiresAt
+    expiresAt.toISOString()
   );
   return { ok: true as const, message: "Verification code generated.", code };
 }
 
 export async function verifyEmailHandler(data: { email: string; code: string }) {
+  if (isMongoConfigured()) {
+    try {
+      const mongo = await getMongoDb();
+      const row = await mongo.collection("email_verifications").findOne({
+        email: data.email.toLowerCase(),
+        code: data.code.trim(),
+        expiresAt: { $gt: new Date() },
+      });
+      if (row) {
+        await mongo.collection("users").updateOne(
+          { email: data.email.toLowerCase() },
+          { $set: { emailVerified: true, email_verified: 1 } }
+        );
+        await mongo.collection("email_verifications").deleteOne({ _id: row["_id"] });
+        return { ok: true as const, message: "Email successfully verified!" };
+      }
+    } catch (err) { void err; }
+  }
+
   const db = await getDatabase();
   const row = db
     .prepare(
@@ -433,6 +758,106 @@ export async function verifyAiAuthAndRateLimit(): Promise<
     };
   }
 
+  const ip = getClientIp();
+  const now = Date.now();
+  const windowMs = 5 * 60 * 1000;
+  const USER_LIMIT = 20;
+  const IP_LIMIT = 30;
+
+  if (isMongoConfigured()) {
+    try {
+      const mongo = await getMongoDb();
+      const sessionDoc = await mongo.collection("sessions").findOne({
+        token,
+        expiresAt: { $gt: new Date() },
+      });
+      if (!sessionDoc) {
+        clearSessionCookie();
+        return {
+          ok: false,
+          error: "Your session has expired or is invalid. Please sign in again.",
+        };
+      }
+
+      let userDoc = null;
+      try {
+        userDoc = await mongo.collection("users").findOne({
+          _id: new ObjectId(sessionDoc["userId"] as string),
+        });
+      } catch {
+        userDoc = await mongo.collection("users").findOne({
+          id: sessionDoc["userId"],
+        });
+      }
+
+      if (!userDoc) {
+        clearSessionCookie();
+        return {
+          ok: false,
+          error: "Your session has expired or is invalid. Please sign in again.",
+        };
+      }
+
+      const cutoffDate = new Date(now - windowMs);
+      await mongo.collection("ai_rate_limits").deleteMany({ windowStart: { $lt: cutoffDate } });
+
+      const userKey = `user:${userDoc["_id"]}`;
+      const ipKey = `ip:${ip}`;
+
+      const userRec = await mongo.collection("ai_rate_limits").findOne({ key: userKey });
+      const ipRec = await mongo.collection("ai_rate_limits").findOne({ key: ipKey });
+
+      if (userRec && (userRec["count"] as number) >= USER_LIMIT) {
+        return {
+          ok: false,
+          error:
+            "Rate limit reached: You have made too many AI requests recently (20 requests per 5 minutes). Please wait a few moments before continuing.",
+        };
+      }
+
+      if (ipRec && (ipRec["count"] as number) >= IP_LIMIT) {
+        return {
+          ok: false,
+          error:
+            "Rate limit reached: Too many AI requests originating from this network. Please wait a few moments before continuing.",
+        };
+      }
+
+      await mongo.collection("ai_rate_limits").updateOne(
+        { key: userKey },
+        {
+          $inc: { count: 1 },
+          $setOnInsert: { windowStart: new Date() },
+        },
+        { upsert: true }
+      );
+
+      await mongo.collection("ai_rate_limits").updateOne(
+        { key: ipKey },
+        {
+          $inc: { count: 1 },
+          $setOnInsert: { windowStart: new Date() },
+        },
+        { upsert: true }
+      );
+
+      return {
+        ok: true,
+        user: {
+          id: userDoc["_id"].toString(),
+          fullName: String(userDoc["fullName"] || userDoc["full_name"]),
+          email: String(userDoc["email"]),
+          role: userDoc["role"] as AccountRole,
+          emailVerified: Boolean(userDoc["emailVerified"] ?? userDoc["email_verified"]),
+        },
+        ip,
+      };
+    } catch (err) {
+      console.warn("MongoDB Atlas AI rate limit note (falling back to SQLite):", err);
+    }
+  }
+
+  // SQLite implementation
   const db = await getDatabase();
   const row = db
     .prepare(
@@ -448,16 +873,7 @@ export async function verifyAiAuthAndRateLimit(): Promise<
     };
   }
 
-  const ip = getClientIp();
-
-  // Enforce sliding window rate limits:
-  // 1) Per-user limit: 20 requests per 5 minutes
-  // 2) Per-IP limit: 30 requests per 5 minutes
-  const now = Date.now();
-  const windowMs = 5 * 60 * 1000;
   const cutoffIso = new Date(now - windowMs).toISOString();
-
-  // Clean up expired window entries
   db.prepare("DELETE FROM ai_rate_limits WHERE window_start < ?").run(cutoffIso);
 
   const userKey = `user:${row.id}`;
@@ -469,9 +885,6 @@ export async function verifyAiAuthAndRateLimit(): Promise<
   const ipRec = db
     .prepare("SELECT count, window_start FROM ai_rate_limits WHERE key = ?")
     .get(ipKey) as { count: number; window_start: string } | undefined;
-
-  const USER_LIMIT = 20;
-  const IP_LIMIT = 30;
 
   if (userRec && userRec.count >= USER_LIMIT) {
     return {
@@ -489,7 +902,6 @@ export async function verifyAiAuthAndRateLimit(): Promise<
     };
   }
 
-  // Increment usage
   db.prepare(`
     INSERT INTO ai_rate_limits (key, count, window_start)
     VALUES (?, 1, ?)
@@ -503,4 +915,24 @@ export async function verifyAiAuthAndRateLimit(): Promise<
   `).run(ipKey, ipRec ? ipRec.window_start : new Date().toISOString());
 
   return { ok: true, user: publicUser(row), ip };
+}
+
+export async function getDatabaseStatusHandler() {
+  const isAtlas = isMongoConfigured();
+  if (!isAtlas) {
+    return {
+      type: "sqlite" as const,
+      connected: true,
+      message: "Running on SQLite storage (local). To connect MongoDB Atlas, set MONGODB_URI in .env.",
+    };
+  }
+  const check = await checkMongoConnection();
+  return {
+    type: "mongodb" as const,
+    connected: check.connected,
+    dbName: check.dbName,
+    message: check.connected
+      ? `Connected to MongoDB Atlas database "${check.dbName}".`
+      : `MongoDB Atlas connection error: ${check.error}`,
+  };
 }

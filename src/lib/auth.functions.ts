@@ -82,3 +82,10 @@ export const verifyEmail = createServerFn({ method: "POST" })
     const { verifyEmailHandler } = await import("./auth.server");
     return verifyEmailHandler(data);
   });
+
+export const getDatabaseStatus = createServerFn({ method: "GET" })
+  .handler(async () => {
+    const { getDatabaseStatusHandler } = await import("./auth.server");
+    return getDatabaseStatusHandler();
+  });
+
