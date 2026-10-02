@@ -136,30 +136,49 @@ export function CareerAssistant() {
 
   return (
     <>
-      <Button
-        className="fixed bottom-4 right-4 z-40 min-h-11 shadow-lg"
+      <button
+        type="button"
+        className="fixed bottom-5 right-5 z-40 flex items-center gap-2.5 rounded-2xl border-2 border-[#191716] bg-[#FFFDF9] dark:bg-[#201E1C] p-2.5 shadow-[3px_3px_0px_#191716] hover:-translate-y-0.5 active:translate-y-0 transition-transform"
         onClick={() => setOpen(true)}
         aria-expanded={open}
         aria-controls="career-assistant-panel"
       >
-        <Bot aria-hidden="true" />
-        AI career assistant
-      </Button>
+        <span className="flex size-8 items-center justify-center rounded-full border border-[#191716] bg-[#E8F7F4] text-xs font-serif font-bold text-[#141817]">
+          An
+        </span>
+        <div className="text-left pr-1 hidden sm:block">
+          <p className="text-[9px] uppercase font-serif tracking-widest text-stone-500 leading-none">Chat with</p>
+          <p className="text-xs font-serif font-bold text-stone-900 dark:text-stone-100">Angie</p>
+        </div>
+        <span className="rounded-full border border-[#191716] bg-[#7BD3C2] px-2.5 py-0.5 text-[11px] font-semibold text-[#141817]">
+          Let's Chat!
+        </span>
+      </button>
 
       {open ? (
         <aside
           id="career-assistant-panel"
           aria-label="AI career assistant"
-          className="fixed inset-x-2 bottom-2 z-50 max-h-[85dvh] overflow-y-auto rounded-lg border border-border bg-card p-4 shadow-xl sm:inset-x-auto sm:right-4 sm:w-[26rem]"
+          className="fixed inset-x-2 bottom-2 z-50 max-h-[85dvh] overflow-y-auto rounded-3xl border-2 border-[#191716] bg-[#FFFDF9] dark:bg-[#201E1C] p-5 shadow-[4px_4px_0px_#191716] sm:inset-x-auto sm:right-5 sm:w-[26rem]"
         >
-          <div className="flex items-center justify-between gap-2">
-            <h2 className="flex items-center gap-2 text-lg font-semibold">
-              <Bot aria-hidden="true" className="size-5 text-brand" />
-              Career assistant
-            </h2>
-            <Button variant="ghost" size="icon" className="min-h-11 min-w-11" aria-label="Close career assistant" onClick={() => { tts.stop(); setOpen(false); }}>
-              <X aria-hidden="true" />
-            </Button>
+          <div className="flex items-center justify-between gap-2 border-b border-border/70 pb-3">
+            <div className="flex items-center gap-2.5">
+              <span className="flex size-8 items-center justify-center rounded-full border border-[#191716] bg-[#E8F7F4] text-xs font-serif font-bold text-[#141817]">
+                An
+              </span>
+              <div>
+                <p className="text-[9px] uppercase font-serif tracking-widest text-stone-500 leading-none">Chat with</p>
+                <h2 className="font-serif text-base font-normal text-foreground">Angie • Ableo Advisor</h2>
+              </div>
+            </div>
+            <button
+              type="button"
+              className="flex size-8 items-center justify-center rounded-full border border-stone-300 dark:border-stone-700 hover:bg-secondary text-stone-600 transition-colors"
+              aria-label="Close career assistant"
+              onClick={() => { tts.stop(); setOpen(false); }}
+            >
+              <X className="size-4" />
+            </button>
           </div>
 
           <ul className="mt-3 space-y-3" aria-live="polite">
@@ -226,23 +245,26 @@ export function CareerAssistant() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Ask about your matches…"
+              className="rounded-full border-stone-300 dark:border-stone-700 bg-background px-4 text-xs"
             />
             {voice.supported ? (
-              <Button
+              <button
                 type="button"
-                variant="outline"
-                size="icon"
-                className="min-h-11 min-w-11"
+                className="flex size-10 shrink-0 items-center justify-center rounded-full border border-stone-300 dark:border-stone-700 bg-background text-foreground hover:bg-secondary"
                 aria-pressed={voice.listening}
                 aria-label={voice.listening ? "Stop voice input" : "Ask by voice"}
                 onClick={() => (voice.listening ? voice.stop() : voice.start())}
               >
-                <Mic aria-hidden="true" />
-              </Button>
+                <Mic className="size-4" aria-hidden="true" />
+              </button>
             ) : null}
-            <Button type="submit" size="icon" className="min-h-11 min-w-11" aria-label="Send question">
-              <Send aria-hidden="true" />
-            </Button>
+            <button
+              type="submit"
+              className="flex size-10 shrink-0 items-center justify-center rounded-full border border-[#191716] bg-[#7BD3C2] text-[#141817] shadow-[1px_1px_0px_#141817] hover:bg-[#6ec2b1]"
+              aria-label="Send question"
+            >
+              <Send className="size-4" aria-hidden="true" />
+            </button>
           </form>
 
           <h3 className="mt-4 text-sm font-semibold">Suggested questions</h3>

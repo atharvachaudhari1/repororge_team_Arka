@@ -87,27 +87,38 @@ export function NextStepCard({
   return (
     <section
       aria-labelledby="next-step-heading"
-      className="rounded-xl border border-border bg-card p-5"
+      className="rounded-2xl border border-border bg-card p-6 shadow-[0_2px_8px_rgba(0,0,0,0.02)]"
     >
-      <p className="flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-        <Compass aria-hidden="true" className="size-4" />
-        Your next step
+      <p className="flex items-center gap-1.5 text-xs font-serif uppercase tracking-wider text-stone-500">
+        <Compass aria-hidden="true" className="size-4 text-stone-700 dark:text-stone-300" />
+        Recommended Next Step
       </p>
-      <h2 id="next-step-heading" className="mt-2 text-xl font-semibold">{step.title}</h2>
-      <p className="mt-1 text-sm text-muted-foreground">{step.body}</p>
-      <Button asChild className="mt-4 min-h-11">
+      <h2 id="next-step-heading" className="mt-2 font-serif text-2xl font-normal text-foreground leading-snug">
+        {step.title}
+      </h2>
+      <p className="mt-1.5 text-xs sm:text-sm text-stone-600 dark:text-stone-400 font-sans leading-relaxed">
+        {step.body}
+      </p>
+      <div className="mt-4">
         {step.to === "/jobs" ? (
-          <Link to="/jobs" search={{ q: "" }}>
+          <Link
+            to="/jobs"
+            search={{ q: "" }}
+            className="inline-flex items-center gap-1.5 rounded-full border border-[#191716] bg-[#7BD3C2] px-5 py-2 text-xs font-semibold text-[#141817] shadow-[1px_1px_0px_#141817] hover:bg-[#6ec2b1] transition-all"
+          >
             {step.cta}
-            <ArrowRight aria-hidden="true" />
+            <ArrowRight aria-hidden="true" className="size-3.5" />
           </Link>
         ) : (
-          <Link to={step.to}>
+          <Link
+            to={step.to}
+            className="inline-flex items-center gap-1.5 rounded-full border border-[#191716] bg-[#7BD3C2] px-5 py-2 text-xs font-semibold text-[#141817] shadow-[1px_1px_0px_#141817] hover:bg-[#6ec2b1] transition-all"
+          >
             {step.cta}
-            <ArrowRight aria-hidden="true" />
+            <ArrowRight aria-hidden="true" className="size-3.5" />
           </Link>
         )}
-      </Button>
+      </div>
     </section>
   );
 }

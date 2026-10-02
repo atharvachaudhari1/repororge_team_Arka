@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
-import { Sparkles, HeartHandshake, Accessibility, Sun, Moon } from "lucide-react";
-import { AccessibilityToolbar } from "./accessibility-toolbar";
+import { Sun, Moon, Accessibility } from "lucide-react";
+import { AccessibilitySheetTrigger } from "./accessibility-toolbar";
 import { useAppState } from "@/lib/app-state";
 
 const NAV = [
@@ -27,41 +27,35 @@ export function SiteHeader() {
       >
         Skip to main content
       </a>
-      <AccessibilityToolbar />
-      <header className="border-b border-border/50 bg-background/85 backdrop-blur-md sticky top-0 z-40 transition-colors">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-3">
-          <Link to="/" className="flex items-center gap-3 group" aria-label="Ableo home: Where Ability Meets Opportunity">
-            <span className="flex size-10 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/25 transition-all duration-300 group-hover:scale-105 group-hover:shadow-cyan-500/40">
-              <HeartHandshake aria-hidden="true" className="size-5" />
+      <header className="border-b border-border bg-background/90 backdrop-blur-md sticky top-0 z-40 transition-colors">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
+          <Link to="/" className="flex items-center gap-2.5 group" aria-label="Ableo home: Where Ability Meets Opportunity">
+            <span className="flex size-9 items-center justify-center rounded-full border border-foreground/80 bg-foreground text-background text-sm font-serif font-bold transition-transform group-hover:scale-105">
+              Ab
             </span>
             <div>
-              <div className="flex items-center gap-2">
-                <span className="font-display text-xl font-black tracking-tight text-foreground group-hover:text-primary transition-colors">
-                  Ableo
-                </span>
-                <span className="hidden sm:inline-flex items-center gap-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 px-2 py-0.5 text-[10px] font-semibold text-cyan-400 shadow-sm shadow-cyan-500/10">
-                  <Sparkles className="size-2.5 text-cyan-400" /> Team Arka!
-                </span>
-              </div>
-              <p className="text-[11px] font-medium text-muted-foreground hidden sm:block">
-                The Disability-First Job Platform
-              </p>
+              <span className="font-serif text-xl font-bold tracking-tight text-foreground">
+                Ableo
+              </span>
+              <span className="hidden sm:inline text-xs text-muted-foreground ml-2 font-sans">
+                Disability-First Career
+              </span>
             </div>
           </Link>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
             <nav aria-label="Main navigation">
-              <ul className="flex flex-wrap items-center gap-1 text-sm">
-                {NAV.map((item) => (
+              <ul className="hidden md:flex items-center gap-1 text-sm font-medium">
+                {NAV.slice(0, 6).map((item) => (
                   <li key={item.to}>
                     <Link
                       to={item.to}
-                      className="rounded-lg px-2.5 py-1.5 font-medium text-muted-foreground transition-all duration-200 hover:bg-secondary/70 hover:text-foreground"
+                      className="rounded-full px-3 py-1 text-xs text-muted-foreground transition-colors hover:text-foreground hover:bg-secondary"
                       activeOptions={{ exact: item.to === "/" }}
-                      activeProps={{ className: "bg-primary/10 text-primary font-semibold border border-primary/20 shadow-sm" }}
+                      activeProps={{ className: "text-foreground font-semibold bg-secondary" }}
                     >
                       {item.label}
                       {item.to === "/saved" && savedJobs.length > 0 ? (
-                        <span className="ml-1.5 rounded-full bg-cyan-500/20 border border-cyan-500/40 px-1.5 py-0.2 text-[11px] text-cyan-400 font-bold">
+                        <span className="ml-1 rounded-full bg-foreground text-background px-1.5 py-0.2 text-[10px] font-bold">
                           {savedJobs.length}
                         </span>
                       ) : null}
@@ -70,17 +64,36 @@ export function SiteHeader() {
                 ))}
               </ul>
             </nav>
+
+            <AccessibilitySheetTrigger />
+
+            <Link
+              to="/jobs"
+              className="inline-flex items-center gap-1.5 rounded-full border border-foreground/90 bg-[#7BD3C2] px-4 py-1.5 text-xs font-semibold text-[#141817] shadow-[1px_2px_0px_#141817] transition-all hover:bg-[#6ec2b1] hover:-translate-y-0.5"
+            >
+              Browse Roles →
+            </Link>
+
+            <Link
+              to="/privacy"
+              className="flex size-8 items-center justify-center rounded-full border border-foreground/80 bg-[#7BD3C2]/30 text-xs font-bold text-foreground transition-colors hover:bg-[#7BD3C2]"
+              title="Accessibility & Privacy Guide"
+              aria-label="Accessibility & Privacy Guide"
+            >
+              ?
+            </Link>
+
             <button
               type="button"
               onClick={toggleTheme}
-              className="hidden lg:flex size-9 items-center justify-center rounded-xl border border-border/60 bg-secondary/40 text-foreground transition-all hover:bg-secondary hover:border-brand/40 hover:scale-105"
+              className="flex size-8 items-center justify-center rounded-full border border-border text-foreground transition-colors hover:bg-secondary"
               aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
               title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
             >
               {theme === "dark" ? (
-                <Sun className="size-4 text-amber-400 transition-transform duration-300 rotate-0 hover:rotate-45" />
+                <Sun className="size-3.5 text-amber-400" />
               ) : (
-                <Moon className="size-4 text-cyan-500 transition-transform duration-300 -rotate-12 hover:rotate-0" />
+                <Moon className="size-3.5 text-foreground" />
               )}
             </button>
           </div>

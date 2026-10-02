@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import {
+  ArrowRight,
   BadgeCheck,
   Brain,
   Compass,
@@ -120,92 +121,122 @@ function Landing() {
 
   return (
     <>
-      {/* Hero Section — Disability-First */}
-      <section className="relative overflow-hidden border-b border-border/40 bg-gradient-to-b from-background via-cyan-950/20 to-background py-14 lg:py-24">
-        <div className="absolute top-1/4 left-1/4 -mt-20 -ml-20 size-80 rounded-full bg-cyan-500/10 blur-[100px] pointer-events-none" />
-        <div className="absolute top-1/3 right-1/4 -mt-20 -mr-20 size-80 rounded-full bg-purple-500/10 blur-[100px] pointer-events-none" />
-        
-        <div className="relative mx-auto grid max-w-6xl gap-10 px-4 lg:grid-cols-[1.1fr_1fr] items-center">
+      {/* Hero Section — Editorial Ink Landscape */}
+      <section className="relative overflow-hidden border-b border-border bg-background py-14 lg:py-20">
+        {/* Decorative Ink Landscape in Background */}
+        <div className="absolute inset-0 pointer-events-none opacity-45 dark:opacity-20 select-none overflow-hidden">
+          <svg className="w-full h-full" viewBox="0 0 1200 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M0 320 C 300 320, 450 350, 750 330 C 950 310, 1100 335, 1200 330" stroke="#191716" strokeWidth="1.2" strokeDasharray="3 3" />
+            <path d="M0 345 C 350 335, 550 375, 850 350 C 1050 335, 1150 360, 1200 350" stroke="#191716" strokeWidth="0.8" />
+            <path d="M100 300 Q 220 250 340 300 T 580 300" stroke="#191716" strokeWidth="1" opacity="0.6" />
+            <path d="M750 290 Q 880 240 1010 290 T 1200 290" stroke="#191716" strokeWidth="1" opacity="0.6" />
+            {/* Pine silhouettes */}
+            <path d="M30 320 L45 230 L60 320 Z M25 320 L45 250 L65 320 Z" fill="#191716" opacity="0.85" />
+            <path d="M70 330 L82 250 L94 330 Z" fill="#191716" opacity="0.75" />
+            <path d="M1100 330 L1115 240 L1130 330 Z" fill="#191716" opacity="0.8" />
+            <path d="M1140 335 L1152 260 L1164 335 Z" fill="#191716" opacity="0.7" />
+            {/* Hot air balloon in terracotta */}
+            <g transform="translate(920, 80)">
+              <ellipse cx="28" cy="35" rx="22" ry="30" fill="#CF4E3D" stroke="#191716" strokeWidth="1.5" />
+              <path d="M18 52 L38 52 L34 64 L22 64 Z" fill="#E5B34C" stroke="#191716" strokeWidth="1.2" />
+              <rect x="25" y="67" width="6" height="5" fill="#191716" />
+              <path d="M25 64 L25 67 M31 64 L31 67" stroke="#191716" strokeWidth="1" />
+            </g>
+          </svg>
+        </div>
+
+        <div className="relative mx-auto grid max-w-6xl gap-10 px-4 lg:grid-cols-[1.2fr_1fr] items-center">
           <div>
-            <div className="inline-flex items-center gap-2 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-3.5 py-1 text-xs font-semibold text-cyan-400 shadow-sm shadow-cyan-500/15 mb-4">
-              <Accessibility aria-hidden="true" className="size-4 text-cyan-400" />
-              <span>Built for People with Disabilities • Team Arka!</span>
+            <div className="inline-flex items-center gap-2 rounded-full border border-[#191716]/60 bg-white/70 dark:bg-stone-900/70 px-3.5 py-1 text-xs font-serif italic text-stone-700 dark:text-stone-300 mb-4 backdrop-blur-sm">
+              <Accessibility aria-hidden="true" className="size-3.5 text-stone-700 dark:text-stone-300" />
+              <span>Built for People with Disabilities • Team Arka</span>
             </div>
-            <h1 className="text-4xl font-black leading-tight sm:text-5xl font-display tracking-tight text-foreground">
-              Your Disability Doesn't Define Your Career.{" "}
-              <span className="gradient-text font-black">Your Ability Does.</span>
+            
+            <h1 className="font-serif text-4xl sm:text-5xl lg:text-6xl font-normal leading-[1.1] tracking-tight text-foreground">
+              A career roadmap <br className="hidden sm:inline" />
+              for <span className="italic">everyone</span>.
             </h1>
-            <p className="mt-4 max-w-xl text-base sm:text-lg text-muted-foreground leading-relaxed">
-              Ableo is the first job platform designed entirely around the needs of People with Disabilities (PwD). 
-              Know your accommodations before applying, understand workplace accessibility, and apply — barrier-free.
+            
+            <p className="mt-4 max-w-xl text-base sm:text-lg text-stone-600 dark:text-stone-400 font-sans leading-relaxed">
+              Your career is a journey. Take it with confidence. Ableo matches your skills to employers with verified disability accommodations — transparently and with zero guesswork.
             </p>
-            <div className="mt-3 flex flex-wrap gap-2 text-xs font-medium text-muted-foreground/90">
-              <span className="inline-flex items-center gap-1 rounded-md bg-secondary/60 px-2 py-0.5 border border-border/40">♿ Screen-reader verified</span>
-              <span className="inline-flex items-center gap-1 rounded-md bg-secondary/60 px-2 py-0.5 border border-border/40">🎙️ Voice navigation</span>
-              <span className="inline-flex items-center gap-1 rounded-md bg-secondary/60 px-2 py-0.5 border border-border/40">💬 Live captions</span>
-              <span className="inline-flex items-center gap-1 rounded-md bg-secondary/60 px-2 py-0.5 border border-border/40">🔒 100% Private</span>
+
+            <div className="mt-4 flex flex-wrap gap-2 text-xs font-sans text-stone-600 dark:text-stone-400">
+              <span className="inline-flex items-center gap-1 rounded-full border border-stone-300 dark:border-stone-700 bg-card px-3 py-1">♿ Screen-reader verified</span>
+              <span className="inline-flex items-center gap-1 rounded-full border border-stone-300 dark:border-stone-700 bg-card px-3 py-1">🎙️ Voice navigation</span>
+              <span className="inline-flex items-center gap-1 rounded-full border border-stone-300 dark:border-stone-700 bg-card px-3 py-1">💬 Live captions</span>
+              <span className="inline-flex items-center gap-1 rounded-full border border-stone-300 dark:border-stone-700 bg-card px-3 py-1">🔒 100% Private</span>
             </div>
+
             <div className="mt-8 flex flex-wrap gap-3">
-              <Button asChild size="lg" className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold shadow-xl shadow-cyan-500/25 border-0 text-sm">
-                <Link to="/jobs" search={{ q: "" }}>
-                  <Accessibility className="size-4 mr-1.5" />
-                  Find Accessible Jobs
-                </Link>
-              </Button>
-              <Button asChild size="lg" variant="outline" className="border-border/60 hover:bg-secondary text-foreground text-sm">
-                <Link to="/profile">
-                  <HeartHandshake className="size-4 mr-1.5 text-cyan-400" />
-                  Configure My Access Needs
-                </Link>
-              </Button>
+              <Link
+                to="/jobs"
+                search={{ q: "" }}
+                className="inline-flex items-center gap-2 rounded-full border border-[#191716] bg-[#7BD3C2] px-6 py-3 text-sm font-semibold text-[#141817] shadow-[2px_2px_0px_#141817] hover:bg-[#6ec2b1] hover:-translate-y-0.5 active:translate-y-0 transition-all"
+              >
+                Find Accessible Jobs
+                <ArrowRight className="size-4" />
+              </Link>
+              <Link
+                to="/profile"
+                className="inline-flex items-center gap-2 rounded-full border border-stone-800 dark:border-stone-400 bg-card px-5 py-3 text-sm font-medium text-foreground shadow-[1px_1px_0px_rgba(0,0,0,0.15)] hover:bg-secondary hover:-translate-y-0.5 transition-all"
+              >
+                <HeartHandshake className="size-4 text-stone-700 dark:text-stone-300" />
+                Configure My Access Needs
+              </Link>
             </div>
-            <dl className="mt-10 flex flex-wrap gap-8 text-sm">
-              <div className="p-3 rounded-xl bg-secondary/30 border border-border/30">
-                <dt className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Accessible roles</dt>
-                <dd className="text-2xl font-black text-cyan-400 mt-0.5">{JOBS.length}</dd>
+
+            <dl className="mt-10 grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
+              <div className="p-3.5 rounded-2xl bg-card border border-border shadow-[0_1px_4px_rgba(0,0,0,0.02)]">
+                <dt className="text-xs uppercase tracking-wider text-stone-500 font-serif">Accessible roles</dt>
+                <dd className="font-serif text-2xl font-normal text-foreground mt-0.5">{JOBS.length}</dd>
               </div>
-              <div className="p-3 rounded-xl bg-secondary/30 border border-border/30">
-                <dt className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Inclusive employers</dt>
-                <dd className="text-2xl font-black text-purple-400 mt-0.5">
+              <div className="p-3.5 rounded-2xl bg-card border border-border shadow-[0_1px_4px_rgba(0,0,0,0.02)]">
+                <dt className="text-xs uppercase tracking-wider text-stone-500 font-serif">Employers</dt>
+                <dd className="font-serif text-2xl font-normal text-foreground mt-0.5">
                   {new Set(JOBS.map((j) => j.company)).size}
                 </dd>
               </div>
-              <div className="p-3 rounded-xl bg-secondary/30 border border-border/30">
-                <dt className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Remote-friendly</dt>
-                <dd className="text-2xl font-black text-emerald-400 mt-0.5">
+              <div className="p-3.5 rounded-2xl bg-card border border-border shadow-[0_1px_4px_rgba(0,0,0,0.02)]">
+                <dt className="text-xs uppercase tracking-wider text-stone-500 font-serif">Remote-friendly</dt>
+                <dd className="font-serif text-2xl font-normal text-foreground mt-0.5">
                   {JOBS.filter((j) => j.workMode === "Remote").length}
                 </dd>
               </div>
-              <div className="p-3 rounded-xl bg-secondary/30 border border-border/30">
-                <dt className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Screen-reader ready</dt>
-                <dd className="text-2xl font-black text-amber-400 mt-0.5">
+              <div className="p-3.5 rounded-2xl bg-card border border-border shadow-[0_1px_4px_rgba(0,0,0,0.02)]">
+                <dt className="text-xs uppercase tracking-wider text-stone-500 font-serif">Vision ready</dt>
+                <dd className="font-serif text-2xl font-normal text-foreground mt-0.5">
                   {JOBS.filter((j) => j.access.includes("screen_reader")).length}
                 </dd>
               </div>
             </dl>
           </div>
 
-          <div className="glass-card self-start p-6 border-cyan-500/30 shadow-2xl relative overflow-hidden">
-            <div className="absolute top-0 left-0 h-1 w-full bg-gradient-to-r from-cyan-500 to-purple-500" />
-            <h2 className="text-xl font-bold flex items-center gap-2 text-foreground">
-              <span className="flex size-8 items-center justify-center rounded-lg bg-cyan-500/15 text-cyan-400">
+          {/* Search Box Card */}
+          <div className="rounded-3xl border border-border bg-card p-6 sm:p-7 shadow-[0_2px_12px_rgba(0,0,0,0.03)] self-start">
+            <h2 className="font-serif text-xl font-normal flex items-center gap-2 text-foreground">
+              <span className="flex size-8 items-center justify-center rounded-full border border-border bg-secondary text-stone-700 dark:text-stone-300">
                 <Mic className="size-4" />
               </span>
               Search by typing, voice, or screen reader
             </h2>
-            <p className="mt-2 text-xs sm:text-sm text-muted-foreground">
-              Search by job title, accessibility accommodation (e.g. "Screen reader", "Captions", "Wheelchair"), or company.
+            <p className="mt-2 text-xs sm:text-sm text-stone-600 dark:text-stone-400 font-sans leading-relaxed">
+              Search by job title, specific accommodation (e.g. "Screen reader", "Captions", "Wheelchair"), or city.
             </p>
             <div className="mt-5">
               <JobSearchBar value={q} onChange={setQ} onSubmit={search} id="hero-search" />
             </div>
-            <h3 className="mt-6 text-xs uppercase tracking-wider font-bold text-muted-foreground">Quick accessibility filters</h3>
+            <h3 className="mt-6 text-xs uppercase tracking-wider font-serif text-stone-500">Quick accessibility filters</h3>
             <ul className="mt-2.5 flex flex-wrap gap-1.5">
               {QUICK.map((item) => (
                 <li key={item}>
-                  <Button variant="secondary" size="sm" className="text-xs border border-border/40 hover:border-cyan-500/40 hover:text-cyan-400 transition-colors" onClick={() => search(item)}>
+                  <button
+                    type="button"
+                    className="rounded-full border border-stone-300 dark:border-stone-700 bg-secondary/50 px-3 py-1 text-xs text-foreground hover:bg-secondary hover:border-stone-800 transition-colors"
+                    onClick={() => search(item)}
+                  >
                     {item}
-                  </Button>
+                  </button>
                 </li>
               ))}
             </ul>
@@ -214,37 +245,35 @@ function Landing() {
       </section>
 
       {/* Disability-Centric Accessibility Pillars */}
-      <section className="mx-auto max-w-6xl px-4 py-14" aria-labelledby="disability-heading">
+      <section className="mx-auto max-w-6xl px-4 py-16" aria-labelledby="disability-heading">
         <div className="text-center max-w-3xl mx-auto">
-          <Badge variant="outline" className="mb-3 border-brand/40 bg-brand/5 text-brand">
-            <Accessibility className="size-3 mr-1" />
-            Disability-First Design
-          </Badge>
-          <h2 id="disability-heading" className="text-3xl font-bold">
+          <span className="inline-block rounded-full border border-stone-300 dark:border-stone-700 bg-card px-3.5 py-1 text-xs font-serif italic text-stone-600 dark:text-stone-400 mb-3">
+            Disability-First Architecture
+          </span>
+          <h2 id="disability-heading" className="font-serif text-3xl sm:text-4xl font-normal text-foreground">
             Every Disability. Every Barrier. Addressed.
           </h2>
-          <p className="mt-3 text-muted-foreground">
-            Ableo isn't a job board with accessibility bolted on. It's built from scratch for blind users, 
-            Deaf users, wheelchair users, neurodivergent people, and anyone with a disability — 
-            because inclusive design means designing <em>with</em> disabled people, not for them.
+          <p className="mt-3 text-stone-600 dark:text-stone-400 font-sans leading-relaxed text-sm sm:text-base">
+            Ableo is built from scratch for blind users, Deaf users, wheelchair users, neurodivergent professionals, 
+            and anyone with chronic health needs — designing with disabled people, not for them.
           </p>
         </div>
 
-        <ul className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <ul className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {DISABILITY_PILLARS.map((p) => (
-            <li key={p.title} className="glass-card p-6 border-border/50 hover:border-cyan-500/40 hover:shadow-xl hover:shadow-cyan-500/5 hover:-translate-y-1 transition-all duration-300">
-              <span className="flex size-11 items-center justify-center rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400">
-                <p.icon aria-hidden="true" className="size-6" />
+            <li key={p.title} className="rounded-2xl border border-border bg-card p-6 shadow-[0_2px_8px_rgba(0,0,0,0.02)] hover:border-[#191716]/40 transition-all">
+              <span className="flex size-11 items-center justify-center rounded-full border border-stone-300 dark:border-stone-700 bg-secondary text-stone-800 dark:text-stone-200">
+                <p.icon aria-hidden="true" className="size-5" />
               </span>
-              <h3 className="mt-4 text-lg font-bold text-foreground">{p.title}</h3>
-              <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{p.body}</p>
-              <div className="mt-4 flex flex-wrap gap-1.5">
+              <h3 className="mt-4 font-serif text-xl font-normal text-foreground">{p.title}</h3>
+              <p className="mt-2 text-xs sm:text-sm text-stone-600 dark:text-stone-400 font-sans leading-relaxed">{p.body}</p>
+              <div className="mt-4 flex flex-wrap gap-1.5 pt-3 border-t border-border/50">
                 {p.features.map((f) => (
                   <span
                     key={f}
-                    className="inline-flex items-center gap-1 rounded-full bg-secondary/80 border border-border/50 px-2.5 py-0.5 text-[11px] font-medium text-foreground"
+                    className="inline-flex items-center gap-1 rounded-full border border-stone-200 dark:border-stone-800 bg-secondary/60 px-2.5 py-0.5 text-[11px] font-medium text-stone-700 dark:text-stone-300"
                   >
-                    <CheckCircle2 className="size-3 text-cyan-400" />
+                    <CheckCircle2 className="size-3 text-[#3D8B6E]" />
                     {f}
                   </span>
                 ))}
@@ -255,26 +284,26 @@ function Landing() {
       </section>
 
       {/* How It Works — PwD Journey */}
-      <section className="border-y border-border/40 bg-secondary/20 py-16" aria-labelledby="how-heading">
+      <section className="border-y border-border bg-secondary/30 py-16" aria-labelledby="how-heading">
         <div className="mx-auto max-w-6xl px-4">
           <div className="text-center max-w-2xl mx-auto">
-            <span className="text-xs font-bold uppercase tracking-wider text-cyan-400 bg-cyan-500/10 px-3 py-1 rounded-full border border-cyan-500/20">How It Works</span>
-            <h2 id="how-heading" className="text-3xl font-extrabold text-foreground mt-3 font-display">
+            <span className="text-xs font-serif uppercase tracking-widest text-stone-500">How It Works</span>
+            <h2 id="how-heading" className="font-serif text-3xl sm:text-4xl font-normal text-foreground mt-2">
               Designed for Every Ability
             </h2>
-            <p className="mt-2 text-sm md:text-base text-muted-foreground leading-relaxed">
-              Whether you're blind, Deaf, use a wheelchair, are neurodivergent, or manage chronic health needs — 
-              Ableo adapts seamlessly at every step.
+            <p className="mt-2 text-sm text-stone-600 dark:text-stone-400 leading-relaxed font-sans">
+              Whether you're blind, Deaf, use mobility equipment, or are neurodivergent — 
+              Ableo adapts seamlessly at each stage of your search.
             </p>
           </div>
-          <ol className="mt-10 grid gap-6 sm:grid-cols-3">
+          <ol className="mt-12 grid gap-6 sm:grid-cols-3">
             {HOW_IT_WORKS.map((step) => (
-              <li key={step.step} className="glass-card p-6 border-border/50 relative overflow-hidden group hover:border-cyan-500/40 hover:-translate-y-1 transition-all duration-300">
-                <span className="flex size-11 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-600 text-white font-black text-lg shadow-lg shadow-cyan-500/20">
+              <li key={step.step} className="rounded-2xl border border-border bg-card p-6 shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
+                <span className="flex size-9 items-center justify-center rounded-full border border-[#191716] bg-[#7BD3C2] text-[#141817] font-serif font-bold text-sm shadow-[1px_1px_0px_#141817]">
                   {step.step}
                 </span>
-                <h3 className="mt-4 font-bold text-base text-foreground group-hover:text-cyan-400 transition-colors">{step.title}</h3>
-                <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{step.desc}</p>
+                <h3 className="mt-4 font-serif text-xl font-normal text-foreground">{step.title}</h3>
+                <p className="mt-2 text-xs sm:text-sm text-stone-600 dark:text-stone-400 font-sans leading-relaxed">{step.desc}</p>
               </li>
             ))}
           </ol>
@@ -282,114 +311,68 @@ function Landing() {
       </section>
 
       {/* Multi-Modal Access Features */}
-      <section className="mx-auto max-w-6xl px-4 py-14" aria-labelledby="multimodal-heading">
-        <h2 id="multimodal-heading" className="text-2xl font-bold">
+      <section className="mx-auto max-w-6xl px-4 py-16" aria-labelledby="multimodal-heading">
+        <h2 id="multimodal-heading" className="font-serif text-3xl font-normal text-foreground">
           Multi-Modal Accessible Interaction
         </h2>
-        <p className="mt-2 max-w-2xl text-muted-foreground">
-          Interact with Ableo using whichever method works best for your disability. 
-          Every feature is accessible through multiple input and output modes.
+        <p className="mt-2 max-w-2xl text-sm sm:text-base text-stone-600 dark:text-stone-400 font-sans">
+          Interact with Ableo using whichever sensory mode suits you best. 
+          Every feature is fully operable through multiple inputs and outputs.
         </p>
-        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {[
             {
               icon: Volume2,
               title: "Read Aloud",
-              body: "Text-to-speech reads job descriptions, match results, and any page content aloud for blind and low-vision users.",
+              body: "Text-to-speech reads job descriptions, match results, and page contents aloud.",
             },
             {
               icon: Mic,
               title: "Voice Navigation",
-              body: "Full voice-controlled navigation, job search, and form filling for users with motor disabilities.",
+              body: "Voice-controlled navigation, keyword search, and form inputs for motor accessibility.",
             },
             {
               icon: Subtitles,
               title: "Live Captions",
-              body: "Real-time captions for all audio content, interview coaching, and voice input — essential for Deaf users.",
+              body: "Real-time speech captions for interview practice and voice inputs — essential for Deaf users.",
             },
             {
               icon: Keyboard,
               title: "Keyboard & Switch",
-              body: "100% keyboard-navigable. Compatible with switch devices, sip-and-puff, and other assistive input.",
+              body: "100% keyboard-navigable. Built for switch devices and sip-and-puff inputs.",
             },
           ].map((p) => (
-            <div key={p.title} className="glass-card p-5 border-border/50 hover:border-cyan-500/30 transition-all duration-300">
-              <span className="flex size-10 items-center justify-center rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400">
+            <div key={p.title} className="rounded-2xl border border-border bg-card p-5 shadow-[0_2px_6px_rgba(0,0,0,0.02)]">
+              <span className="flex size-10 items-center justify-center rounded-full border border-stone-300 dark:border-stone-700 bg-secondary text-stone-800 dark:text-stone-200">
                 <p.icon aria-hidden="true" className="size-5" />
               </span>
-              <h3 className="mt-3 font-bold text-foreground">{p.title}</h3>
-              <p className="mt-1.5 text-xs sm:text-sm text-muted-foreground leading-relaxed">{p.body}</p>
+              <h3 className="mt-3 font-serif text-lg font-normal text-foreground">{p.title}</h3>
+              <p className="mt-1 text-xs text-stone-600 dark:text-stone-400 font-sans leading-relaxed">{p.body}</p>
             </div>
           ))}
         </div>
       </section>
 
-      {/* Platform Impact */}
-      <section className="mx-auto max-w-6xl px-4 pb-14" aria-labelledby="impact-heading">
-        <h2 id="impact-heading" className="text-2xl font-bold text-foreground">
-          Platform Impact
-        </h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Live statistics across our verified disability-accommodated repository.
-        </p>
-        <dl className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="glass-card p-5 border-border/50 hover:border-cyan-500/40 transition-all">
-            <dt className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              <Accessibility aria-hidden="true" className="size-4 text-cyan-400" />
-              Accommodated Roles
-            </dt>
-            <dd className="mt-2 text-3xl font-black text-cyan-400">
-              {JOBS.filter((j) => j.access.length > 0).length}
-            </dd>
-          </div>
-          <div className="glass-card p-5 border-border/50 hover:border-purple-500/40 transition-all">
-            <dt className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              <Users aria-hidden="true" className="size-4 text-purple-400" />
-              Inclusive Employers
-            </dt>
-            <dd className="mt-2 text-3xl font-black text-purple-400">
-              {new Set(JOBS.map((j) => j.company)).size}
-            </dd>
-          </div>
-          <div className="glass-card p-5 border-border/50 hover:border-emerald-500/40 transition-all">
-            <dt className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              <Eye aria-hidden="true" className="size-4 text-emerald-400" />
-              Screen-Reader Ready
-            </dt>
-            <dd className="mt-2 text-3xl font-black text-emerald-400">
-              {JOBS.filter((j) => j.access.includes("screen_reader")).length}
-            </dd>
-          </div>
-          <div className="glass-card p-5 border-border/50 hover:border-amber-500/40 transition-all">
-            <dt className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              <ShieldCheck aria-hidden="true" className="size-4 text-amber-400" />
-              Verified Access
-            </dt>
-            <dd className="mt-2 text-3xl font-black text-amber-400">
-              {JOBS.filter((j) => j.accessSource === "Verified by AccessPath").length}
-            </dd>
-          </div>
-        </dl>
-      </section>
-
       {/* Featured Jobs */}
-      <section className="mx-auto max-w-6xl px-4 pb-14" aria-labelledby="featured-heading">
-        <div className="flex flex-wrap items-end justify-between gap-3">
+      <section className="mx-auto max-w-6xl px-4 pb-16" aria-labelledby="featured-heading">
+        <div className="flex flex-wrap items-end justify-between gap-3 mb-6">
           <div>
-            <h2 id="featured-heading" className="text-2xl font-bold">
-              Featured Accessible Opportunities
+            <h2 id="featured-heading" className="font-serif text-3xl font-normal text-foreground">
+              Featured Accessible Roles
             </h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Every listing includes verified disability accommodation details
+            <p className="mt-1 text-sm text-stone-600 dark:text-stone-400 font-sans">
+              Every listing includes verified disability accommodation transparency
             </p>
           </div>
-          <Button asChild variant="outline">
-            <Link to="/jobs" search={{ q: "" }}>
-              Browse all {JOBS.length} accessible jobs
-            </Link>
-          </Button>
+          <Link
+            to="/jobs"
+            search={{ q: "" }}
+            className="inline-flex items-center gap-1.5 rounded-full border border-stone-300 dark:border-stone-700 bg-card px-4 py-2 text-xs font-semibold text-foreground hover:bg-secondary transition-all"
+          >
+            Browse all {JOBS.length} accessible jobs →
+          </Link>
         </div>
-        <ul className="mt-6 grid gap-4">
+        <ul className="grid gap-4">
           {featured.map((job) => (
             <li key={job.id}>
               <JobCard job={job} />

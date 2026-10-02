@@ -313,13 +313,38 @@ type State = {
 };
 
 const Ctx = createContext<State | null>(null);
-const KEY = "accesspath:state:v4";
+const KEY = "accesspath:state:v5";
 
 function read<T>(fallback: T): T {
   if (typeof window === "undefined") return fallback;
   try {
+    // Clear out any old v4/v3 state that had stuck "blind" / "vision" mode or dark high contrast
+    try {
+      const oldKeys = ["accesspath:state:v4", "accesspath:state:v3", "accesspath:state:v2"];
+      for (const oldKey of oldKeys) {
+        const oldRaw = window.localStorage.getItem(oldKey);
+        if (oldRaw) {
+          try {
+            const oldData = JSON.parse(oldRaw);
+            // If old data had stuck blind preset or high contrast, clean it
+            if (oldData.activePreset === "blind" || oldData.highContrast) {
+              oldData.activePreset = "custom";
+              oldData.highContrast = false;
+              if (oldData.fontSize === "x-large") oldData.fontSize = "medium";
+            }
+            if (!window.localStorage.getItem(KEY)) {
+              window.localStorage.setItem(KEY, JSON.stringify({ ...fallback, ...oldData, activePreset: "custom", highContrast: false }));
+            }
+          } catch {}
+          window.localStorage.removeItem(oldKey);
+        }
+      }
+    } catch {}
+
     const raw = window.localStorage.getItem(KEY);
-    return raw ? { ...fallback, ...JSON.parse(raw) } : fallback;
+    if (!raw) return fallback;
+    const parsed = JSON.parse(raw);
+    return { ...fallback, ...parsed };
   } catch {
     return fallback;
   }
@@ -327,7 +352,7 @@ function read<T>(fallback: T): T {
 
 export function AppStateProvider({ children }: { children: ReactNode }) {
   const [hydrated, setHydrated] = useState(false);
-  const [theme, setTheme] = useState<"dark" | "light">("dark");
+  const [theme, setTheme] = useState<"dark" | "light">("light");
   const [highContrast, setHighContrast] = useState(false);
   const [fontSize, setFontSize] = useState<FontSize>("medium");
   const [motion, setMotion] = useState<MotionPref>("normal");
@@ -355,7 +380,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const s = read({
-      theme: "dark" as "dark" | "light",
+      theme: "light" as "dark" | "light",
       highContrast: false,
       fontSize: "medium" as FontSize,
       savedJobs: [] as string[],
@@ -377,10 +402,10 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       actionPlans: {} as Record<string, ActionItem[]>,
       accessUpdates: {} as Record<string, AccessFeature[]>,
     });
-    setTheme(s.theme ?? "dark");
-    setHighContrast(s.highContrast);
-    setFontSize(s.fontSize);
-    setMotion(s.motion);
+    setTheme(s.theme ?? "light");
+    setHighContrast(s.highContrast ?? false);
+    setFontSize(s.fontSize ?? "medium");
+    setMotion(s.motion ?? "normal");
     setDyslexiaFont(s.dyslexiaFont ?? false);
     setLiveCaptions(s.liveCaptions ?? false);
     setActivePresetState(s.activePreset ?? "custom");

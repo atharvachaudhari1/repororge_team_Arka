@@ -65,26 +65,26 @@ export function JobCard({ job }: { job: Job }) {
 
   return (
     <article
-      className="rounded-xl border border-border bg-card p-5 transition-colors hover:border-foreground/20"
+      className="rounded-2xl border border-border bg-card p-6 transition-all hover:border-[#191716]/30 shadow-[0_2px_8px_rgba(0,0,0,0.02)]"
       aria-labelledby={`job-${job.id}-title`}
     >
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h3 id={`job-${job.id}-title`} className="text-lg font-bold text-foreground">
+          <h3 id={`job-${job.id}-title`} className="font-serif text-xl font-normal text-foreground">
             <Link to="/jobs/$jobId" params={{ jobId: job.id }} className="hover:underline">
               {job.title}
             </Link>
           </h3>
-          <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
+          <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-stone-600 dark:text-stone-400">
             <span className="flex items-center gap-1 font-medium text-foreground">
-              <Building2 aria-hidden="true" className="size-4" />
+              <Building2 aria-hidden="true" className="size-4 text-stone-500" />
               {job.company}
             </span>
             <span className="flex items-center gap-1">
-              <MapPin aria-hidden="true" className="size-4" />
+              <MapPin aria-hidden="true" className="size-4 text-stone-500" />
               {job.city}
             </span>
-            <Badge variant="outline" className="font-normal text-xs">{job.workMode}</Badge>
+            <span className="rounded-full border border-stone-300 dark:border-stone-700 px-2.5 py-0.5 text-xs">{job.workMode}</span>
             <span>{job.employment}</span>
             <span>{job.experience}</span>
             {job.salary ? (
@@ -95,21 +95,19 @@ export function JobCard({ job }: { job: Job }) {
             ) : null}
           </div>
         </div>
-        <Button
+        <button
           type="button"
-          variant="outline"
-          size="sm"
-          className="min-h-10 min-w-10 shrink-0"
+          className="flex size-9 shrink-0 items-center justify-center rounded-full border border-stone-300 dark:border-stone-700 bg-background text-foreground transition-colors hover:bg-secondary"
           aria-pressed={saved}
           aria-label={saved ? `Remove ${job.title} from saved jobs` : `Save ${job.title}`}
           onClick={() => toggleSaved(job.id)}
         >
           {saved ? (
-            <BookmarkCheck aria-hidden="true" className="size-4 text-brand" />
+            <BookmarkCheck aria-hidden="true" className="size-4 text-stone-900 dark:text-stone-100" />
           ) : (
-            <Bookmark aria-hidden="true" className="size-4" />
+            <Bookmark aria-hidden="true" className="size-4 text-stone-500" />
           )}
-        </Button>
+        </button>
       </div>
 
       {/* Disability Accessibility Fit — Prominent Display */}
@@ -253,20 +251,24 @@ export function JobCard({ job }: { job: Job }) {
       </div>
 
       {/* Actions */}
-      <div className="mt-4 flex flex-wrap items-center justify-between gap-2.5 pt-1">
-        <span className="text-xs text-muted-foreground">Posted {job.posted}</span>
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-2.5 pt-2 border-t border-border/60">
+        <span className="text-xs text-stone-500 font-sans">Posted {job.posted}</span>
         <div className="flex items-center gap-2">
-          <Button asChild size="sm" variant="outline">
-            <Link to="/jobs/$jobId" params={{ jobId: job.id }}>
-              View Details & Accommodations
-            </Link>
-          </Button>
-          <Button asChild size="sm" className="gap-1 bg-brand text-brand-foreground hover:bg-brand/90 font-medium">
-            <Link to="/apply/$jobId" params={{ jobId: job.id }}>
-              Apply Now
-              <ArrowRight className="size-3.5" />
-            </Link>
-          </Button>
+          <Link
+            to="/jobs/$jobId"
+            params={{ jobId: job.id }}
+            className="rounded-full border border-stone-300 dark:border-stone-700 bg-background px-4 py-1.5 text-xs font-medium text-foreground hover:bg-secondary transition-all"
+          >
+            View details
+          </Link>
+          <Link
+            to="/apply/$jobId"
+            params={{ jobId: job.id }}
+            className="inline-flex items-center gap-1 rounded-full border border-[#191716] bg-[#7BD3C2] px-4 py-1.5 text-xs font-semibold text-[#141817] shadow-[1px_1px_0px_#141817] hover:bg-[#6ec2b1] transition-all"
+          >
+            Apply now
+            <ArrowRight className="size-3" />
+          </Link>
         </div>
       </div>
     </article>
