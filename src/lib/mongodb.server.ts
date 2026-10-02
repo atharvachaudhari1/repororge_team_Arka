@@ -10,13 +10,27 @@ let clientPromise: Promise<MongoClient> | null = null;
 
 export const DEFAULT_DB_NAME = "ableo";
 
+export function sanitizeMongoUri(raw: string | null | undefined): string | null {
+  if (!raw) return null;
+  let uri = raw.trim();
+  // Strip quotes if wrapped
+  uri = uri.replace(/^['"]|['"]$/g, "");
+  // Fix literal <password> brackets if left from Atlas template: mongodb+srv://user:<pass>@
+  uri = uri.replace(/(mongodb(?:\+srv)?:\/\/[^:]+:)<([^>]+)>(@)/, "$1$2$3");
+  // If no db path specified before ?, insert /ableo
+  if (/^mongodb(?:\+srv)?:\/\/[^/]+\/(\?.*)?$/.test(uri)) {
+    uri = uri.replace(/^mongodb(?:\+srv)?:\/\/[^/]+\//, (match) => match + DEFAULT_DB_NAME);
+  }
+  return uri;
+}
+
 export function getMongoUri(): string | null {
-  return (
+  const raw =
     process.env["MONGODB_URI"] ||
     process.env["MONGO_URI"] ||
     process.env["MONGODB_URL"] ||
-    null
-  );
+    null;
+  return sanitizeMongoUri(raw);
 }
 
 export function isMongoConfigured(): boolean {
