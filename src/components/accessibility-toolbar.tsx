@@ -14,11 +14,9 @@ import {
   Moon,
   Sun,
   Accessibility,
-  SlidersHorizontal,
-  X,
+  ScanLine,
 } from "lucide-react";
 import { useAppState, type FontSize, type MotionPref, type AccessibilityPreset } from "@/lib/app-state";
-import { Button } from "@/components/ui/button";
 import { useTextToSpeech } from "@/lib/speech";
 import {
   Sheet,
@@ -56,6 +54,10 @@ export function AccessibilityControlsContent({ inDrawer = false }: { inDrawer?: 
     activePreset,
     applyPreset,
     setVoiceAssistantOpen,
+    readingRuler,
+    setReadingRuler,
+    ttsRate,
+    setTtsRate,
   } = useAppState();
 
   const tts = useTextToSpeech();
@@ -65,7 +67,7 @@ export function AccessibilityControlsContent({ inDrawer = false }: { inDrawer?: 
     const text = (main?.innerText || "").replace(/\s+/g, " ").trim().slice(0, 4000);
     if (text) {
       setCaptionText(text.slice(0, 250));
-      tts.play(text);
+      tts.play(text, ttsRate);
     }
   };
 
@@ -224,6 +226,21 @@ export function AccessibilityControlsContent({ inDrawer = false }: { inDrawer?: 
             High Contrast
           </button>
 
+          {/* Reading Ruler */}
+          <button
+            type="button"
+            onClick={() => setReadingRuler(!readingRuler)}
+            className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs transition-all ${
+              readingRuler
+                ? "bg-[#7BD3C2] text-[#141817] font-semibold border border-[#191716] shadow-[1px_1px_0px_#141817]"
+                : "border border-stone-300 dark:border-stone-700 bg-card hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-700 dark:text-stone-300"
+            }`}
+            title="Toggle focus reading ruler (Alt+Up/Down to resize)"
+          >
+            <ScanLine className="size-3.5" />
+            Reading Ruler
+          </button>
+
           {/* Theme */}
           <button
             type="button"
@@ -272,6 +289,25 @@ export function AccessibilityControlsContent({ inDrawer = false }: { inDrawer?: 
             </button>
           )}
 
+          {/* Speech Rate */}
+          <div className="inline-flex rounded-full border border-stone-300 dark:border-stone-700 p-0.5 bg-card items-center text-xs">
+            <span className="px-2 text-stone-500 font-sans text-[11px]">Speed:</span>
+            {([0.8, 1.0, 1.25] as const).map((r) => (
+              <button
+                key={r}
+                type="button"
+                onClick={() => setTtsRate(r)}
+                className={`rounded-full px-2.5 py-1 text-xs transition-all ${
+                  ttsRate === r
+                    ? "bg-[#7BD3C2] text-[#141817] font-semibold"
+                    : "text-stone-600 dark:text-stone-400 hover:text-foreground"
+                }`}
+              >
+                {r}x
+              </button>
+            ))}
+          </div>
+
           {/* Voice Control */}
           <button
             type="button"
@@ -306,7 +342,7 @@ export function AccessibilitySection({ className = "" }: { className?: string })
             Accessibility & Adaptive Workspace
           </h2>
           <p className="mt-1 text-xs sm:text-sm text-stone-600 dark:text-stone-400 font-sans">
-            Customize Ableo for your comfort — choose assistive disability presets, resize text, enable high contrast, or control via voice.
+            Customize Ableo for your comfort — choose assistive disability presets, resize text, enable high contrast, activate reading ruler, or control via voice.
           </p>
         </div>
       </div>
@@ -350,7 +386,7 @@ export function AccessibilitySheetTrigger() {
             </SheetTitle>
           </div>
           <SheetDescription className="text-xs text-muted-foreground mt-1 font-sans">
-            Adjust visual contrast, font sizes, screen reading, and disability accommodation presets.
+            Adjust visual contrast, font sizes, screen reading, reading ruler, and disability accommodation presets.
           </SheetDescription>
         </SheetHeader>
 

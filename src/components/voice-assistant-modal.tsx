@@ -17,6 +17,8 @@ export function VoiceAssistantModal() {
     liveCaptions,
     setLiveCaptions,
     setCaptionText,
+    readingRuler,
+    setReadingRuler,
   } = useAppState();
 
   const [transcript, setTranscript] = useState("");
@@ -101,6 +103,16 @@ export function VoiceAssistantModal() {
       const nextVal = !dyslexiaFont;
       setDyslexiaFont(nextVal);
       const msg = nextVal ? "Dyslexia-friendly font enabled" : "Dyslexia font disabled";
+      setFeedback(msg);
+      tts.play(msg);
+      toast.success(msg);
+      return;
+    }
+
+    if (text.includes("ruler") || text.includes("guide") || text.includes("mask")) {
+      const nextVal = !readingRuler;
+      setReadingRuler(nextVal);
+      const msg = nextVal ? "Reading ruler enabled" : "Reading ruler disabled";
       setFeedback(msg);
       tts.play(msg);
       toast.success(msg);

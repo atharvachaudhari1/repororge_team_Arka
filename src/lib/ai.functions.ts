@@ -455,3 +455,91 @@ export const generateInterviewFeedback = createServerFn({ method: "POST" })
       howToImprove: String(parsed["howToImprove"] ?? ""),
     };
   });
+
+/* ------------------------------------------------------------------ */
+/*  Explainable AI — Job Match Deep Explainer                          */
+/* ------------------------------------------------------------------ */
+
+const explainInput = z.object({
+  jobTitle: z.string(),
+  company: z.string(),
+  matchScore: z.number(),
+  matchedSkills: z.array(z.string()),
+  missingSkills: z.array(z.string()),
+  workPreference: z.string().optional(),
+  jobWorkMode: z.string().optional(),
+  accessibilityFitScore: z.number().optional(),
+  userQuestion: z.string().optional(),
+});
+
+/**
+ * AI Match Explainer — gives plain language explanations of match scoring,
+ * gaps, and actionable steps to raise candidate employability.
+ */
+export const explainJobMatch = createServerFn({ method: "POST" })
+  .inputValidator((data) => explainInput.parse(data))
+  .handler(async ({ data }) => {
+    const system = [
+      "You are an explainable AI career advisor on Ableo, an accessibility-first employment platform in India.",
+      "Explain in transparent, empowering, and concrete terms why this job matches the candidate, what skills or experience gaps exist, and how the candidate can bridge them.",
+      "If the user asked a specific question, directly address it first.",
+      "Never mention disability identity, gender, or protected characteristics as factors in match scores.",
+      'Reply with JSON only: {"answer":"Detailed friendly explanation addressing the question or match summary","improvementTips":["tip 1","tip 2","tip 3"],"accommodationAdvice":"Advice on what accommodations to discuss with the employer"}',
+    ].join(" ");
+
+    const brief = [
+      `Role: ${data.jobTitle} at ${data.company}`,
+      `Overall Match Score: ${data.matchScore}%`,
+      `Matched Skills: ${data.matchedSkills.join(", ") || "None directly matched"}`,
+      `Missing/Gap Skills: ${data.missingSkills.join(", ") || "None - all requirements met"}`,
+      `Candidate Work Preference: ${data.workPreference || "Not specified"} vs Job Mode: ${data.jobWorkMode || "Not specified"}`,
+      data.accessibilityFitScore !== undefined ? `Accessibility Fit: ${data.accessibilityFitScore}%` : "",
+      data.userQuestion ? `Candidate Question: "${data.userQuestion}"` : "Question: Explain my match breakdown and how to improve.",
+    ].filter(Boolean).join("\n");
+
+    const result = await callAI(system, brief, 900);
+    if (result.ok) {
+      const match = result.content.match(/\{[\s\S]*\}/);
+      if (match) {
+        try {
+          const parsed = JSON.parse(match[0]) as {
+            answer?: unknown;
+            improvementTips?: unknown;
+            accommodationAdvice?: unknown;
+          };
+          return {
+            ok: true as const,
+            answer: String(parsed.answer ?? ""),
+            improvementTips: asStringList(parsed.improvementTips),
+            accommodationAdvice: String(parsed.accommodationAdvice ?? ""),
+          };
+        } catch {
+          // continue to fallback
+        }
+      }
+    }
+
+    // High quality deterministic fallback
+    const answer = data.userQuestion
+      ? `Based on your profile, you scored ${data.matchScore}% for ${data.jobTitle} at ${data.company}. Your strongest matches are in ${data.matchedSkills.slice(0, 3).join(", ") || "core domain knowledge"}. ${data.missingSkills.length ? `To maximize your score, prioritize gaining exposure to ${data.missingSkills.slice(0, 2).join(" and ")}.` : "You meet all technical skill requirements!"}`
+      : `Your ${data.matchScore}% score is driven by strong alignment with ${data.matchedSkills.length} required skills (${data.matchedSkills.join(", ")}). Work mode and experience match expectations. ${data.missingSkills.length ? `A slight gap exists in ${data.missingSkills.join(", ")}, which accounts for the remaining score.` : "You cover every required skill."}`;
+
+    const improvementTips = [
+      ...(data.missingSkills.slice(0, 2).map((s) => `Add a small personal project or showcase coursework utilizing ${s}.`)),
+      `Highlight measurable impact for your ${data.matchedSkills[0] || "primary"} skills on your resume (e.g. reduced load times, improved accessibility).`,
+      `Mirror the exact role terminology (${data.jobTitle}) in your professional headline.`,
+    ];
+
+    const accommodationAdvice =
+      "Request accommodations early during the initial recruiter screen. Under the Rights of Persons with Disabilities Act (RPwD) 2016 in India, inclusive employers like " +
+      data.company +
+      " provide reasonable accommodations including screen-reader friendly assessments, remote interview setups, and captioning.";
+
+    return {
+      ok: true as const,
+      answer,
+      improvementTips,
+      accommodationAdvice,
+    };
+  });
+

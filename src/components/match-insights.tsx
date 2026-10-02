@@ -1,6 +1,9 @@
-import { AlertTriangle, Check, Sparkles } from "lucide-react";
+import { useState } from "react";
+import { AlertTriangle, Check, Sparkles, MessageSquareText } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
 import { matchSummary, type MatchResult } from "@/lib/matching";
+import { MatchExplainerModal } from "@/components/match-explainer-modal";
 
 export function MatchPill({ score, label }: { score: number; label?: string }) {
   const tone =
@@ -24,12 +27,28 @@ const BREAKDOWN: { key: keyof MatchResult; label: string }[] = [
 
 export function MatchScoreCard({ match }: { match: MatchResult }) {
   const summary = matchSummary(match);
+  const [explainOpen, setExplainOpen] = useState(false);
+
   return (
     <section aria-labelledby="match-heading" className="surface-card p-5">
-      <h2 id="match-heading" className="flex items-center gap-2 text-xl font-semibold">
-        <Sparkles aria-hidden="true" className="size-5 text-brand" />
-        AI match analysis
-      </h2>
+      <div className="flex items-center justify-between gap-2">
+        <h2 id="match-heading" className="flex items-center gap-2 text-xl font-semibold">
+          <Sparkles aria-hidden="true" className="size-5 text-brand" />
+          AI match analysis
+        </h2>
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          className="h-8 gap-1.5 text-xs font-semibold border-brand/40 text-brand hover:bg-brand/10"
+          onClick={() => setExplainOpen(true)}
+        >
+          <Sparkles className="size-3.5" />
+          Ask AI Why
+        </Button>
+      </div>
+
+      <MatchExplainerModal open={explainOpen} onOpenChange={setExplainOpen} match={match} />
       <p className="mt-3 text-4xl font-bold" aria-live="polite">
         {match.total}% <span className="text-base font-medium text-muted-foreground">match</span>
       </p>
@@ -66,11 +85,26 @@ export function MatchScoreCard({ match }: { match: MatchResult }) {
 
 export function WhyThisJob({ match }: { match: MatchResult }) {
   const headingId = `why-${match.job.id}`;
+  const [explainOpen, setExplainOpen] = useState(false);
+
   return (
     <section aria-labelledby={headingId} className="surface-card p-5">
-      <h2 id={headingId} className="text-xl font-semibold">
-        Why this job matches you
-      </h2>
+      <div className="flex items-center justify-between gap-2">
+        <h2 id={headingId} className="text-xl font-semibold">
+          Why this job matches you
+        </h2>
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          className="h-7 gap-1 text-xs text-brand hover:underline"
+          onClick={() => setExplainOpen(true)}
+        >
+          <Sparkles className="size-3" />
+          Explain with AI
+        </Button>
+      </div>
+      <MatchExplainerModal open={explainOpen} onOpenChange={setExplainOpen} match={match} />
       {!match.hasProfileSignal ? (
         <p className="mt-2 text-sm text-muted-foreground">
           Add your skills, experience level and career interests to your profile to see a

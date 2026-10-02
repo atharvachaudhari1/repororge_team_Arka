@@ -14,6 +14,7 @@ import { useAppState } from "@/lib/app-state";
 import { analyseResume } from "@/lib/matching";
 import { DEMO_RESUMES } from "@/lib/resume-parser";
 import { extractResumeText } from "@/lib/resume-file";
+import { AccessibleResumeExportModal } from "@/components/accessible-resume-export";
 
 export const Route = createFileRoute("/resume-match")({
   head: () => ({
@@ -37,6 +38,7 @@ function ResumeMatchPage() {
   const [jobId, setJobId] = useState(allJobs[0]?.id ?? "");
   const [showImprove, setShowImprove] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
 
   const job = allJobs.find((j) => j.id === jobId);
   const result = useMemo(
@@ -53,10 +55,24 @@ function ResumeMatchPage() {
             Ableo AI analyzes your resume against target job requirements, identifying matched skills, missing criteria, and ATS recommendations.
           </p>
         </div>
-        <Badge variant="outline" className="self-start sm:self-center bg-brand/5 border-brand/30 text-brand">
-          Pillar 1 &amp; 3: Skill &amp; Resume Intelligence
-        </Badge>
+        <div className="flex items-center gap-2 self-start sm:self-center">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-8 gap-1.5 text-xs font-semibold border-brand/50 text-brand hover:bg-brand/10"
+            onClick={() => setExportOpen(true)}
+          >
+            <FileText className="size-3.5" />
+            Export Accessible Resume
+          </Button>
+          <Badge variant="outline" className="bg-brand/5 border-brand/30 text-brand">
+            Pillar 1 &amp; 3: Skill &amp; Resume Intelligence
+          </Badge>
+        </div>
       </div>
+
+      <AccessibleResumeExportModal open={exportOpen} onOpenChange={setExportOpen} />
 
       <div className="mt-6 grid gap-6 md:grid-cols-2">
         <section aria-labelledby="resume-heading" className="surface-card space-y-4 p-5">
