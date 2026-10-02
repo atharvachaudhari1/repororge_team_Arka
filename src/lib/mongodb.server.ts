@@ -13,8 +13,10 @@ export const DEFAULT_DB_NAME = "ableo";
 export function sanitizeMongoUri(raw: string | null | undefined): string | null {
   if (!raw) return null;
   let uri = raw.trim();
+  if (!uri) return null;
   // Strip quotes if wrapped
   uri = uri.replace(/^['"]|['"]$/g, "");
+  if (!uri) return null;
   // Fix literal <password> brackets if left from Atlas template: mongodb+srv://user:<pass>@
   uri = uri.replace(/(mongodb(?:\+srv)?:\/\/[^:]+:)<([^>]+)>(@)/, "$1$2$3");
   // If no db path specified before ?, insert /ableo

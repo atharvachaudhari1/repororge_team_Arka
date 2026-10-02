@@ -108,7 +108,7 @@ export function scoreJob(profile: Profile, job: Job): MatchResult {
         : profile.workPreference === "Hybrid" && job.workMode !== "On-site"
           ? 75
           : 50;
-  const loc = profile.preferredLocation.trim().toLowerCase();
+  const loc = (profile.preferredLocation || "").trim().toLowerCase();
   const locMatch = !loc
     ? 80
     : job.city.toLowerCase().includes(loc) || (loc.includes("remote") && job.workMode === "Remote")
@@ -118,7 +118,8 @@ export function scoreJob(profile: Profile, job: Job): MatchResult {
         : 50;
   const workPreference = Math.round(modeMatch * 0.6 + locMatch * 0.4);
 
-  const eduBonus = profile.education.trim() || profile.certifications.trim() ? 3 : 0;
+  const eduBonus =
+    (profile.education || "").trim() || (profile.certifications || "").trim() ? 3 : 0;
 
   const total = Math.max(
     0,

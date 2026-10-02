@@ -52,7 +52,8 @@ const LEGACY_PREFS: Record<string, AccessFeature> = {
   "accessible interview format": "accessible_interview",
 };
 
-export function normalisePrefs(list: string[]): AccessFeature[] {
+export function normalisePrefs(list: string[] | undefined = []): AccessFeature[] {
+  if (!list || !Array.isArray(list)) return [];
   const keys = Object.keys(ACCESS_FEATURES) as AccessFeature[];
   const out: AccessFeature[] = [];
   for (const raw of list) {

@@ -15,9 +15,10 @@ transgender, and underserved job seekers — powered by explainable AI.
 
 [![React](https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=white)](https://react.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
-[![Vite](https://img.shields.io/badge/Vite-7-646CFF?style=flat-square&logo=vite&logoColor=white)](https://vite.dev)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
-[![OpenRouter](https://img.shields.io/badge/AI-OpenRouter-8B5CF6?style=flat-square)](https://openrouter.ai)
+[![Vite](https://img.shields.io/badge/Vite-8-646CFF?style=flat-square&logo=vite&logoColor=white)](https://vite.dev)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
+[![Gemini](https://img.shields.io/badge/AI-Google_Gemini-4285F4?style=flat-square&logo=google)](https://ai.google.dev)
+[![MongoDB](https://img.shields.io/badge/Database-MongoDB_Atlas-47A248?style=flat-square&logo=mongodb&logoColor=white)](https://www.mongodb.com/atlas)
 [![WCAG 2.2 AA](https://img.shields.io/badge/WCAG-2.2_AA-149187?style=flat-square)](https://www.w3.org/WAI/WCAG22/quickref/)
 [![MIT License](https://img.shields.io/badge/License-MIT-22c55e?style=flat-square)](./LICENSE)
 
@@ -566,14 +567,15 @@ They must never be used to screen out or deprioritise candidates.
 
 ## 🛠️ Technology Stack
 
-| Layer              | Technology                                                          |
-| ------------------ | ------------------------------------------------------------------- |
-| **Frontend**       | React 19, TypeScript, Vite 7                                        |
-| **Styling**        | Tailwind CSS 3, Framer Motion                                       |
-| **AI / LLM**       | OpenRouter (LLM-powered matching, resume analysis, career guidance) |
-| **Backend / Data** | Convex / PostgreSQL                                                 |
-| **Accessibility**  | Web Speech API, Text-to-Speech, ARIA, Semantic HTML                 |
-| **Standards**      | WCAG 2.2 AA                                                         |
+| Layer              | Technology                                                             |
+| ------------------ | ---------------------------------------------------------------------- |
+| **Frontend**       | React 19, TypeScript, Vite 8, TanStack Start & Router                  |
+| **Styling**        | Tailwind CSS 4, tw-animate-css, Radix UI                               |
+| **AI / LLM**       | Google Gemini 2.5 Flash & TinyFish Web Agent API (with local fallback) |
+| **Backend / Data** | MongoDB Atlas (with SQLite local fallback)                             |
+| **Accessibility**  | Web Speech API, Text-to-Speech, ARIA, Semantic HTML                    |
+| **Testing / CI**   | Vitest, GitHub Actions CI                                              |
+| **Standards**      | WCAG 2.2 AA                                                            |
 
 ---
 
@@ -603,7 +605,7 @@ accesspath/
 │   │   └── Applications/
 │   │
 │   ├── services/
-│   │   ├── ai/                # OpenRouter integration
+│   │   ├── ai/                # Google Gemini & TinyFish integration
 │   │   ├── jobs/              # Job search and filtering
 │   │   └── applications/      # Application management
 │   │
