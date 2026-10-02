@@ -1,7 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import type { SkillGapItem } from "./app-state";
-import { verifyAiAuthAndRateLimit } from "./auth.functions";
 
 /* ------------------------------------------------------------------ */
 /*  Shared AI helper                                                   */
@@ -77,6 +76,7 @@ const briefingInput = z.object({ brief: z.string().min(1).max(6000) });
 export const generateApplyBriefing = createServerFn({ method: "POST" })
   .validator((data) => briefingInput.parse(data))
   .handler(async ({ data }) => {
+    const { verifyAiAuthAndRateLimit } = await import("./auth.server");
     const auth = await verifyAiAuthAndRateLimit();
     if (!auth.ok) return { ok: false as const, error: auth.error };
 
@@ -135,6 +135,7 @@ const assessmentInput = z.object({
 export const generateCareerDiscoveries = createServerFn({ method: "POST" })
   .validator((data) => assessmentInput.parse(data))
   .handler(async ({ data }) => {
+    const { verifyAiAuthAndRateLimit } = await import("./auth.server");
     const auth = await verifyAiAuthAndRateLimit();
     if (!auth.ok) return { ok: false as const, error: auth.error };
 
@@ -193,6 +194,7 @@ const skillGapInput = z.object({
 export const generateSkillGap = createServerFn({ method: "POST" })
   .validator((data) => skillGapInput.parse(data))
   .handler(async ({ data }) => {
+    const { verifyAiAuthAndRateLimit } = await import("./auth.server");
     const auth = await verifyAiAuthAndRateLimit();
     if (!auth.ok) return { ok: false as const, error: auth.error };
 
@@ -242,6 +244,7 @@ const roadmapInput = z.object({
 export const generateRoadmap = createServerFn({ method: "POST" })
   .validator((data) => roadmapInput.parse(data))
   .handler(async ({ data }) => {
+    const { verifyAiAuthAndRateLimit } = await import("./auth.server");
     const auth = await verifyAiAuthAndRateLimit();
     if (!auth.ok) return { ok: false as const, error: auth.error };
 
@@ -287,6 +290,7 @@ const portfolioInput = z.object({
 export const generatePortfolioProject = createServerFn({ method: "POST" })
   .validator((data) => portfolioInput.parse(data))
   .handler(async ({ data }) => {
+    const { verifyAiAuthAndRateLimit } = await import("./auth.server");
     const auth = await verifyAiAuthAndRateLimit();
     if (!auth.ok) return { ok: false as const, error: auth.error };
 
@@ -330,6 +334,7 @@ const interviewInput = z.object({
 export const generateInterviewQuestions = createServerFn({ method: "POST" })
   .validator((data) => interviewInput.parse(data))
   .handler(async ({ data }) => {
+    const { verifyAiAuthAndRateLimit } = await import("./auth.server");
     const auth = await verifyAiAuthAndRateLimit();
     if (!auth.ok) return { ok: false as const, error: auth.error };
 
@@ -384,6 +389,7 @@ const accommodationInput = z.object({
 export const generateAccommodationRequest = createServerFn({ method: "POST" })
   .validator((data) => accommodationInput.parse(data))
   .handler(async ({ data }) => {
+    const { verifyAiAuthAndRateLimit } = await import("./auth.server");
     const auth = await verifyAiAuthAndRateLimit();
     if (!auth.ok) return { ok: false as const, error: auth.error };
 
@@ -418,6 +424,7 @@ export const generateAccommodationRequest = createServerFn({ method: "POST" })
 export const generateInclusionInsight = createServerFn({ method: "POST" })
   .validator((data) => insightInput.parse(data))
   .handler(async ({ data }) => {
+    const { verifyAiAuthAndRateLimit } = await import("./auth.server");
     const auth = await verifyAiAuthAndRateLimit();
     if (!auth.ok) return { ok: false as const, error: auth.error };
 
@@ -465,6 +472,7 @@ export const generateInclusionInsight = createServerFn({ method: "POST" })
 export const generateInterviewFeedback = createServerFn({ method: "POST" })
   .validator((data) => feedbackInput.parse(data))
   .handler(async ({ data }) => {
+    const { verifyAiAuthAndRateLimit } = await import("./auth.server");
     const auth = await verifyAiAuthAndRateLimit();
     if (!auth.ok) return { ok: false as const, error: auth.error };
 
@@ -521,6 +529,7 @@ const explainInput = z.object({
 export const explainJobMatch = createServerFn({ method: "POST" })
   .validator((data) => explainInput.parse(data))
   .handler(async ({ data }) => {
+    const { verifyAiAuthAndRateLimit } = await import("./auth.server");
     const auth = await verifyAiAuthAndRateLimit();
     if (!auth.ok) return { ok: false as const, error: auth.error };
 
