@@ -4,6 +4,7 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useRouterState,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
@@ -11,9 +12,11 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { AppStateProvider } from "../lib/app-state";
+import { AuthProvider } from "../lib/auth-context";
 import { SiteFooter, SiteHeader } from "../components/site-header";
 import { Toaster } from "../components/ui/sonner";
 import { CareerAssistant } from "../components/career-assistant";
+import { PortalGate } from "../components/portal-gate";
 import { LiveCaptions } from "../components/live-captions";
 import { VoiceAssistantModal } from "../components/voice-assistant-modal";
 import { ReadingRuler } from "../components/reading-ruler";
@@ -135,15 +138,19 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const isPublicPage = pathname === "/" || pathname === "/login" || pathname === "/privacy";
+  const requiredRole = pathname.startsWith("/employer") ? "employer" : "candidate";
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AppStateProvider>
-        <div className="flex min-h-dvh flex-col bg-background text-foreground">
+      <AuthProvider>
+        <AppStateProvider>
+          <div className="flex min-h-dvh flex-col bg-background text-foreground">
           <SiteHeader />
           <main id="main" className="flex-1">
-            {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-            <Outlet />
+            {/* The public landing page is open to everyone; all tools and portals require an account. */}
+            {isPublicPage ? <Outlet /> : <PortalGate role={requiredRole}><Outlet /></PortalGate>}
           </main>
           <SiteFooter />
           <LiveCaptions />
@@ -151,8 +158,9 @@ function RootComponent() {
           <ReadingRuler />
           <CareerAssistant />
           <Toaster />
-        </div>
-      </AppStateProvider>
+          </div>
+        </AppStateProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

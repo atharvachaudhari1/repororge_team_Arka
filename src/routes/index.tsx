@@ -184,6 +184,13 @@ function Landing() {
                 <HeartHandshake className="size-4 text-stone-700 dark:text-stone-300" />
                 Configure My Access Needs
               </Link>
+              <Link
+                to="/employer"
+                className="inline-flex items-center gap-2 rounded-full border border-stone-800 dark:border-stone-400 bg-card px-5 py-3 text-sm font-medium text-foreground shadow-[1px_1px_0px_rgba(0,0,0,0.15)] hover:bg-secondary hover:-translate-y-0.5 transition-all"
+              >
+                <Building2 className="size-4 text-stone-700 dark:text-stone-300" />
+                Post a job
+              </Link>
             </div>
 
             <dl className="mt-10 grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">

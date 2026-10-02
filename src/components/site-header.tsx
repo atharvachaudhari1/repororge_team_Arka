@@ -1,7 +1,8 @@
 import { Link } from "@tanstack/react-router";
-import { Sun, Moon, Accessibility } from "lucide-react";
+import { Sun, Moon, Accessibility, Building2 } from "lucide-react";
 import { AccessibilitySheetTrigger } from "./accessibility-toolbar";
 import { useAppState } from "@/lib/app-state";
+import { useAuth } from "@/lib/auth-context";
 
 const NAV = [
   { to: "/", label: "Home" },
@@ -18,6 +19,7 @@ const NAV = [
 
 export function SiteHeader() {
   const { savedJobs, theme, toggleTheme } = useAppState();
+  const { user, isLoading, logout } = useAuth();
 
   return (
     <>
@@ -73,6 +75,24 @@ export function SiteHeader() {
             >
               Browse Roles →
             </Link>
+
+            <Link
+              to="/employer"
+              className="inline-flex items-center gap-1.5 rounded-full border border-foreground/90 bg-card px-4 py-1.5 text-xs font-semibold text-foreground shadow-[1px_2px_0px_rgba(20,24,23,0.35)] transition-all hover:bg-secondary hover:-translate-y-0.5"
+            >
+              <Building2 className="size-3.5" aria-hidden="true" />
+              Post a job
+            </Link>
+
+            {!isLoading && (user ? (
+              <button type="button" onClick={logout} className="rounded-full border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-secondary hover:text-foreground">
+                Sign out
+              </button>
+            ) : (
+              <Link to="/login" className="rounded-full border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-secondary hover:text-foreground">
+                Sign in
+              </Link>
+            ))}
 
             <Link
               to="/privacy"

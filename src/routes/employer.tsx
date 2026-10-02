@@ -25,6 +25,7 @@ import {
 } from "@/lib/jobs-data";
 import { APPLICATION_STATUSES, useAppState, type ApplicationStatus } from "@/lib/app-state";
 import { InclusionIntelligence } from "@/components/inclusion-intelligence";
+import { PortalGate } from "@/components/portal-gate";
 
 export const Route = createFileRoute("/employer")({
   head: () => ({
@@ -42,7 +43,7 @@ export const Route = createFileRoute("/employer")({
       },
     ],
   }),
-  component: EmployerPage,
+  component: () => <PortalGate role="employer"><EmployerPage /></PortalGate>,
 });
 
 const EMPTY = {

@@ -316,6 +316,8 @@ type State = {
   setTtsRate: (v: number) => void;
   accessUpdates: Record<string, AccessFeature[]>;
   updateJobAccess: (jobId: string, keys: AccessFeature[]) => void;
+  isEmployerMode: boolean;
+  setIsEmployerMode: (v: boolean) => void;
 };
 
 const Ctx = createContext<State | null>(null);
@@ -386,6 +388,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const [interviewSession, setInterviewSession] = useState<InterviewSession | null>(null);
   const [actionPlans, setActionPlans] = useState<Record<string, ActionItem[]>>({});
   const [accessUpdates, setAccessUpdates] = useState<Record<string, AccessFeature[]>>({});
+  const [isEmployerMode, setIsEmployerMode] = useState(false);
 
   useEffect(() => {
     const s = read({
@@ -413,6 +416,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       interviewSession: null as InterviewSession | null,
       actionPlans: {} as Record<string, ActionItem[]>,
       accessUpdates: {} as Record<string, AccessFeature[]>,
+      isEmployerMode: false,
     });
     setTheme(s.theme ?? "light");
     setHighContrast(s.highContrast ?? false);
@@ -483,6 +487,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     setInterviewSession(s.interviewSession);
     setActionPlans(s.actionPlans);
     setAccessUpdates(s.accessUpdates);
+    setIsEmployerMode(s.isEmployerMode ?? false);
     setHydrated(true);
   }, []);
 
@@ -515,6 +520,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         interviewSession,
         actionPlans,
         accessUpdates,
+        isEmployerMode,
       }),
     );
   }, [

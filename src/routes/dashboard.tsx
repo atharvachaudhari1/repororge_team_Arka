@@ -27,6 +27,7 @@ import { averageMatch, rankJobs } from "@/lib/matching";
 import { NextStepCard } from "@/components/next-step-card";
 import { prefLabels } from "@/lib/accessibility";
 import { AccessibilitySection } from "@/components/accessibility-toolbar";
+import { PortalGate } from "@/components/portal-gate";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
@@ -38,7 +39,7 @@ export const Route = createFileRoute("/dashboard")({
       },
     ],
   }),
-  component: Dashboard,
+  component: () => <PortalGate role="candidate"><Dashboard /></PortalGate>,
 });
 
 type FilterCategory = "all" | "remote" | "vision" | "hearing" | "mobility";
