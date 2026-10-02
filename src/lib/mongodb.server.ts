@@ -136,6 +136,19 @@ async function initMongoIndexes(db: Db): Promise<void> {
 
     // AI rate limits: key index
     await db.collection("ai_rate_limits").createIndex({ key: 1 }, { unique: true });
+
+    // Employer jobs: employer + status lookup, unique id
+    await db.collection("employer_jobs").createIndex({ id: 1 }, { unique: true });
+    await db.collection("employer_jobs").createIndex({ employerId: 1, status: 1 });
+    await db.collection("employer_jobs").createIndex({ status: 1, createdAt: -1 });
+
+    // Job applications: job + candidate lookup, unique id
+    await db.collection("job_applications").createIndex({ id: 1 }, { unique: true });
+    await db.collection("job_applications").createIndex({ jobId: 1 });
+    await db.collection("job_applications").createIndex({ candidateId: 1 });
+    await db
+      .collection("job_applications")
+      .createIndex({ jobId: 1, candidateId: 1 }, { unique: true });
   } catch (err) {
     console.warn("MongoDB Atlas: index initialization note:", err);
   }

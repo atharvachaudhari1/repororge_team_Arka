@@ -55,7 +55,85 @@ export type Job = {
     "Provided by employer" | "Verified by AccessPath" | "Discovered via TinyFish Web Search";
   /** True when the employer added accessibility information after posting. */
   accessUpdated?: boolean;
+  /** Where this job came from: static seed data or employer-posted via server. */
+  source?: "static" | "employer";
+  /** Employer-posted jobs link back to the poster. */
+  employerId?: string;
+  /** Employer-posted jobs have a publication status. */
+  jobStatus?: "draft" | "published" | "closed";
 };
+
+export type EmployerJobInput = {
+  id: string;
+  employerId: string;
+  title: string;
+  company: string;
+  description: string;
+  location?: string | undefined;
+  workMode: WorkMode;
+  employmentType: Employment;
+  experienceLevel: ExperienceBand;
+  skills: string[];
+  salaryRange?: string | undefined;
+  accessibilityFeatures?:
+    | {
+        key?: string;
+        feature?: string;
+        status: "verified" | "employer-provided" | "not-specified";
+      }[]
+    | undefined;
+  inclusionFeatures?: InclusionFeature[] | undefined;
+  status: "draft" | "published" | "closed";
+  createdAt?: string | undefined;
+};
+
+export function employerJobToJob(ej: EmployerJobInput): Job {
+  const verifiedFeatures: AccessFeature[] = (ej.accessibilityFeatures || [])
+    .filter((f) => f.status === "verified" || f.status === "employer-provided")
+    .map((f) => (f.key || f.feature || "") as AccessFeature)
+    .filter((k): k is AccessFeature => k in ACCESS_FEATURES);
+
+  const hasVerified = (ej.accessibilityFeatures || []).some((f) => f.status === "verified");
+  const accessSource: Job["accessSource"] = hasVerified
+    ? "Verified by AccessPath"
+    : "Provided by employer";
+
+  let posted = "Recently";
+  if (ej.createdAt) {
+    try {
+      const diffMs = Date.now() - new Date(ej.createdAt).getTime();
+      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+      if (diffDays <= 0) posted = "Today";
+      else if (diffDays === 1) posted = "1 day ago";
+      else posted = `${diffDays} days ago`;
+    } catch {
+      posted = "Recently";
+    }
+  }
+
+  return {
+    id: ej.id,
+    title: ej.title,
+    company: ej.company,
+    city: ej.location || (ej.workMode === "Remote" ? "Remote" : "Bengaluru"),
+    workMode: ej.workMode,
+    employment: ej.employmentType,
+    experience: ej.experienceLevel,
+    category: "Software",
+    salary: ej.salaryRange,
+    posted,
+    about: ej.description,
+    responsibilities: [],
+    requiredSkills: ej.skills || [],
+    preferredSkills: [],
+    access: verifiedFeatures,
+    inclusion: (ej.inclusionFeatures as InclusionFeature[]) || [],
+    accessSource,
+    source: "employer",
+    employerId: ej.employerId,
+    jobStatus: ej.status,
+  };
+}
 
 type Tuple = [
   string,

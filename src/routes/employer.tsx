@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,10 +20,19 @@ import {
   type Employment,
   type ExperienceBand,
   type InclusionFeature,
-  type Job,
   type WorkMode,
 } from "@/lib/jobs-data";
-import { APPLICATION_STATUSES, useAppState, type ApplicationStatus } from "@/lib/app-state";
+import type { EmployerJob, StoredApplication, JobStatus } from "@/lib/jobs.server";
+import {
+  createJob,
+  updateJob,
+  publishJob,
+  closeJob,
+  listMyJobs,
+  listApplicationsForEmployer,
+  updateApplicationStatus,
+} from "@/lib/jobs.functions";
+import { APPLICATION_STATUSES, type ApplicationStatus } from "@/lib/app-state";
 import { InclusionIntelligence } from "@/components/inclusion-intelligence";
 import { CandidateTalentMap } from "@/components/candidate-talent-map";
 import { PortalGate } from "@/components/portal-gate";
@@ -63,52 +72,72 @@ const EMPTY = {
   experience: "Fresher" as ExperienceBand,
 };
 
+const STATUS_COLORS: Record<JobStatus, string> = {
+  draft: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
+  published: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
+  closed: "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400",
+};
+
 function EmployerPage() {
-  const {
-    employerJobs,
-    addEmployerJob,
-    updateEmployerJob,
-    applications,
-    findJob,
-    setApplicationStatus,
-    setInterviewMeetingLink,
-    profile,
-  } = useAppState();
   const [form, setForm] = useState(EMPTY);
   const [access, setAccess] = useState<AccessFeature[]>([]);
   const [inclusion, setInclusion] = useState<InclusionFeature[]>([]);
   const [editingJobId, setEditingJobId] = useState<string | null>(null);
   const [applicantSearch, setApplicantSearch] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  // Server-backed state
+  const [myJobs, setMyJobs] = useState<EmployerJob[]>([]);
+  const [applications, setApplications] = useState<StoredApplication[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const set = <K extends keyof typeof EMPTY>(k: K, v: (typeof EMPTY)[K]) =>
     setForm((p) => ({ ...p, [k]: v }));
 
-  const myJobIds = new Set(employerJobs.map((j) => j.id));
-  const applicants = applications.filter((a) => myJobIds.has(a.jobId));
-  const normalizedApplicantSearch = applicantSearch.trim().toLowerCase();
-  const filteredApplicants = applicants.filter((a) => {
-    if (!normalizedApplicantSearch) return true;
-    const job = findJob(a.jobId);
-    return [profile.name, profile.skills.join(" "), job?.title, job?.company, a.status]
+  // Load employer's jobs and applications from server
+  const refreshData = useCallback(async () => {
+    try {
+      const [jobsResult, appsResult] = await Promise.all([
+        listMyJobs({ data: undefined }),
+        listApplicationsForEmployer({ data: {} }),
+      ]);
+      if (jobsResult.ok) setMyJobs(jobsResult.jobs);
+      if (appsResult.ok && "applications" in appsResult) setApplications(appsResult.applications);
+    } catch (err) {
+      console.warn("Failed to load employer data:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void refreshData();
+  }, [refreshData]);
+
+  const normalizedSearch = applicantSearch.trim().toLowerCase();
+  const filteredApplicants = applications.filter((a) => {
+    if (!normalizedSearch) return true;
+    const job = myJobs.find((j) => j.id === a.jobId);
+    return [a.candidateName, job?.title, job?.company, a.status]
       .filter(Boolean)
-      .some((value) => value!.toLowerCase().includes(normalizedApplicantSearch));
+      .some((value) => value!.toLowerCase().includes(normalizedSearch));
   });
 
-  const startEditing = (job: Job) => {
+  const startEditing = (job: EmployerJob) => {
     setEditingJobId(job.id);
     setForm({
       title: job.title,
       company: job.company,
-      city: job.city === "Remote (India)" ? "" : job.city,
-      salary: job.salary ?? "",
-      about: job.about,
-      skills: job.requiredSkills.join(", "),
+      city: job.location === "Remote (India)" ? "" : job.location,
+      salary: job.salaryRange ?? "",
+      about: job.description,
+      skills: job.skills.join(", "),
       workMode: job.workMode,
-      employment: job.employment,
-      experience: job.experience,
+      employment: job.employmentType,
+      experience: job.experienceLevel,
     });
-    setAccess(job.access);
-    setInclusion(job.inclusion);
+    setAccess(job.accessibilityFeatures.map((f) => f.key));
+    setInclusion(job.inclusionFeatures);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -117,6 +146,134 @@ function EmployerPage() {
     setAccess([]);
     setInclusion([]);
     setEditingJobId(null);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (access.length === 0) {
+      toast.error("Select the accessibility support available for this role.");
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const skills = form.skills
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
+
+      const accessFeatures = access.map((key) => ({
+        key,
+        status: "employer-provided" as const,
+      }));
+
+      if (editingJobId) {
+        const result = await updateJob({
+          data: {
+            jobId: editingJobId,
+            title: form.title,
+            company: form.company,
+            description: form.about,
+            location: form.workMode === "Remote" ? "Remote (India)" : form.city,
+            workMode: form.workMode,
+            employmentType: form.employment,
+            experienceLevel: form.experience,
+            skills,
+            salaryRange: form.salary || undefined,
+            accessibilityFeatures: accessFeatures,
+            inclusionFeatures: inclusion,
+          },
+        });
+        if (result.ok) {
+          toast.success("Job post updated");
+          resetJobForm();
+          void refreshData();
+        } else {
+          toast.error(result.error);
+        }
+      } else {
+        const result = await createJob({
+          data: {
+            title: form.title,
+            company: form.company,
+            description: form.about,
+            location: form.workMode === "Remote" ? "Remote (India)" : form.city,
+            workMode: form.workMode,
+            employmentType: form.employment,
+            experienceLevel: form.experience,
+            skills,
+            salaryRange: form.salary || undefined,
+            accessibilityFeatures: accessFeatures,
+            inclusionFeatures: inclusion,
+            status: "draft",
+          },
+        });
+        if (result.ok) {
+          toast.success("Job saved as draft. Preview and publish when ready.");
+          resetJobForm();
+          void refreshData();
+        } else {
+          toast.error(result.error);
+        }
+      }
+    } catch (err) {
+      toast.error("Failed to save job. Please try again.");
+      console.error(err);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handlePublish = async (jobId: string) => {
+    try {
+      const result = await publishJob({ data: { jobId } });
+      if (result.ok) {
+        toast.success("Job published and live on AccessPath");
+        void refreshData();
+      } else {
+        toast.error(result.error);
+      }
+    } catch {
+      toast.error("Failed to publish job.");
+    }
+  };
+
+  const handleClose = async (jobId: string) => {
+    try {
+      const result = await closeJob({ data: { jobId } });
+      if (result.ok) {
+        toast.success("Job closed");
+        void refreshData();
+      } else {
+        toast.error(result.error);
+      }
+    } catch {
+      toast.error("Failed to close job.");
+    }
+  };
+
+  const handleStatusChange = async (
+    applicationId: string,
+    status: ApplicationStatus,
+    meetingLink?: string,
+  ) => {
+    try {
+      const result = await updateApplicationStatus({
+        data: {
+          applicationId,
+          status,
+          interviewMeetingLink: meetingLink,
+        },
+      });
+      if (result.ok) {
+        toast.success(`Status updated to ${status}`);
+        void refreshData();
+      } else {
+        toast.error(result.error);
+      }
+    } catch {
+      toast.error("Failed to update status.");
+    }
   };
 
   return (
@@ -133,50 +290,7 @@ function EmployerPage() {
           <h2 id="post-heading" className="text-2xl font-bold">
             {editingJobId ? "Edit job post" : "Post a job"}
           </h2>
-          <form
-            className="mt-4 space-y-5"
-            onSubmit={(e) => {
-              e.preventDefault();
-              if (access.length === 0) {
-                toast.error("Select the accessibility support available for this role.");
-                return;
-              }
-              const skills = form.skills
-                .split(",")
-                .map((s) => s.trim())
-                .filter(Boolean);
-              const job: Job = {
-                id: editingJobId ?? `emp-${Date.now()}`,
-                title: form.title,
-                company: form.company,
-                city: form.workMode === "Remote" ? "Remote (India)" : form.city,
-                workMode: form.workMode,
-                employment: form.employment,
-                experience: form.experience,
-                category: "Operations",
-                salary: form.salary || undefined,
-                posted: editingJobId
-                  ? (employerJobs.find((existing) => existing.id === editingJobId)?.posted ??
-                    "Today")
-                  : "Today",
-                about: form.about,
-                responsibilities: [],
-                requiredSkills: skills,
-                preferredSkills: [],
-                access,
-                inclusion,
-                accessSource: "Provided by employer",
-              };
-              if (editingJobId) {
-                updateEmployerJob(job);
-                toast.success("Job post updated");
-              } else {
-                addEmployerJob(job);
-                toast.success("Job posted and live on AccessPath");
-              }
-              resetJobForm();
-            }}
-          >
+          <form className="mt-4 space-y-5" onSubmit={handleSubmit}>
             <div className="surface-card space-y-4 p-5">
               {[
                 { id: "e-title", label: "Job title", key: "title" as const, required: true },
@@ -342,20 +456,16 @@ function EmployerPage() {
               </fieldset>
             </div>
 
-            <Button type="submit" size="lg">
-              {editingJobId ? "Save changes" : "Post job"}
-            </Button>
-            {editingJobId ? (
-              <Button
-                type="button"
-                variant="outline"
-                size="lg"
-                className="ml-2"
-                onClick={resetJobForm}
-              >
-                Cancel
+            <div className="flex gap-2">
+              <Button type="submit" size="lg" disabled={submitting}>
+                {submitting ? "Saving…" : editingJobId ? "Save changes" : "Save as draft"}
               </Button>
-            ) : null}
+              {editingJobId ? (
+                <Button type="button" variant="outline" size="lg" onClick={resetJobForm}>
+                  Cancel
+                </Button>
+              ) : null}
+            </div>
           </form>
         </section>
 
@@ -364,32 +474,62 @@ function EmployerPage() {
             <h2 id="posted-heading" className="text-2xl font-bold">
               Your posted jobs
             </h2>
-            {employerJobs.length === 0 ? (
+            {loading ? (
               <p className="surface-card mt-4 p-5 text-sm text-muted-foreground">
-                No jobs posted yet. Posted roles appear in candidate search immediately.
+                Loading your jobs…
+              </p>
+            ) : myJobs.length === 0 ? (
+              <p className="surface-card mt-4 p-5 text-sm text-muted-foreground">
+                No jobs posted yet. Jobs saved as drafts appear here. Publish when ready.
               </p>
             ) : (
               <ul className="mt-4 space-y-3">
-                {employerJobs.map((j) => (
+                {myJobs.map((j) => (
                   <li key={j.id} className="surface-card p-4">
-                    <h3 className="font-semibold">{j.title}</h3>
-                    <p className="text-sm text-muted-foreground">
-                      {j.company} • {j.city} • {j.workMode} • {j.experience}
-                    </p>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="mt-3"
-                      onClick={() => startEditing(j)}
-                    >
-                      Edit job post
-                    </Button>
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <h3 className="font-semibold">{j.title}</h3>
+                        <p className="text-sm text-muted-foreground">
+                          {j.company} • {j.location} • {j.workMode} • {j.experienceLevel}
+                        </p>
+                      </div>
+                      <Badge
+                        className={`shrink-0 text-xs ${STATUS_COLORS[j.status]}`}
+                        variant="outline"
+                      >
+                        {j.status.charAt(0).toUpperCase() + j.status.slice(1)}
+                      </Badge>
+                    </div>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => startEditing(j)}
+                      >
+                        Edit
+                      </Button>
+                      {j.status === "draft" ? (
+                        <Button type="button" size="sm" onClick={() => handlePublish(j.id)}>
+                          Publish
+                        </Button>
+                      ) : null}
+                      {j.status === "published" ? (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleClose(j.id)}
+                        >
+                          Close listing
+                        </Button>
+                      ) : null}
+                    </div>
                     <ul className="mt-2 flex flex-wrap gap-2">
-                      {j.access.map((a) => (
-                        <li key={a}>
+                      {j.accessibilityFeatures.map((f) => (
+                        <li key={f.key}>
                           <Badge variant="secondary" className="font-normal">
-                            {ACCESS_FEATURES[a]}
+                            {ACCESS_FEATURES[f.key] || f.key}
                           </Badge>
                         </li>
                       ))}
@@ -409,7 +549,7 @@ function EmployerPage() {
               employers, and accommodation requests appear only if the candidate chose to share
               them.
             </p>
-            {applicants.length ? (
+            {applications.length ? (
               <div className="mt-4 max-w-md">
                 <label htmlFor="applicant-search" className="sr-only">
                   Search applicants
@@ -419,11 +559,15 @@ function EmployerPage() {
                   type="search"
                   value={applicantSearch}
                   onChange={(event) => setApplicantSearch(event.target.value)}
-                  placeholder="Search by candidate, skills, job, or status"
+                  placeholder="Search by candidate, job, or status"
                 />
               </div>
             ) : null}
-            {applicants.length === 0 ? (
+            {loading ? (
+              <p className="surface-card mt-4 p-5 text-sm text-muted-foreground">
+                Loading applicants…
+              </p>
+            ) : applications.length === 0 ? (
               <p className="surface-card mt-4 p-5 text-sm text-muted-foreground">
                 No applicants yet for your posted roles.
               </p>
@@ -436,34 +580,32 @@ function EmployerPage() {
                 ) : (
                   <ul className="mt-4 space-y-4">
                     {filteredApplicants.map((a) => {
-                      const job = findJob(a.jobId);
+                      const job = myJobs.find((j) => j.id === a.jobId);
                       return (
-                        <li key={a.jobId} className="surface-card p-5">
-                          <h3 className="font-semibold">{profile.name || "Candidate"}</h3>
+                        <li key={a.id} className="surface-card p-5">
+                          <h3 className="font-semibold">{a.candidateName || "Candidate"}</h3>
                           <p className="text-sm text-muted-foreground">
-                            Applied {a.date} • {job?.title}
+                            Applied {new Date(a.createdAt).toLocaleDateString()} • {job?.title}
                           </p>
                           <dl className="mt-3 space-y-2 text-sm">
-                            <div>
-                              <dt className="text-muted-foreground">Skills</dt>
-                              <dd>
-                                {profile.skills.length
-                                  ? profile.skills.join(" • ")
-                                  : "Not provided"}
-                              </dd>
-                            </div>
-                            <div>
-                              <dt className="text-muted-foreground">Experience</dt>
-                              <dd>{profile.experienceBand || "Not provided"}</dd>
-                            </div>
-                            <div>
-                              <dt className="text-muted-foreground">Education</dt>
-                              <dd>{profile.education || "Not provided"}</dd>
-                            </div>
-                            <div>
-                              <dt className="text-muted-foreground">Resume</dt>
-                              <dd>{a.resumeName}</dd>
-                            </div>
+                            {a.resumeName ? (
+                              <div>
+                                <dt className="text-muted-foreground">Resume</dt>
+                                <dd>{a.resumeName}</dd>
+                              </div>
+                            ) : null}
+                            {a.matchScore > 0 ? (
+                              <div>
+                                <dt className="text-muted-foreground">Match score</dt>
+                                <dd>{a.matchScore}%</dd>
+                              </div>
+                            ) : null}
+                            {a.coverLetter ? (
+                              <div>
+                                <dt className="text-muted-foreground">Cover letter</dt>
+                                <dd className="whitespace-pre-line">{a.coverLetter}</dd>
+                              </div>
+                            ) : null}
                             {a.shareAccommodations && a.accommodations.length ? (
                               <div>
                                 <dt className="text-muted-foreground">
@@ -474,20 +616,16 @@ function EmployerPage() {
                             ) : null}
                           </dl>
                           <div className="mt-3">
-                            <label
-                              htmlFor={`status-${a.jobId}`}
-                              className="block text-sm font-medium"
-                            >
+                            <label htmlFor={`status-${a.id}`} className="block text-sm font-medium">
                               Application status
                             </label>
                             <Select
                               value={a.status}
-                              onValueChange={(v) => {
-                                setApplicationStatus(a.jobId, v as ApplicationStatus);
-                                toast.success(`Status updated to ${v}`);
-                              }}
+                              onValueChange={(v) =>
+                                handleStatusChange(a.id, v as ApplicationStatus)
+                              }
                             >
-                              <SelectTrigger id={`status-${a.jobId}`} className="mt-1.5 max-w-56">
+                              <SelectTrigger id={`status-${a.id}`} className="mt-1.5 max-w-56">
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
@@ -501,17 +639,17 @@ function EmployerPage() {
                             {a.status === "Interview" ? (
                               <div className="mt-3 max-w-md">
                                 <label
-                                  htmlFor={`meeting-link-${a.jobId}`}
+                                  htmlFor={`meeting-link-${a.id}`}
                                   className="block text-sm font-medium"
                                 >
                                   Interview meeting link
                                 </label>
                                 <Input
-                                  id={`meeting-link-${a.jobId}`}
+                                  id={`meeting-link-${a.id}`}
                                   type="url"
-                                  value={a.interviewMeetingLink ?? ""}
-                                  onChange={(event) =>
-                                    setInterviewMeetingLink(a.jobId, event.target.value)
+                                  defaultValue={a.interviewMeetingLink ?? ""}
+                                  onBlur={(event) =>
+                                    handleStatusChange(a.id, "Interview", event.target.value)
                                   }
                                   placeholder="https://meet.google.com/..."
                                   className="mt-1.5"

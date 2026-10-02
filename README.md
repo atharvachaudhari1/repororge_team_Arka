@@ -390,15 +390,16 @@ Dashboard shows: saved jobs · recommended jobs · applications · statuses · p
 </details>
 
 <details>
-<summary>🚧 Phase 3 — Accessibility & Inclusive Hiring (In Development)</summary>
+<summary>✅ Phase 3 — Employer Job Posting & Inclusive Hiring (Implemented)</summary>
 
 **Goal:** Make accessibility and inclusion visible throughout the hiring process.
 
-- Accessibility Fit — candidate preferences vs. employer support
-- Advanced voice search
-- Candidate-controlled identity and privacy controls
-- Structured employer accessibility profiles
-- Accessibility transparency layer
+- Employer Job Posting & Management (`employer_jobs` collection/table with MongoDB Atlas & SQLite fallback)
+- Draft, preview, and publish lifecycle with live candidate-facing preview
+- Granular accessibility feature verification status (`verified`, `employer-provided`, `not-specified`)
+- Candidate-controlled privacy: disability, pronouns, and unshared accommodations are stripped before reaching employers
+- Stored job applications and pipeline stage progression with email notifications to employers
+- Strict server-side session authentication with write rate limiting
 
 </details>
 

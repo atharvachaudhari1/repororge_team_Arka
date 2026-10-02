@@ -275,6 +275,26 @@ export function ApplicationWizard({ job }: { job: Job }) {
       matchScore: 0,
       nextStep: "Application received — this demo tracker simulates employer updates.",
     });
+
+    // Also persist to server database if candidate has an active session
+    void (async () => {
+      try {
+        const { applyToJob } = await import("@/lib/jobs.functions");
+        await applyToJob({
+          data: {
+            jobId: job.id,
+            resumeName: data.resumeName.trim() || "No resume attached",
+            resumeText: data.resumeText || "",
+            coverLetter,
+            accommodations: data.accommodations,
+            shareAccommodations: data.shareRequests,
+            matchScore: 0,
+          },
+        });
+      } catch {
+        // Continue smoothly if unauthenticated or offline
+      }
+    })();
     tts.stop();
     voice.stop();
     setSubmitted({

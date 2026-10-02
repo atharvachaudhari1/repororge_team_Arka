@@ -73,6 +73,9 @@ export const EMPTY_PROFILE: Profile = {
   shareLegalName: false,
 };
 
+/** Alias for tests and consumers that use DEFAULT_PROFILE. */
+export const DEFAULT_PROFILE: Profile = EMPTY_PROFILE;
+
 /** Privacy defaults applied by "Reset privacy settings". Private-first. */
 export const DEFAULT_PRIVACY = {
   shareDisplayName: true,
@@ -512,6 +515,31 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     setAccessUpdates(s.accessUpdates);
     setIsEmployerMode(s.isEmployerMode ?? false);
     setHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadPublicJobs() {
+      try {
+        const { listPublicJobs } = await import("./jobs.functions");
+        const res = await listPublicJobs({ data: undefined });
+        if (!cancelled && res.ok && Array.isArray(res.jobs)) {
+          const { employerJobToJob } = await import("./jobs-data");
+          const converted = res.jobs.map(employerJobToJob);
+          setEmployerJobs((prev) => {
+            const serverIds = new Set(converted.map((j) => j.id));
+            const localOnly = prev.filter((j) => !serverIds.has(j.id));
+            return [...converted, ...localOnly];
+          });
+        }
+      } catch {
+        // Fall back gracefully to local/demo state
+      }
+    }
+    void loadPublicJobs();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
