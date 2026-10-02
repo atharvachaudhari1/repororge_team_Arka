@@ -367,7 +367,7 @@ function ProfilePage() {
           </Field>
           <Field label="Experience level" id="experienceBand" hint="Used for match scoring">
             <Select
-              {...(form.experienceBand ? { value: form.experienceBand } : {})}
+              value={form.experienceBand}
               onValueChange={(v) => set("experienceBand", v as Profile["experienceBand"])}
             >
               <SelectTrigger id="experienceBand">
@@ -409,7 +409,7 @@ function ProfilePage() {
           </Field>
           <Field label="Work style preference" id="workPreference">
             <Select
-              {...(form.workPreference ? { value: form.workPreference } : {})}
+              value={form.workPreference}
               onValueChange={(v) => set("workPreference", v as Profile["workPreference"])}
             >
               <SelectTrigger id="workPreference">
