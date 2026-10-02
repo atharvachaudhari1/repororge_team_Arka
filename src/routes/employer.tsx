@@ -25,6 +25,7 @@ import {
 } from "@/lib/jobs-data";
 import { APPLICATION_STATUSES, useAppState, type ApplicationStatus } from "@/lib/app-state";
 import { InclusionIntelligence } from "@/components/inclusion-intelligence";
+import { CandidateTalentMap } from "@/components/candidate-talent-map";
 import { PortalGate } from "@/components/portal-gate";
 
 export const Route = createFileRoute("/employer")({
@@ -407,6 +408,10 @@ function EmployerPage() {
             )}
           </section>
         </div>
+      </div>
+
+      <div className="mt-10">
+        <CandidateTalentMap />
       </div>
 
       <div className="mt-10">

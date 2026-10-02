@@ -147,6 +147,13 @@ export function JobCard({ job }: { job: Job }) {
           {match.total}% Skills Fit &bull; Ask AI
         </button>
 
+        {job.accessSource === "Discovered via TinyFish Web Search" && (
+          <span className="inline-flex items-center gap-1 rounded-full bg-[#E5B34C]/20 text-[#191716] dark:text-stone-200 border border-[#E5B34C] px-2.5 py-1 text-xs font-semibold">
+            <Sparkles className="size-3 text-[#CF4E3D]" />
+            Live Web • TinyFish
+          </span>
+        )}
+
         {/* Disability category icons */}
         {disabilityIcons.map(({ icon: Icon, label }) => (
           <span

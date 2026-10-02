@@ -1,10 +1,11 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMemo, useRef, useState } from "react";
-import { X } from "lucide-react";
+import { X, List, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { JobCard } from "@/components/job-card";
 import { JobSearchBar } from "@/components/job-search-bar";
+import { JobMapExplorer } from "@/components/job-map-explorer";
 import {
   ACCESS_FEATURES, CITIES, INCLUSION_FEATURES,
 } from "@/lib/jobs-data";
@@ -78,6 +79,7 @@ function JobsPage() {
   const navigate = useNavigate();
   const { allJobs } = useAppState();
   const [filters, setFilters] = useState<Filters>({ ...EMPTY_FILTERS, q });
+  const [viewMode, setViewMode] = useState<"list" | "map">("list");
   const [pending, setPending] = useState<{ filters: Filters; chips: QueryChip[]; heard: string } | null>(null);
   const [announcement, setAnnouncement] = useState("");
   const filterPanel = useRef<HTMLDivElement | null>(null);
@@ -266,15 +268,55 @@ function JobsPage() {
         </aside>
 
         <section aria-labelledby="results-heading">
-          <h2 id="results-heading" className="text-lg font-semibold" aria-live="polite">
-            {results.length} {results.length === 1 ? "job" : "jobs"} found
-            {query ? ` for “${query}”` : ""}
-          </h2>
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <h2 id="results-heading" className="text-lg font-semibold" aria-live="polite">
+              {results.length} {results.length === 1 ? "job" : "jobs"} found
+              {query ? ` for “${query}”` : ""}
+            </h2>
+            <div
+              className="inline-flex items-center rounded-lg border border-border bg-card p-1 text-sm shadow-sm"
+              role="radiogroup"
+              aria-label="View mode"
+            >
+              <button
+                type="button"
+                role="radio"
+                aria-checked={viewMode === "list"}
+                onClick={() => setViewMode("list")}
+                className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+                  viewMode === "list"
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <List className="size-3.5" />
+                List View
+              </button>
+              <button
+                type="button"
+                role="radio"
+                aria-checked={viewMode === "map"}
+                onClick={() => setViewMode("map")}
+                className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+                  viewMode === "map"
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <MapPin className="size-3.5" />
+                Map View
+              </button>
+            </div>
+          </div>
           {results.length === 0 ? (
             <p className="surface-card mt-4 p-6 text-sm text-muted-foreground">
               No jobs match these filters yet. Try removing a filter or searching a broader term
               such as “developer” or “support”.
             </p>
+          ) : viewMode === "map" ? (
+            <div className="mt-4">
+              <JobMapExplorer jobs={results} />
+            </div>
           ) : (
             <ul className="mt-4 grid gap-4">
               {results.map((job) => (

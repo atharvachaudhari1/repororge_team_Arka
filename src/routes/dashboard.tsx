@@ -154,6 +154,14 @@ function Dashboard() {
             </Link>
 
             <Link
+              to="/jobs"
+              className="inline-flex items-center gap-2 rounded-full border border-[#191716]/80 dark:border-stone-400 bg-white/80 dark:bg-stone-900 px-5 py-2.5 text-sm font-medium text-stone-900 dark:text-stone-100 shadow-[1px_1px_0px_rgba(0,0,0,0.15)] transition-all hover:bg-stone-50 hover:-translate-y-0.5"
+            >
+              <MapPin className="size-4 text-[#CF4E3D]" />
+              Jobs Map Explorer
+            </Link>
+
+            <Link
               to="/career-gps"
               className="inline-flex items-center gap-2 rounded-full border border-[#191716]/80 dark:border-stone-400 bg-white/80 dark:bg-stone-900 px-5 py-2.5 text-sm font-medium text-stone-900 dark:text-stone-100 shadow-[1px_1px_0px_rgba(0,0,0,0.15)] transition-all hover:bg-stone-50 hover:-translate-y-0.5"
             >
@@ -285,6 +293,14 @@ function Dashboard() {
                   {tab.label}
                 </button>
               ))}
+
+              <Link
+                to="/jobs"
+                className="ml-auto inline-flex items-center gap-1.5 rounded-full border border-stone-300 dark:border-stone-700 bg-secondary/70 px-3.5 py-1.5 text-xs font-medium text-stone-700 dark:text-stone-300 hover:text-foreground hover:bg-secondary transition-all"
+              >
+                <MapPin className="size-3.5 text-[#CF4E3D]" />
+                Explore on Map
+              </Link>
             </div>
           </div>
 
