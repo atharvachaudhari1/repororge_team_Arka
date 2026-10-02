@@ -100,3 +100,33 @@ export const getDatabaseStatus = createServerFn({ method: "GET" }).handler(async
   const { getDatabaseStatusHandler } = await import("./auth.server");
   return getDatabaseStatusHandler();
 });
+
+export const getUserProfile = createServerFn({ method: "POST" })
+  .validator((data: unknown) =>
+    z
+      .object({
+        token: z.string().optional(),
+        email: z.string().email().optional(),
+      })
+      .default({})
+      .parse(data ?? {}),
+  )
+  .handler(async ({ data }) => {
+    const { getUserProfileHandler } = await import("./auth.server");
+    return getUserProfileHandler(data);
+  });
+
+export const saveUserProfile = createServerFn({ method: "POST" })
+  .validator((data: unknown) =>
+    z
+      .object({
+        profile: z.record(z.string(), z.unknown()),
+        token: z.string().optional(),
+        email: z.string().email().optional(),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data }) => {
+    const { saveUserProfileHandler } = await import("./auth.server");
+    return saveUserProfileHandler(data);
+  });

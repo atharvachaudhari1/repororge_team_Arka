@@ -84,6 +84,12 @@ export async function getDatabase(): Promise<SqliteDatabase> {
           count INTEGER NOT NULL DEFAULT 1,
           window_start TEXT NOT NULL
         );
+
+        CREATE TABLE IF NOT EXISTS profiles (
+          email TEXT PRIMARY KEY COLLATE NOCASE,
+          profile_data TEXT NOT NULL,
+          updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );
       `);
 
       try {
@@ -1030,4 +1036,127 @@ export async function getDatabaseStatusHandler() {
       ? `Connected to MongoDB Atlas database "${check.dbName}".`
       : `MongoDB Atlas connection error: ${check.error}`,
   };
+}
+
+export async function getUserProfileHandler(data: {
+  token?: string | undefined;
+  email?: string | undefined;
+}) {
+  const sessionResult = await readSessionHandler(data);
+  const user = sessionResult.user;
+  const targetEmail = user?.email || data.email?.toLowerCase().trim();
+
+  if (!targetEmail) {
+    return { ok: false, error: "Authentication or email required to read profile" };
+  }
+
+  if (isMongoConfigured()) {
+    try {
+      const mongo = await getMongoDb();
+      const doc = await mongo.collection("profiles").findOne({ email: targetEmail });
+      if (doc) {
+        // Strip _id before returning
+        const { _id, ...profileData } = doc;
+        return { ok: true, profile: profileData, source: "mongodb" as const };
+      }
+    } catch (err) {
+      console.warn("MongoDB Atlas getUserProfile note:", err);
+    }
+  }
+
+  // SQLite fallback
+  const db = await getDatabase();
+  const row = db.prepare("SELECT profile_data FROM profiles WHERE email = ?").get(targetEmail) as
+    { profile_data: string } | undefined;
+
+  if (row) {
+    try {
+      return { ok: true, profile: JSON.parse(row.profile_data), source: "sqlite" as const };
+    } catch {
+      // parse failure
+    }
+  }
+
+  return {
+    ok: true,
+    profile: null,
+    source: isMongoConfigured() ? ("mongodb" as const) : ("sqlite" as const),
+  };
+}
+
+export async function saveUserProfileHandler(data: {
+  profile: Record<string, unknown>;
+  token?: string | undefined;
+  email?: string | undefined;
+}) {
+  const sessionResult = await readSessionHandler(data);
+  const user = sessionResult.user;
+  const targetEmail =
+    user?.email ||
+    data.email?.toLowerCase().trim() ||
+    (typeof data.profile["email"] === "string" ? data.profile["email"].toLowerCase().trim() : null);
+
+  if (!targetEmail) {
+    return {
+      ok: false,
+      error: "Please sign in or provide an email to save your profile to the cloud database.",
+    };
+  }
+
+  const profilePayload = {
+    ...data.profile,
+    email: targetEmail,
+    updatedAt: new Date().toISOString(),
+  };
+
+  if (isMongoConfigured()) {
+    try {
+      const mongo = await getMongoDb();
+      await mongo
+        .collection("profiles")
+        .updateOne({ email: targetEmail }, { $set: profilePayload }, { upsert: true });
+
+      // If full name is changed, update user account as well
+      if (typeof data.profile["name"] === "string" && data.profile["name"].trim()) {
+        const trimmedName = data.profile["name"].trim();
+        await mongo
+          .collection("users")
+          .updateOne(
+            { email: targetEmail },
+            { $set: { fullName: trimmedName, full_name: trimmedName } },
+          );
+      }
+
+      return { ok: true, profile: profilePayload, storage: "mongodb" as const };
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      return { ok: false, error: `MongoDB Atlas write failed: ${msg}` };
+    }
+  }
+
+  // SQLite fallback
+  try {
+    const db = await getDatabase();
+    db.prepare(
+      `
+      INSERT INTO profiles (email, profile_data, updated_at)
+      VALUES (?, ?, CURRENT_TIMESTAMP)
+      ON CONFLICT(email) DO UPDATE SET
+        profile_data = excluded.profile_data,
+        updated_at = CURRENT_TIMESTAMP
+    `,
+    ).run(targetEmail, JSON.stringify(profilePayload));
+
+    if (typeof data.profile["name"] === "string" && data.profile["name"].trim()) {
+      db.prepare("UPDATE users SET full_name = ? WHERE email = ?").run(
+        data.profile["name"].trim(),
+        targetEmail,
+      );
+    }
+
+    return { ok: true, profile: profilePayload, storage: "sqlite" as const };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return { ok: false, error: `SQLite storage error: ${msg}` };
+  }
 }

@@ -122,6 +122,9 @@ async function initMongoIndexes(db: Db): Promise<void> {
     // Users: unique email
     await db.collection("users").createIndex({ email: 1 }, { unique: true });
 
+    // User profiles: unique email index
+    await db.collection("profiles").createIndex({ email: 1 }, { unique: true });
+
     // Sessions: token index
     await db.collection("sessions").createIndex({ token: 1 }, { unique: true });
 

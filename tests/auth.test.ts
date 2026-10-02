@@ -8,6 +8,8 @@ import {
   hashResetToken,
   isUserAdmin,
   getAdminEmails,
+  saveUserProfileHandler,
+  getUserProfileHandler,
 } from "@/lib/auth.server";
 
 describe("Authentication & Session Management", () => {
@@ -95,6 +97,38 @@ describe("Authentication & Session Management", () => {
     const session = await readSessionHandler({ token: sessionToken });
     expect(session.user).not.toBeNull();
     expect(session.user?.email).toBe(testEmail.toLowerCase());
+  });
+
+  it("saves and retrieves user profile from database", async () => {
+    const profilePayload = {
+      fullName: "Test User",
+      displayName: "Tester",
+      headline: "Accessibility Specialist",
+      email: testEmail,
+      location: "San Francisco, CA",
+      skills: ["WCAG", "React", "TypeScript", "A11y"],
+      accommodations: ["screen_reader", "keyboard_navigation"],
+      customAccommodation: "Needs captions on video calls",
+    };
+
+    const saveResult = await saveUserProfileHandler({
+      token: sessionToken,
+      profile: profilePayload,
+    });
+
+    expect(saveResult.ok).toBe(true);
+    expect(saveResult.profile?.headline).toBe("Accessibility Specialist");
+    expect(saveResult.profile?.skills).toContain("A11y");
+
+    const fetchResult = await getUserProfileHandler({
+      token: sessionToken,
+    });
+
+    expect(fetchResult.ok).toBe(true);
+    expect(fetchResult.profile?.headline).toBe("Accessibility Specialist");
+    expect(fetchResult.profile?.skills).toEqual(profilePayload.skills);
+    expect(fetchResult.profile?.accommodations).toContain("screen_reader");
+    expect(fetchResult.profile?.customAccommodation).toBe("Needs captions on video calls");
   });
 
   it("logs out user and invalidates session token", async () => {

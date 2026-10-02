@@ -1,6 +1,9 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
+import { useAuth } from "@/lib/auth-context";
+import { getUserProfile, saveUserProfile } from "@/lib/auth.functions";
 import {
   FileText,
   Sparkles,
@@ -13,6 +16,9 @@ import {
   Ear,
   Brain,
   ShieldCheck,
+  Database,
+  Save,
+  RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -78,16 +84,86 @@ function Field({
 
 function ProfilePage() {
   const { profile, saveProfile, profileCompletion } = useAppState();
+  const { user } = useAuth();
+  const getUserProfileFn = useServerFn(getUserProfile);
+  const saveUserProfileFn = useServerFn(saveUserProfile);
+
   const [form, setForm] = useState<Profile>(profile);
   const [isScanning, setIsScanning] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isLoadingRemote, setIsLoadingRemote] = useState(false);
+  const [storageSource, setStorageSource] = useState<"mongodb" | "sqlite" | "local">("local");
+  const [lastSaved, setLastSaved] = useState<string | null>(null);
   const [extractedData, setExtractedData] = useState<ParsedResume | null>(null);
   const [exportOpen, setExportOpen] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => setForm(profile), [profile]);
 
+  // Auto-load profile from MongoDB Atlas on mount if user is logged in
+  useEffect(() => {
+    if (!user?.email) return;
+    setIsLoadingRemote(true);
+    getUserProfileFn({ data: { email: user.email } })
+      .then((res) => {
+        if (res.ok && res.profile) {
+          const remote = res.profile as Record<string, unknown>;
+          const merged: Profile = {
+            ...profile,
+            ...(remote as unknown as Partial<Profile>),
+            email: user.email,
+          };
+          setForm(merged);
+          saveProfile(merged);
+          if (res.source) setStorageSource(res.source);
+          setLastSaved(new Date().toLocaleTimeString());
+          toast.success(
+            res.source === "mongodb"
+              ? "Profile loaded from MongoDB Atlas."
+              : "Profile loaded from database.",
+          );
+        }
+      })
+      .catch((err) => {
+        console.warn("Could not load database profile:", err);
+      })
+      .finally(() => {
+        setIsLoadingRemote(false);
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.email, getUserProfileFn]);
+
   const set = <K extends keyof Profile>(key: K, value: Profile[K]) =>
     setForm((p) => ({ ...p, [key]: value }));
+
+  const persistProfile = async (targetProfile: Profile) => {
+    setIsSaving(true);
+    try {
+      saveProfile(targetProfile);
+      const res = await saveUserProfileFn({
+        data: {
+          profile: targetProfile as unknown as Record<string, unknown>,
+          email: user?.email || targetProfile.email,
+        },
+      });
+      if (res.ok) {
+        if (res.storage) setStorageSource(res.storage);
+        setLastSaved(new Date().toLocaleTimeString());
+        toast.success(
+          res.storage === "mongodb"
+            ? "Profile saved and synced to MongoDB Atlas!"
+            : "Profile saved successfully to database.",
+        );
+      } else {
+        toast.warning(res.error || "Profile saved locally.");
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      toast.error(`Database notice: ${msg}`);
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const applyExtracted = (parsed: ParsedResume, sourceFileName?: string) => {
     const previous = form;
@@ -114,8 +190,7 @@ function ProfilePage() {
       ),
     };
     setForm(nextProfile);
-    saveProfile(nextProfile);
-    toast.success("Profile saved from your resume extraction.");
+    void persistProfile(nextProfile);
   };
 
   const handleFileUpload = async (file: File) => {
@@ -153,6 +228,23 @@ function ProfilePage() {
             <FileCheck className="size-3.5" />
             Export Accessible Resume
           </Button>
+          {storageSource === "mongodb" ? (
+            <Badge
+              variant="outline"
+              className="gap-1.5 py-1 px-3 border-emerald-600/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 font-medium"
+            >
+              <Database className="size-3.5 text-emerald-600" />
+              <span>MongoDB Atlas Synced</span>
+            </Badge>
+          ) : user ? (
+            <Badge
+              variant="outline"
+              className="gap-1.5 py-1 px-3 border-amber-600/40 bg-amber-500/10 text-amber-700 dark:text-amber-400 font-medium"
+            >
+              <Database className="size-3.5" />
+              <span>Database Connected</span>
+            </Badge>
+          ) : null}
           <Badge
             variant="outline"
             className="gap-1.5 py-1 px-3 border-brand/40 bg-brand/5 text-brand"
@@ -308,9 +400,7 @@ function ProfilePage() {
         className="mt-6 space-y-8"
         onSubmit={(e) => {
           e.preventDefault();
-          saveProfile(form);
-          toast.success("Profile saved successfully");
-          navigate({ to: "/dashboard" });
+          void persistProfile(form);
         }}
       >
         {/* Section 1: Basic details */}
@@ -841,13 +931,53 @@ function ProfilePage() {
           </div>
         </section>
 
-        <div className="flex gap-3 pt-2">
-          <Button type="submit" size="lg" className="min-w-32">
-            Save Profile
+        <div className="flex flex-wrap items-center gap-3 pt-2">
+          <Button type="submit" size="lg" className="min-w-44 gap-2" disabled={isSaving}>
+            {isSaving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
+            <span>{isSaving ? "Saving to MongoDB…" : "Save Profile to Database"}</span>
           </Button>
-          <Button type="button" size="lg" variant="outline" onClick={() => setForm(profile)}>
-            Reset Changes
+          <Button
+            type="button"
+            size="lg"
+            variant="outline"
+            disabled={isLoadingRemote}
+            onClick={() => {
+              if (user?.email) {
+                setIsLoadingRemote(true);
+                getUserProfileFn({ data: { email: user.email } })
+                  .then((res) => {
+                    if (res.ok && res.profile) {
+                      const remote = res.profile as Record<string, unknown>;
+                      setForm((prev) => ({
+                        ...prev,
+                        ...(remote as unknown as Partial<Profile>),
+                      }));
+                      toast.success("Profile reloaded from database.");
+                    } else {
+                      setForm(profile);
+                    }
+                  })
+                  .finally(() => setIsLoadingRemote(false));
+              } else {
+                setForm(profile);
+                toast.info("Form reset to saved state.");
+              }
+            }}
+            className="gap-2"
+          >
+            {isLoadingRemote ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              <RefreshCw className="size-4" />
+            )}
+            <span>{isLoadingRemote ? "Reloading…" : "Reset / Reload"}</span>
           </Button>
+          {lastSaved && (
+            <span className="text-xs text-muted-foreground flex items-center gap-1.5 sm:ml-auto">
+              <CheckCircle2 className="size-3.5 text-emerald-600" />
+              Saved to database at {lastSaved}
+            </span>
+          )}
         </div>
       </form>
     </div>
