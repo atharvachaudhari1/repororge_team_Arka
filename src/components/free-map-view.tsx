@@ -1,17 +1,7 @@
 import { useEffect, useRef, useState, useMemo, type ReactNode } from "react";
 import {
-  MapPin,
-  Navigation,
-  Compass,
-  Layers,
-  ZoomIn,
-  ZoomOut,
-  Maximize2,
-  ExternalLink,
-  Sparkles,
   Building2,
   Users,
-  CheckCircle2,
   X,
 } from "lucide-react";
 import "leaflet/dist/leaflet.css";
@@ -229,32 +219,9 @@ export function FreeMapView({
     }
   }, [activeMarker]);
 
-  const handleZoomIn = () => {
-    mapInstanceRef.current?.zoomIn();
-  };
-
-  const handleZoomOut = () => {
-    mapInstanceRef.current?.zoomOut();
-  };
-
-  const handleResetCenter = () => {
-    if (!mapInstanceRef.current) return;
-    if (markers.length > 0) {
-      import("leaflet").then((mod) => {
-        const L = mod.default;
-        const bounds = L.latLngBounds(markers.map((m) => [m.position.lat, m.position.lng]));
-        mapInstanceRef.current.fitBounds(bounds, { padding: [50, 50], maxZoom: 10 });
-      });
-    } else {
-      mapInstanceRef.current.flyTo([center.lat, center.lng], zoom, { duration: 0.8 });
-    }
-    setActiveMarkerId(null);
-    onSelectMarker?.(null);
-  };
-
   return (
     <div
-      className={`relative flex flex-col overflow-hidden rounded-3xl border border-[#191716]/15 dark:border-stone-800 bg-[#FAF7F2] dark:bg-[#1A1816] shadow-[0_2px_12px_rgba(0,0,0,0.03)] ${className}`}
+      className={`relative isolate flex flex-col overflow-hidden rounded-3xl border border-[#191716]/15 dark:border-stone-800 bg-[#FAF7F2] dark:bg-[#1A1816] shadow-[0_2px_12px_rgba(0,0,0,0.03)] ${className}`}
       style={{ height }}
     >
       {/* Main Map Viewport */}
@@ -262,48 +229,9 @@ export function FreeMapView({
         {/* Leaflet DOM container */}
         <div ref={mapContainerRef} className="w-full h-full z-0" style={{ minHeight: "460px" }} />
 
-        {/* Custom Accessible Map Controls (Floating Top-Right) */}
-        <div className="absolute top-3 right-3 z-[400] flex flex-col gap-1.5 bg-white/95 dark:bg-stone-900/95 backdrop-blur-sm p-1 rounded-xl border border-[#191716]/20 shadow-[2px_2px_0px_rgba(0,0,0,0.15)]">
-          <button
-            type="button"
-            onClick={handleZoomIn}
-            className="flex size-8 items-center justify-center rounded-lg hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-800 dark:text-stone-200 transition-colors"
-            aria-label="Zoom in"
-          >
-            <ZoomIn className="size-4" />
-          </button>
-          <button
-            type="button"
-            onClick={handleZoomOut}
-            className="flex size-8 items-center justify-center rounded-lg hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-800 dark:text-stone-200 transition-colors"
-            aria-label="Zoom out"
-          >
-            <ZoomOut className="size-4" />
-          </button>
-          <div className="h-px bg-stone-200 dark:bg-stone-800 my-0.5" />
-          <button
-            type="button"
-            onClick={handleResetCenter}
-            className="flex size-8 items-center justify-center rounded-lg hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-800 dark:text-stone-200 transition-colors"
-            aria-label="Fit all points"
-            title="Fit all mapped points"
-          >
-            <Compass className="size-4" />
-          </button>
-          <button
-            type="button"
-            onClick={() => setTileStyle(tileStyle === "osm" ? "esri" : "osm")}
-            className="flex size-8 items-center justify-center rounded-lg hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-800 dark:text-stone-200 transition-colors"
-            aria-label="Toggle map layer style"
-            title={tileStyle === "osm" ? "Switch to Minimal Gray" : "Switch to OpenStreetMap"}
-          >
-            <Layers className="size-4" />
-          </button>
-        </div>
-
         {/* Floating Detail Overlay Card for Active Marker */}
         {activeMarker && (
-          <div className="absolute bottom-4 left-4 right-4 sm:left-auto sm:right-4 z-[400] max-w-sm rounded-2xl border-2 border-[#191716] bg-[#FAF7F2] dark:bg-[#1E1C1A] p-4 shadow-[4px_4px_0px_#191716] animate-in fade-in slide-in-from-bottom-2 duration-200">
+          <div className="absolute bottom-4 left-4 right-4 sm:left-auto sm:right-4 z-20 max-w-sm rounded-2xl border-2 border-[#191716] bg-[#FAF7F2] dark:bg-[#1E1C1A] p-4 shadow-[4px_4px_0px_#191716] animate-in fade-in slide-in-from-bottom-2 duration-200">
             <button
               type="button"
               onClick={() => {
