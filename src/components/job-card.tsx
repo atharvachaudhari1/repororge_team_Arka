@@ -65,7 +65,7 @@ export function JobCard({ job }: { job: Job }) {
 
   return (
     <article
-      className="glass-card p-4 sm:p-5 transition-all duration-300 hover:border-cyan-500/40 hover:shadow-xl hover:shadow-cyan-500/5 hover:-translate-y-0.5 border border-border/50"
+      className="rounded-xl border border-border bg-card p-5 transition-colors hover:border-foreground/20"
       aria-labelledby={`job-${job.id}-title`}
     >
       <div className="flex items-start justify-between gap-3">

@@ -87,9 +87,9 @@ export function NextStepCard({
   return (
     <section
       aria-labelledby="next-step-heading"
-      className="surface-card border-brand/30 bg-brand-soft p-5"
+      className="rounded-xl border border-border bg-card p-5"
     >
-      <p className="flex items-center gap-2 text-sm font-semibold text-brand">
+      <p className="flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
         <Compass aria-hidden="true" className="size-4" />
         Your next step
       </p>
