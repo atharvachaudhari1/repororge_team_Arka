@@ -18,21 +18,27 @@ function asStringList(value: unknown): string[] {
 }
 
 async function callAI(system: string, user: string, maxTokens = 1200) {
-  const key = process.env["LOVABLE_API_KEY"];
-  if (!key) return { ok: false as const, error: "AI is not configured on this deployment." };
+  const key = process.env["GEMINI_API_KEY"];
+  if (!key) {
+    return {
+      ok: false as const,
+      error:
+        "AI is not configured. Add the GEMINI_API_KEY server-side secret, then redeploy.",
+    };
+  }
   try {
-    const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const res = await fetch(
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
+      {
       method: "POST",
-      headers: { "Content-Type": "application/json", "Lovable-API-Key": key },
+      headers: { "Content-Type": "application/json", "x-goog-api-key": key },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          { role: "system", content: system },
-          { role: "user", content: user },
-        ],
-        max_tokens: maxTokens,
+        systemInstruction: { parts: [{ text: system }] },
+        contents: [{ role: "user", parts: [{ text: user }] }],
+        generationConfig: { maxOutputTokens: maxTokens },
       }),
-    });
+      },
+    );
     if (!res.ok) {
       const status = res.status;
       return {
@@ -40,11 +46,15 @@ async function callAI(system: string, user: string, maxTokens = 1200) {
         error:
           status === 429
             ? "AI is busy right now. Please try again in a moment."
+            : status === 401 || status === 403
+              ? "The Gemini API key is invalid or does not have access to this model."
             : "We couldn't reach the AI assistant right now.",
       };
     }
-    const json = (await res.json()) as { choices?: { message?: { content?: string } }[] };
-    const content = json.choices?.[0]?.message?.content ?? "";
+    const json = (await res.json()) as {
+      candidates?: { content?: { parts?: { text?: string }[] } }[];
+    };
+    const content = json.candidates?.[0]?.content?.parts?.map((part) => part.text ?? "").join("") ?? "";
     return { ok: true as const, content };
   } catch {
     return { ok: false as const, error: "We couldn't reach the AI assistant." };

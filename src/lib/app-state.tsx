@@ -46,9 +46,18 @@ export type Profile = {
   shareDisplayName: boolean;
   /** Legal name visibility. Off by default — only for later payroll/background stages. */
   shareLegalName: boolean;
-};export const EMPTY_PROFILE: Profile = {
-  name: "", displayName: "", pronouns: "", legalName: "",
-  headline: "", email: "", skills: [], education: "", experience: "", experienceBand: "",
+};
+export const EMPTY_PROFILE: Profile = {
+  name: "",
+  displayName: "",
+  pronouns: "",
+  legalName: "",
+  headline: "",
+  email: "",
+  skills: [],
+  education: "",
+  experience: "",
+  experienceBand: "",
   careerInterests: "",
   certifications: "",
   preferredLocation: "",
@@ -273,6 +282,7 @@ type State = {
   getApplication: (jobId: string) => Application | undefined;
   employerJobs: Job[];
   addEmployerJob: (job: Job) => void;
+  updateEmployerJob: (job: Job) => void;
   feedback: Feedback[];
   addFeedback: (f: Omit<Feedback, "id" | "date" | "status">) => void;
   hasFeedback: (jobId: string) => boolean;
@@ -344,7 +354,15 @@ function read<T>(fallback: T): T {
               if (oldData.fontSize === "x-large") oldData.fontSize = "medium";
             }
             if (!window.localStorage.getItem(KEY)) {
-              window.localStorage.setItem(KEY, JSON.stringify({ ...fallback, ...oldData, activePreset: "custom", highContrast: false }));
+              window.localStorage.setItem(
+                KEY,
+                JSON.stringify({
+                  ...fallback,
+                  ...oldData,
+                  activePreset: "custom",
+                  highContrast: false,
+                }),
+              );
             }
           } catch {}
           window.localStorage.removeItem(oldKey);
@@ -459,8 +477,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
               interviewLocation: "Google Meet",
               interviewFormat: "Remote (Google Meet with Live Captions)",
               accommodationsConfirmed: true,
-              emailSubject:
-                "Interview Confirmation: Junior Frontend Developer at TechNova India",
+              emailSubject: "Interview Confirmation: Junior Frontend Developer at TechNova India",
               emailSnippet:
                 "Hello Atharva, We have confirmed your technical interview. All requested accessibility accommodations have been approved.",
             },
@@ -469,8 +486,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
               status: "Under Review",
               date: "3 days ago",
               resumeName: "Atharva_Chaudhari_Resume.pdf",
-              coverLetter:
-                "Data enthusiast with expertise in accessible dashboard visualization.",
+              coverLetter: "Data enthusiast with expertise in accessible dashboard visualization.",
               accommodations: ["Captioned interview", "Flexible scheduling"],
               accommodationNote: "Prefer written or captioned communication.",
               shareAccommodations: true,
@@ -698,6 +714,8 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     getApplication: (jobId) => applications.find((a) => a.jobId === jobId),
     employerJobs,
     addEmployerJob: (job) => setEmployerJobs((prev) => [job, ...prev]),
+    updateEmployerJob: (job) =>
+      setEmployerJobs((prev) => prev.map((existing) => (existing.id === job.id ? job : existing))),
     feedback,
     addFeedback: (f) =>
       setFeedback((prev) => [

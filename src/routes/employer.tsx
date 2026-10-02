@@ -43,7 +43,11 @@ export const Route = createFileRoute("/employer")({
       },
     ],
   }),
-  component: () => <PortalGate role="employer"><EmployerPage /></PortalGate>,
+  component: () => (
+    <PortalGate role="employer">
+      <EmployerPage />
+    </PortalGate>
+  ),
 });
 
 const EMPTY = {
@@ -62,22 +66,57 @@ function EmployerPage() {
   const {
     employerJobs,
     addEmployerJob,
+    updateEmployerJob,
     applications,
     findJob,
     setApplicationStatus,
     setInterviewMeetingLink,
     profile,
-  } =
-    useAppState();
+  } = useAppState();
   const [form, setForm] = useState(EMPTY);
   const [access, setAccess] = useState<AccessFeature[]>([]);
   const [inclusion, setInclusion] = useState<InclusionFeature[]>([]);
+  const [editingJobId, setEditingJobId] = useState<string | null>(null);
+  const [applicantSearch, setApplicantSearch] = useState("");
 
   const set = <K extends keyof typeof EMPTY>(k: K, v: (typeof EMPTY)[K]) =>
     setForm((p) => ({ ...p, [k]: v }));
 
   const myJobIds = new Set(employerJobs.map((j) => j.id));
   const applicants = applications.filter((a) => myJobIds.has(a.jobId));
+  const normalizedApplicantSearch = applicantSearch.trim().toLowerCase();
+  const filteredApplicants = applicants.filter((a) => {
+    if (!normalizedApplicantSearch) return true;
+    const job = findJob(a.jobId);
+    return [profile.name, profile.skills.join(" "), job?.title, job?.company, a.status]
+      .filter(Boolean)
+      .some((value) => value!.toLowerCase().includes(normalizedApplicantSearch));
+  });
+
+  const startEditing = (job: Job) => {
+    setEditingJobId(job.id);
+    setForm({
+      title: job.title,
+      company: job.company,
+      city: job.city === "Remote (India)" ? "" : job.city,
+      salary: job.salary ?? "",
+      about: job.about,
+      skills: job.requiredSkills.join(", "),
+      workMode: job.workMode,
+      employment: job.employment,
+      experience: job.experience,
+    });
+    setAccess(job.access);
+    setInclusion(job.inclusion);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const resetJobForm = () => {
+    setForm(EMPTY);
+    setAccess([]);
+    setInclusion([]);
+    setEditingJobId(null);
+  };
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
@@ -91,7 +130,7 @@ function EmployerPage() {
       <div className="mt-8 grid gap-8 lg:grid-cols-2">
         <section aria-labelledby="post-heading">
           <h2 id="post-heading" className="text-2xl font-bold">
-            Post a job
+            {editingJobId ? "Edit job post" : "Post a job"}
           </h2>
           <form
             className="mt-4 space-y-5"
@@ -106,7 +145,7 @@ function EmployerPage() {
                 .map((s) => s.trim())
                 .filter(Boolean);
               const job: Job = {
-                id: `emp-${Date.now()}`,
+                id: editingJobId ?? `emp-${Date.now()}`,
                 title: form.title,
                 company: form.company,
                 city: form.workMode === "Remote" ? "Remote (India)" : form.city,
@@ -115,7 +154,10 @@ function EmployerPage() {
                 experience: form.experience,
                 category: "Operations",
                 salary: form.salary || undefined,
-                posted: "Today",
+                posted: editingJobId
+                  ? (employerJobs.find((existing) => existing.id === editingJobId)?.posted ??
+                    "Today")
+                  : "Today",
                 about: form.about,
                 responsibilities: [],
                 requiredSkills: skills,
@@ -124,11 +166,14 @@ function EmployerPage() {
                 inclusion,
                 accessSource: "Provided by employer",
               };
-              addEmployerJob(job);
-              toast.success("Job posted and live on AccessPath");
-              setForm(EMPTY);
-              setAccess([]);
-              setInclusion([]);
+              if (editingJobId) {
+                updateEmployerJob(job);
+                toast.success("Job post updated");
+              } else {
+                addEmployerJob(job);
+                toast.success("Job posted and live on AccessPath");
+              }
+              resetJobForm();
             }}
           >
             <div className="surface-card space-y-4 p-5">
@@ -297,8 +342,19 @@ function EmployerPage() {
             </div>
 
             <Button type="submit" size="lg">
-              Post job
+              {editingJobId ? "Save changes" : "Post job"}
             </Button>
+            {editingJobId ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="lg"
+                className="ml-2"
+                onClick={resetJobForm}
+              >
+                Cancel
+              </Button>
+            ) : null}
           </form>
         </section>
 
@@ -319,6 +375,15 @@ function EmployerPage() {
                     <p className="text-sm text-muted-foreground">
                       {j.company} • {j.city} • {j.workMode} • {j.experience}
                     </p>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="mt-3"
+                      onClick={() => startEditing(j)}
+                    >
+                      Edit job post
+                    </Button>
                     <ul className="mt-2 flex flex-wrap gap-2">
                       {j.access.map((a) => (
                         <li key={a}>
@@ -343,98 +408,126 @@ function EmployerPage() {
               employers, and accommodation requests appear only if the candidate chose to share
               them.
             </p>
+            {applicants.length ? (
+              <div className="mt-4 max-w-md">
+                <label htmlFor="applicant-search" className="sr-only">
+                  Search applicants
+                </label>
+                <Input
+                  id="applicant-search"
+                  type="search"
+                  value={applicantSearch}
+                  onChange={(event) => setApplicantSearch(event.target.value)}
+                  placeholder="Search by candidate, skills, job, or status"
+                />
+              </div>
+            ) : null}
             {applicants.length === 0 ? (
               <p className="surface-card mt-4 p-5 text-sm text-muted-foreground">
                 No applicants yet for your posted roles.
               </p>
             ) : (
-              <ul className="mt-4 space-y-4">
-                {applicants.map((a) => {
-                  const job = findJob(a.jobId);
-                  return (
-                    <li key={a.jobId} className="surface-card p-5">
-                      <h3 className="font-semibold">{profile.name || "Candidate"}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Applied {a.date} • {job?.title}
-                      </p>
-                      <dl className="mt-3 space-y-2 text-sm">
-                        <div>
-                          <dt className="text-muted-foreground">Skills</dt>
-                          <dd>
-                            {profile.skills.length ? profile.skills.join(" • ") : "Not provided"}
-                          </dd>
-                        </div>
-                        <div>
-                          <dt className="text-muted-foreground">Experience</dt>
-                          <dd>{profile.experienceBand || "Not provided"}</dd>
-                        </div>
-                        <div>
-                          <dt className="text-muted-foreground">Education</dt>
-                          <dd>{profile.education || "Not provided"}</dd>
-                        </div>
-                        <div>
-                          <dt className="text-muted-foreground">Resume</dt>
-                          <dd>{a.resumeName}</dd>
-                        </div>
-                        {a.shareAccommodations && a.accommodations.length ? (
-                          <div>
-                            <dt className="text-muted-foreground">
-                              Interview accommodation requested by candidate
-                            </dt>
-                            <dd>{a.accommodations.join(", ")}</dd>
-                          </div>
-                        ) : null}
-                      </dl>
-                      <div className="mt-3">
-                        <label htmlFor={`status-${a.jobId}`} className="block text-sm font-medium">
-                          Application status
-                        </label>
-                        <Select
-                          value={a.status}
-                          onValueChange={(v) => {
-                            setApplicationStatus(a.jobId, v as ApplicationStatus);
-                            toast.success(`Status updated to ${v}`);
-                          }}
-                        >
-                          <SelectTrigger id={`status-${a.jobId}`} className="mt-1.5 max-w-56">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {APPLICATION_STATUSES.map((s) => (
-                              <SelectItem key={s} value={s}>
-                                {s}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        {a.status === "Interview" ? (
-                          <div className="mt-3 max-w-md">
+              <>
+                {filteredApplicants.length === 0 ? (
+                  <p className="surface-card mt-4 p-5 text-sm text-muted-foreground">
+                    No applicants match your search.
+                  </p>
+                ) : (
+                  <ul className="mt-4 space-y-4">
+                    {filteredApplicants.map((a) => {
+                      const job = findJob(a.jobId);
+                      return (
+                        <li key={a.jobId} className="surface-card p-5">
+                          <h3 className="font-semibold">{profile.name || "Candidate"}</h3>
+                          <p className="text-sm text-muted-foreground">
+                            Applied {a.date} • {job?.title}
+                          </p>
+                          <dl className="mt-3 space-y-2 text-sm">
+                            <div>
+                              <dt className="text-muted-foreground">Skills</dt>
+                              <dd>
+                                {profile.skills.length
+                                  ? profile.skills.join(" • ")
+                                  : "Not provided"}
+                              </dd>
+                            </div>
+                            <div>
+                              <dt className="text-muted-foreground">Experience</dt>
+                              <dd>{profile.experienceBand || "Not provided"}</dd>
+                            </div>
+                            <div>
+                              <dt className="text-muted-foreground">Education</dt>
+                              <dd>{profile.education || "Not provided"}</dd>
+                            </div>
+                            <div>
+                              <dt className="text-muted-foreground">Resume</dt>
+                              <dd>{a.resumeName}</dd>
+                            </div>
+                            {a.shareAccommodations && a.accommodations.length ? (
+                              <div>
+                                <dt className="text-muted-foreground">
+                                  Interview accommodation requested by candidate
+                                </dt>
+                                <dd>{a.accommodations.join(", ")}</dd>
+                              </div>
+                            ) : null}
+                          </dl>
+                          <div className="mt-3">
                             <label
-                              htmlFor={`meeting-link-${a.jobId}`}
+                              htmlFor={`status-${a.jobId}`}
                               className="block text-sm font-medium"
                             >
-                              Interview meeting link
+                              Application status
                             </label>
-                            <Input
-                              id={`meeting-link-${a.jobId}`}
-                              type="url"
-                              value={a.interviewMeetingLink ?? ""}
-                              onChange={(event) =>
-                                setInterviewMeetingLink(a.jobId, event.target.value)
-                              }
-                              placeholder="https://meet.google.com/..."
-                              className="mt-1.5"
-                            />
-                            <p className="mt-1 text-xs text-muted-foreground">
-                              This link is visible to you and the candidate in the application tracker.
-                            </p>
+                            <Select
+                              value={a.status}
+                              onValueChange={(v) => {
+                                setApplicationStatus(a.jobId, v as ApplicationStatus);
+                                toast.success(`Status updated to ${v}`);
+                              }}
+                            >
+                              <SelectTrigger id={`status-${a.jobId}`} className="mt-1.5 max-w-56">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {APPLICATION_STATUSES.map((s) => (
+                                  <SelectItem key={s} value={s}>
+                                    {s}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            {a.status === "Interview" ? (
+                              <div className="mt-3 max-w-md">
+                                <label
+                                  htmlFor={`meeting-link-${a.jobId}`}
+                                  className="block text-sm font-medium"
+                                >
+                                  Interview meeting link
+                                </label>
+                                <Input
+                                  id={`meeting-link-${a.jobId}`}
+                                  type="url"
+                                  value={a.interviewMeetingLink ?? ""}
+                                  onChange={(event) =>
+                                    setInterviewMeetingLink(a.jobId, event.target.value)
+                                  }
+                                  placeholder="https://meet.google.com/..."
+                                  className="mt-1.5"
+                                />
+                                <p className="mt-1 text-xs text-muted-foreground">
+                                  This link is visible to you and the candidate in the application
+                                  tracker.
+                                </p>
+                              </div>
+                            ) : null}
                           </div>
-                        ) : null}
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </>
             )}
           </section>
         </div>
