@@ -666,11 +666,13 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 Create a `.env` file at the project root:
 
 ```env
-# AI — OpenRouter API key
-VITE_OPENROUTER_API_KEY=your_openrouter_api_key_here
-
-# Add any other required variables here
+# AI — Gemini API key from Google AI Studio (server-only; do not use a VITE_ prefix)
+GEMINI_API_KEY=your_gemini_api_key_here
 ```
+
+The AI features in this project call Gemini 2.5 Flash directly. Create a Gemini API key in Google
+AI Studio, then add it as `GEMINI_API_KEY` in your deployment host's server-side environment
+variables before redeploying. Never expose it in client-side code or use a `VITE_` prefix.
 
 > ⚠️ **Never commit `.env` or real API keys to GitHub.**
 
