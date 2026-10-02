@@ -248,6 +248,9 @@ export type Feedback = {
 };
 
 type State = {
+  theme: "dark" | "light";
+  setTheme: (t: "dark" | "light") => void;
+  toggleTheme: () => void;
   highContrast: boolean;
   setHighContrast: (v: boolean) => void;
   fontSize: FontSize;
@@ -324,6 +327,7 @@ function read<T>(fallback: T): T {
 
 export function AppStateProvider({ children }: { children: ReactNode }) {
   const [hydrated, setHydrated] = useState(false);
+  const [theme, setTheme] = useState<"dark" | "light">("dark");
   const [highContrast, setHighContrast] = useState(false);
   const [fontSize, setFontSize] = useState<FontSize>("medium");
   const [motion, setMotion] = useState<MotionPref>("normal");
@@ -351,6 +355,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const s = read({
+      theme: "dark" as "dark" | "light",
       highContrast: false,
       fontSize: "medium" as FontSize,
       savedJobs: [] as string[],
@@ -372,6 +377,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       actionPlans: {} as Record<string, ActionItem[]>,
       accessUpdates: {} as Record<string, AccessFeature[]>,
     });
+    setTheme(s.theme ?? "dark");
     setHighContrast(s.highContrast);
     setFontSize(s.fontSize);
     setMotion(s.motion);
@@ -445,6 +451,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     window.localStorage.setItem(
       KEY,
       JSON.stringify({
+        theme,
         highContrast,
         fontSize,
         motion,
@@ -469,6 +476,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     );
   }, [
     hydrated,
+    theme,
     highContrast,
     fontSize,
     motion,
@@ -493,10 +501,11 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (typeof document === "undefined") return;
+    document.documentElement.classList.toggle("dark", theme === "dark");
     document.documentElement.classList.toggle("hc", highContrast);
     document.documentElement.dataset["fontSize"] = fontSize;
     document.documentElement.dataset["motion"] = motion;
-  }, [highContrast, fontSize, motion]);
+  }, [theme, highContrast, fontSize, motion]);
 
   const toggleSaved = useCallback((id: string) => {
     setSavedJobs((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [id, ...prev]));
@@ -572,6 +581,9 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   }, [dyslexiaFont]);
 
   const value: State = {
+    theme,
+    setTheme,
+    toggleTheme: () => setTheme((t) => (t === "dark" ? "light" : "dark")),
     highContrast,
     setHighContrast,
     fontSize,

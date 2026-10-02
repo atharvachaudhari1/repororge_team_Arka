@@ -14,6 +14,8 @@ import {
   Waves,
   X,
   BookOpen,
+  Moon,
+  Sun,
 } from "lucide-react";
 import { useAppState, type FontSize, type MotionPref, type AccessibilityPreset } from "@/lib/app-state";
 import { Button } from "@/components/ui/button";
@@ -45,6 +47,8 @@ function Group({ label, id, children }: { label: string; id: string; children: R
 
 export function AccessibilityToolbar() {
   const {
+    theme,
+    toggleTheme,
     highContrast,
     setHighContrast,
     fontSize,
@@ -85,6 +89,17 @@ export function AccessibilityToolbar() {
             <p className="text-xs font-medium">Ableo Accessibility Suite</p>
           </div>
           <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="h-8 gap-1.5 text-xs font-semibold"
+              onClick={toggleTheme}
+              aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+            >
+              {theme === "dark" ? <Sun className="size-3.5 text-warning" /> : <Moon className="size-3.5 text-brand" />}
+              <span className="sr-only sm:not-sr-only">{theme === "dark" ? "Light" : "Dark"}</span>
+            </Button>
             <Button
               type="button"
               size="sm"
@@ -199,6 +214,21 @@ export function AccessibilityToolbar() {
                   {s.label}
                 </Button>
               ))}
+            </Group>
+
+            <Group label="Theme" id="a11y-theme">
+              <Button
+                type="button"
+                size="sm"
+                variant={theme === "dark" ? "default" : "outline"}
+                aria-pressed={theme === "dark"}
+                className="h-8 gap-1.5 px-2.5 text-xs"
+                onClick={toggleTheme}
+                aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+              >
+                {theme === "dark" ? <Moon aria-hidden="true" className="size-3.5 text-cyan-400" /> : <Sun aria-hidden="true" className="size-3.5 text-amber-500" />}
+                {theme === "dark" ? "Dark" : "Light"}
+              </Button>
             </Group>
 
             <Group label="Contrast" id="a11y-contrast">
