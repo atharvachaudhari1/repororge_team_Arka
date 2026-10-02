@@ -123,7 +123,7 @@ async function passwordHash(password: string, salt: string) {
 }
 
 export function getAdminEmails(): string[] {
-  const envAdmins = process.env["ADMIN_EMAILS"] || "fernandesallan745@gmail.com";
+  const envAdmins = process.env["ADMIN_EMAILS"] || "";
   return envAdmins
     .split(",")
     .map((e) => e.trim().toLowerCase())
@@ -139,8 +139,17 @@ export function isUserAdmin(userDoc?: Record<string, unknown> | UserRow | null):
   if (doc["role"] === "admin") {
     return true;
   }
-  const email = String(doc["email"] || "").toLowerCase();
-  return getAdminEmails().includes(email);
+  const email = String(doc["email"] || "")
+    .toLowerCase()
+    .trim();
+  if (!email) return false;
+  const adminEmails = getAdminEmails();
+  return adminEmails.length > 0 && adminEmails.includes(email);
+}
+
+export function isEmailVerificationRequired(): boolean {
+  const val = process.env["REQUIRE_EMAIL_VERIFICATION"];
+  return val === "true" || val === "1";
 }
 
 export async function hashResetToken(token: string): Promise<string> {
@@ -311,6 +320,25 @@ export async function registerAccountHandler(data: {
         createdAt: new Date(),
       });
       const userId = insertResult.insertedId.toString();
+
+      if (isEmailVerificationRequired()) {
+        void requestEmailVerificationHandler({ email: normalizedEmail });
+        return {
+          ok: true as const,
+          requiresVerification: true as const,
+          message:
+            "Account registered! A 6-digit verification code has been sent to your email. Please verify your email to activate your account.",
+          user: {
+            id: userId,
+            fullName: cleanName,
+            email: normalizedEmail,
+            role: safeRole,
+            emailVerified: false,
+            isAdmin: false,
+          },
+        };
+      }
+
       const token = await createSession("mongo", userId, safeRole);
       setSessionCookie(token);
       return {
@@ -343,6 +371,18 @@ export async function registerAccountHandler(data: {
     )
     .run(cleanName, normalizedEmail, safeRole, hashed, salt);
   const row = db.prepare("SELECT * FROM users WHERE id = ?").get(result.lastInsertRowid) as UserRow;
+
+  if (isEmailVerificationRequired()) {
+    void requestEmailVerificationHandler({ email: normalizedEmail });
+    return {
+      ok: true as const,
+      requiresVerification: true as const,
+      message:
+        "Account registered! A 6-digit verification code has been sent to your email. Please verify your email to activate your account.",
+      user: { ...publicUser(row), isAdmin: false },
+    };
+  }
+
   const token = await createSession(db, row.id, safeRole);
   setSessionCookie(token);
   return { ok: true as const, user: { ...publicUser(row), isAdmin: false }, token };
@@ -421,6 +461,19 @@ export async function loginAccountHandler(data: {
         return {
           ok: false as const,
           error: `Incorrect email, password, or portal. (${remaining} attempt${remaining === 1 ? "" : "s"} remaining before lock)`,
+        };
+      }
+
+      // Check email verification enforcement
+      const isVerified = Boolean(userDoc!["emailVerified"] ?? userDoc!["email_verified"]);
+      if (isEmailVerificationRequired() && !isVerified && !isAdmin) {
+        void requestEmailVerificationHandler({ email: String(userDoc!["email"]) });
+        return {
+          ok: false as const,
+          error:
+            "Email verification is required before signing in. A 6-digit verification code has been sent to your email.",
+          requiresVerification: true as const,
+          email: String(userDoc!["email"]),
         };
       }
 
@@ -506,6 +559,19 @@ export async function loginAccountHandler(data: {
     return {
       ok: false as const,
       error: `Incorrect email, password, or portal. (${remaining} attempt${remaining === 1 ? "" : "s"} remaining before lock)`,
+    };
+  }
+
+  // Check email verification enforcement
+  const isRowVerified = Boolean(row!.email_verified);
+  if (isEmailVerificationRequired() && !isRowVerified && !isRowAdmin) {
+    void requestEmailVerificationHandler({ email: row!.email });
+    return {
+      ok: false as const,
+      error:
+        "Email verification is required before signing in. A 6-digit verification code has been sent to your email.",
+      requiresVerification: true as const,
+      email: row!.email,
     };
   }
 
@@ -821,7 +887,31 @@ export async function verifyEmailHandler(data: { email: string; code: string }) 
             { $set: { emailVerified: true, email_verified: 1 } },
           );
         await mongo.collection("email_verifications").deleteOne({ _id: row["_id"] });
-        return { ok: true as const, message: "Email successfully verified!" };
+
+        const userDoc = await mongo.collection("users").findOne({ email: normalizedEmail });
+        let token: string | undefined;
+        let userPayload: AuthUser | undefined;
+        if (userDoc) {
+          const userId = userDoc["_id"].toString();
+          const userRole = (userDoc["role"] as AccountRole) || "candidate";
+          token = await createSession("mongo", userId, userRole);
+          setSessionCookie(token);
+          userPayload = {
+            id: userId,
+            fullName: String(userDoc["fullName"] || userDoc["full_name"]),
+            email: normalizedEmail,
+            role: userRole,
+            emailVerified: true,
+            isAdmin: isUserAdmin(userDoc),
+          };
+        }
+
+        return {
+          ok: true as const,
+          message: "Email successfully verified! Welcome to Ableo.",
+          user: userPayload,
+          token,
+        };
       }
       return { ok: false as const, error: "Invalid or expired verification code." };
     } catch (err) {
@@ -840,7 +930,23 @@ export async function verifyEmailHandler(data: { email: string; code: string }) 
 
   db.prepare("UPDATE users SET email_verified = 1 WHERE email = ?").run(normalizedEmail);
   db.prepare("DELETE FROM email_verifications WHERE id = ?").run(row.id);
-  return { ok: true as const, message: "Email successfully verified!" };
+
+  const userRow = db.prepare("SELECT * FROM users WHERE email = ?").get(normalizedEmail) as
+    UserRow | undefined;
+  let token: string | undefined;
+  let userPayload: AuthUser | undefined;
+  if (userRow) {
+    token = await createSession(db, userRow.id, userRow.role);
+    setSessionCookie(token);
+    userPayload = { ...publicUser(userRow), isAdmin: isUserAdmin(userRow), emailVerified: true };
+  }
+
+  return {
+    ok: true as const,
+    message: "Email successfully verified! Welcome to Ableo.",
+    user: userPayload,
+    token,
+  };
 }
 
 export async function verifyAiAuthAndRateLimit(): Promise<
@@ -891,6 +997,15 @@ export async function verifyAiAuthAndRateLimit(): Promise<
         return {
           ok: false,
           error: "Your session has expired or is invalid. Please sign in again.",
+        };
+      }
+
+      const isUserVerified = Boolean(userDoc["emailVerified"] ?? userDoc["email_verified"]);
+      if (isEmailVerificationRequired() && !isUserVerified && !isUserAdmin(userDoc)) {
+        return {
+          ok: false,
+          error:
+            "Email verification required: Please verify your email before accessing AI features.",
         };
       }
 
@@ -966,6 +1081,14 @@ export async function verifyAiAuthAndRateLimit(): Promise<
     return {
       ok: false,
       error: "Your session has expired or is invalid. Please sign in again to access AI features.",
+    };
+  }
+
+  const isRowVerified = Boolean(row.email_verified);
+  if (isEmailVerificationRequired() && !isRowVerified && !isUserAdmin(row)) {
+    return {
+      ok: false,
+      error: "Email verification required: Please verify your email before accessing AI features.",
     };
   }
 

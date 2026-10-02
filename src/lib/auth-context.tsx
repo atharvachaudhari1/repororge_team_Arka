@@ -12,11 +12,20 @@ import {
 type Credentials = { email: string; password: string; role: AccountRole };
 type Registration = Credentials & { fullName: string };
 
+export type AuthResult = {
+  ok: boolean;
+  error?: string | undefined;
+  user?: AuthUser | undefined;
+  requiresVerification?: boolean | undefined;
+  email?: string | undefined;
+  message?: string | undefined;
+};
+
 type AuthState = {
   user: AuthUser | null;
   isLoading: boolean;
-  login: (data: Credentials) => Promise<{ ok: boolean; error?: string; user?: AuthUser }>;
-  register: (data: Registration) => Promise<{ ok: boolean; error?: string; user?: AuthUser }>;
+  login: (data: Credentials) => Promise<AuthResult>;
+  register: (data: Registration) => Promise<AuthResult>;
   logout: () => void;
 };
 
@@ -51,15 +60,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     () => ({
       user,
       isLoading,
-      login: async (data) => {
-        const res = await loginFn({ data });
-        if (!res.ok || !res.user) return { ok: false, error: res.error };
+      login: async (data): Promise<AuthResult> => {
+        const res = (await loginFn({ data })) as {
+          ok: boolean;
+          error?: string;
+          user?: AuthUser;
+          requiresVerification?: boolean;
+          email?: string;
+        };
+        if (!res.ok) {
+          return {
+            ok: false,
+            error: res.error,
+            requiresVerification: res.requiresVerification,
+            email: res.email,
+          };
+        }
+        if (!res.user) return { ok: false, error: res.error };
         setUser(res.user);
         return { ok: true, user: res.user };
       },
-      register: async (data) => {
-        const res = await registerFn({ data });
-        if (!res.ok || !res.user) return { ok: false, error: res.error };
+      register: async (data): Promise<AuthResult> => {
+        const res = (await registerFn({ data })) as {
+          ok: boolean;
+          error?: string;
+          user?: AuthUser;
+          requiresVerification?: boolean;
+          message?: string;
+        };
+        if (!res.ok) return { ok: false, error: res.error };
+        if (res.requiresVerification) {
+          return {
+            ok: true,
+            requiresVerification: true,
+            message: res.message,
+            user: res.user,
+          };
+        }
+        if (!res.user) return { ok: false, error: res.error };
         setUser(res.user);
         return { ok: true, user: res.user };
       },

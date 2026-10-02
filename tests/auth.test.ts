@@ -10,6 +10,7 @@ import {
   getAdminEmails,
   saveUserProfileHandler,
   getUserProfileHandler,
+  verifyEmailHandler,
 } from "@/lib/auth.server";
 
 describe("Authentication & Session Management", () => {
@@ -33,12 +34,67 @@ describe("Authentication & Session Management", () => {
     expect(hash1).not.toBe(token);
   });
 
-  it("identifies designated admin emails for multi-portal access", () => {
-    const adminList = getAdminEmails();
-    expect(adminList).toContain("fernandesallan745@gmail.com");
+  it("requires ADMIN_EMAILS to grant admin access and has no hardcoded fallback", () => {
+    const originalAdminEnv = process.env["ADMIN_EMAILS"];
+    try {
+      delete process.env["ADMIN_EMAILS"];
+      expect(getAdminEmails()).toEqual([]);
+      expect(isUserAdmin({ email: "admin@example.com" })).toBe(false);
 
-    expect(isUserAdmin({ email: "fernandesallan745@gmail.com" })).toBe(true);
-    expect(isUserAdmin({ email: "regular_user@example.com", isAdmin: false })).toBe(false);
+      process.env["ADMIN_EMAILS"] = "admin@example.com, superuser@example.com";
+      const adminList = getAdminEmails();
+      expect(adminList).toEqual(["admin@example.com", "superuser@example.com"]);
+      expect(isUserAdmin({ email: "admin@example.com" })).toBe(true);
+      expect(isUserAdmin({ email: "superuser@example.com" })).toBe(true);
+      expect(isUserAdmin({ email: "regular_user@example.com", isAdmin: false })).toBe(false);
+    } finally {
+      if (originalAdminEnv !== undefined) {
+        process.env["ADMIN_EMAILS"] = originalAdminEnv;
+      } else {
+        delete process.env["ADMIN_EMAILS"];
+      }
+    }
+  });
+
+  it("enforces email verification when REQUIRE_EMAIL_VERIFICATION is enabled", async () => {
+    const originalVerEnv = process.env["REQUIRE_EMAIL_VERIFICATION"];
+    try {
+      process.env["REQUIRE_EMAIL_VERIFICATION"] = "true";
+      const unverifiedEmail = `unverified_${Date.now()}@example.com`;
+
+      const reg = await registerAccountHandler({
+        fullName: "Unverified User",
+        email: unverifiedEmail,
+        password: "Password123!",
+        role: "candidate",
+      });
+
+      expect(reg.ok).toBe(true);
+      expect(reg.requiresVerification).toBe(true);
+
+      const loginBlocked = await loginAccountHandler({
+        email: unverifiedEmail,
+        password: "Password123!",
+        role: "candidate",
+      });
+
+      expect(loginBlocked.ok).toBe(false);
+      expect(loginBlocked.requiresVerification).toBe(true);
+      expect(loginBlocked.error).toMatch(/verification is required/i);
+
+      const invalidCode = await verifyEmailHandler({
+        email: unverifiedEmail,
+        code: "000000",
+      });
+      expect(invalidCode.ok).toBe(false);
+      expect(invalidCode.error).toMatch(/invalid or expired/i);
+    } finally {
+      if (originalVerEnv !== undefined) {
+        process.env["REQUIRE_EMAIL_VERIFICATION"] = originalVerEnv;
+      } else {
+        delete process.env["REQUIRE_EMAIL_VERIFICATION"];
+      }
+    }
   });
 
   it("creates a new user account with hashed credentials", async () => {
