@@ -176,6 +176,12 @@ export function AccessibilityToolbar() {
             ) : null}
           </Group>
 
+          {activePreset === "blind" ? (
+            <p role="status" className="text-xs text-muted-foreground">
+              Vision mode active: high contrast, extra-large text, and reduced motion.
+            </p>
+          ) : null}
+
           {/* Granular Accessibility Controls */}
           <div className="flex flex-wrap items-center gap-3">
             <Group label="Text" id="a11y-size">

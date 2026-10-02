@@ -75,7 +75,7 @@ export function JobCard({ job }: { job: Job }) {
               {job.title}
             </Link>
           </h3>
-          <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
+          <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
             <span className="flex items-center gap-1 font-medium text-foreground">
               <Building2 aria-hidden="true" className="size-4" />
               {job.company}
@@ -93,7 +93,7 @@ export function JobCard({ job }: { job: Job }) {
                 {job.salary.replace("₹", "")}
               </span>
             ) : null}
-          </p>
+          </div>
         </div>
         <Button
           type="button"

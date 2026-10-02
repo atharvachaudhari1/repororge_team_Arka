@@ -31,6 +31,7 @@ import {
 import { useAppState, type Profile } from "@/lib/app-state";
 import { ACCESS_PREFERENCE_OPTIONS, normalisePrefs } from "@/lib/accessibility";
 import { parseResumeText, DEMO_RESUMES, type ParsedResume } from "@/lib/resume-parser";
+import { extractResumeText } from "@/lib/resume-file";
 
 export const Route = createFileRoute("/profile")({
   head: () => ({
@@ -85,50 +86,42 @@ function ProfilePage() {
   const set = <K extends keyof Profile>(key: K, value: Profile[K]) =>
     setForm((p) => ({ ...p, [key]: value }));
 
-  const applyExtracted = (parsed: ParsedResume) => {
-    setForm((prev) => ({
-      ...prev,
-      name: parsed.name || prev.name,
-      displayName: parsed.name || prev.displayName,
-      headline: parsed.headline || prev.headline,
-      email: parsed.email || prev.email,
-      skills: Array.from(new Set([...prev.skills, ...parsed.skills])),
-      education: parsed.education || prev.education,
-      experience: parsed.experience || prev.experience,
-      experienceBand: parsed.experienceBand || prev.experienceBand,
-      careerInterests: parsed.careerInterests || prev.careerInterests,
-      workPreference: parsed.workPreference || prev.workPreference,
-      resumeName: parsed.name ? `${parsed.name.replace(/\s+/g, "_")}_Resume.pdf` : prev.resumeName,
-      resumeText: parsed.rawText || prev.resumeText,
+  const applyExtracted = (parsed: ParsedResume, sourceFileName?: string) => {
+    const previous = form;
+    const nextProfile = {
+      ...previous,
+      name: parsed.name || previous.name,
+      displayName: parsed.name || previous.displayName,
+      headline: parsed.headline || previous.headline,
+      email: parsed.email || previous.email,
+      skills: Array.from(new Set([...previous.skills, ...parsed.skills])),
+      education: parsed.education || previous.education,
+      experience: parsed.experience || previous.experience,
+      experienceBand: parsed.experienceBand || previous.experienceBand,
+      careerInterests: parsed.careerInterests || previous.careerInterests,
+      certifications: parsed.certifications || previous.certifications,
+      preferredLocation: parsed.preferredLocation || previous.preferredLocation,
+      workPreference: parsed.workPreference || previous.workPreference,
+      resumeName: sourceFileName || (parsed.name ? `${parsed.name.replace(/\s+/g, "_")}_Resume.pdf` : previous.resumeName),
+      resumeText: parsed.rawText || previous.resumeText,
       accessibilityPreferences: Array.from(
-        new Set([...prev.accessibilityPreferences, ...parsed.suggestedAccommodations]),
+        new Set([...previous.accessibilityPreferences, ...parsed.suggestedAccommodations]),
       ),
-    }));
-    toast.success("Profile populated from resume OCR & AI extraction!");
+    };
+    setForm(nextProfile);
+    saveProfile(nextProfile);
+    toast.success("Profile saved from your resume extraction.");
   };
 
   const handleFileUpload = async (file: File) => {
     setIsScanning(true);
     try {
-      let rawText = "";
-      if (/\.(txt|md)$/i.test(file.name)) {
-        rawText = await file.text();
-      } else {
-        // Simulated OCR text extraction for PDF, DOCX, and Image CVs
-        await new Promise((r) => setTimeout(r, 900));
-        rawText = `${file.name.replace(/\.[^/.]+$/, "").replace(/[_-]/g, " ")}
-Frontend Developer & Accessibility Specialist
-Email: candidate@example.com
-Experience: 2 years building WCAG 2.2 accessible interfaces with React, TypeScript and screen-reader testing.
-Skills: React, TypeScript, JavaScript, HTML, CSS, WAI-ARIA, Jest, Git
-Education: Bachelor in Computer Science
-Accommodations: Screen-reader-friendly assessment, remote work, flexible scheduling`;
-      }
+      const rawText = await extractResumeText(file);
       const parsed = parseResumeText(rawText, file.name);
       setExtractedData(parsed);
-      applyExtracted(parsed);
-    } catch {
-      toast.error("Could not scan file. Try pasting text in Resume Match.");
+      applyExtracted(parsed, file.name);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not scan this resume.");
     } finally {
       setIsScanning(false);
     }
@@ -177,7 +170,7 @@ Accommodations: Screen-reader-friendly assessment, remote work, flexible schedul
                 Auto-Build Profile from Resume (OCR &amp; AI)
               </h2>
               <p className="text-xs text-muted-foreground">
-                Upload a CV (PDF, Image, DOCX, TXT) to automatically extract your skills, education, experience, and accessibility needs.
+                Upload a CV (PDF, DOCX, TXT) to automatically extract your skills, education, experience, and accessibility needs.
               </p>
             </div>
           </div>
@@ -193,13 +186,13 @@ Accommodations: Screen-reader-friendly assessment, remote work, flexible schedul
                   <Loader2 className="size-4 animate-spin" /> Scanning Resume…
                 </span>
               ) : (
-                "Upload Resume (PDF, DOCX, Image, TXT)"
+                "Upload Resume (PDF, DOCX, TXT)"
               )}
             </label>
             <input
               id="ocr-upload"
               type="file"
-              accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg"
+              accept=".pdf,.docx,.txt,.md"
               className="sr-only"
               disabled={isScanning}
               onChange={(e) => {
@@ -253,7 +246,7 @@ Accommodations: Screen-reader-friendly assessment, remote work, flexible schedul
                 className="h-7 text-xs"
                 onClick={() => applyExtracted(extractedData)}
               >
-                Re-apply to fields
+                Apply again
               </Button>
             </div>
             <div className="mt-2 flex flex-wrap gap-1.5">

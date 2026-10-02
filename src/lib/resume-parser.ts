@@ -11,6 +11,7 @@ export type ParsedResume = {
   skills: string[];
   careerInterests: string;
   certifications: string;
+  preferredLocation: string;
   workPreference: Profile["workPreference"];
   suggestedAccommodations: AccessFeature[];
   rawText: string;
@@ -160,26 +161,27 @@ export function parseResumeText(rawText: string, fileName?: string): ParsedResum
   const text = rawText.trim();
   const lines = text.split("\n").map((l) => l.trim()).filter(Boolean);
 
-  // Extract candidate name: usually first non-empty line
-  let name = "";
-  if (lines.length > 0) {
-    const candidateNameLine = lines[0] ?? "";
-    if (candidateNameLine.length < 50 && !candidateNameLine.includes("@") && !candidateNameLine.toLowerCase().includes("resume") && !candidateNameLine.toLowerCase().includes("curriculum")) {
-      name = candidateNameLine;
-    }
-  }
+  // Extract a real name near the contact header, never a filename, title, or section heading.
+  const isName = (line: string) => {
+    const value = line.trim();
+    const blocked = /\b(cv|resume|ats|curriculum|portfolio|linkedin|github|summary|objective|experience|education|skills|projects?|certifications?)\b/i;
+    return value.length <= 60
+      && !blocked.test(value)
+      && /^[A-Za-z][A-Za-z.'-]+(?:\s+[A-Za-z][A-Za-z.'-]+){1,3}$/.test(value);
+  };
+  const emailLine = lines.findIndex((line) => line.includes("@"));
+  const headerLines = emailLine >= 0 ? lines.slice(Math.max(0, emailLine - 4), emailLine + 1) : lines.slice(0, 8);
+  const name = headerLines.find(isName) ?? lines.find(isName) ?? "";
 
   // Extract email
   const emailMatch = text.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
   const email = emailMatch ? emailMatch[0] : "";
 
   // Extract Headline
-  let headline = "";
-  if (lines.length > 1 && !lines[1]?.includes("@")) {
-    headline = lines[1] || "";
-  } else if (lines.length > 2 && !lines[2]?.includes("@")) {
-    headline = lines[2] || "";
-  }
+  const nameIndex = name ? lines.indexOf(name) : -1;
+  const headline = lines
+    .slice(Math.max(0, nameIndex + 1), Math.max(0, nameIndex + 5))
+    .find((line) => line.length <= 120 && !line.includes("@") && !isName(line) && !/^(phone|mobile|email|location)\b/i.test(line)) ?? "";
 
   // Detect skills from comprehensive tech & soft skills dictionary
   const KNOWN_SKILLS = [
@@ -220,8 +222,16 @@ export function parseResumeText(rawText: string, fileName?: string): ParsedResum
     experience = expMatch[0].replace(/^(?:experience|employment|work history)[:\s-]*/i, "").trim().slice(0, 400);
   }
 
+  // Extract certifications and location only when the resume explicitly provides them.
+  const certificationMatch = text.match(/(?:certifications?|licenses?)[\s\S]*?(?=(?:education|experience|employment|projects|skills|accommodations|$))/i);
+  const certifications = certificationMatch
+    ? certificationMatch[0].replace(/^(?:certifications?|licenses?)[:\s-]*/i, "").trim().slice(0, 300)
+    : "";
+  const locationMatch = text.match(/(?:location|address|based in)\s*[:\-]?\s*([^\n|]+)/i);
+  const preferredLocation = locationMatch?.[1]?.trim() ?? "";
+
   // Determine experience band
-  let experienceBand: Profile["experienceBand"] = "0-2 years";
+  let experienceBand: Profile["experienceBand"] = "";
   if (/\b(senior|lead|architect|5\+|6\+|7\+|8\+|9\+|10\+)\b/i.test(text)) {
     experienceBand = "5+ years";
   } else if (/\b(2-5|3 years|4 years|mid-level)\b/i.test(text)) {
@@ -231,7 +241,7 @@ export function parseResumeText(rawText: string, fileName?: string): ParsedResum
   }
 
   // Work preference
-  let workPreference: Profile["workPreference"] = "Remote";
+  let workPreference: Profile["workPreference"] = "";
   if (/\b(remote only|fully remote|remote work)\b/i.test(text)) {
     workPreference = "Remote";
   } else if (/\bhybrid\b/i.test(text)) {
@@ -268,17 +278,18 @@ export function parseResumeText(rawText: string, fileName?: string): ParsedResum
   }
 
   return {
-    name: name || (fileName ? fileName.replace(/\.[^/.]+$/, "").replace(/[_-]/g, " ") : "Candidate"),
-    headline: headline || (matchedSkills.length > 0 ? `${matchedSkills.slice(0, 3).join(" • ")} Specialist` : "Professional"),
-    email: email || "candidate@example.com",
-    education: education || "Higher Education Degree",
-    experience: experience || "Professional experience in inclusive teams.",
+    name,
+    headline,
+    email,
+    education,
+    experience,
     experienceBand,
-    skills: matchedSkills.length > 0 ? matchedSkills : ["Communication", "Problem Solving", "Collaboration"],
-    careerInterests: headline || (matchedSkills.length > 0 ? matchedSkills.slice(0, 2).join(", ") : "Professional Growth"),
-    certifications: "",
+    skills: matchedSkills,
+    careerInterests: headline,
+    certifications,
+    preferredLocation,
     workPreference,
-    suggestedAccommodations: suggestedAccommodations.length > 0 ? suggestedAccommodations : ["flexible_work", "accessible_interview"],
+    suggestedAccommodations,
     rawText: text,
     confidence: Math.min(98, 70 + matchedSkills.length * 3),
   };

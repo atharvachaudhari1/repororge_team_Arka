@@ -77,6 +77,9 @@ function Dashboard() {
   const accessNeedsCount = accessPrefs.filter((p) => !p.startsWith("self_") && !p.startsWith("custom:")).length;
   const selfIdEntries = accessPrefs.filter((p) => p.startsWith("self_"));
   const matchingAccessJobs = allJobs.filter((j) => j.access.length > 0).length;
+  const dashboardHeadline = profile.headline.length > 160
+    ? `${profile.headline.slice(0, 157).trimEnd()}…`
+    : profile.headline;
 
   // Detect which disability categories user has selected
   const disabilityCategories: { icon: typeof Eye; label: string; color: string }[] = [];
@@ -100,7 +103,7 @@ function Dashboard() {
             {profile.name ? `Welcome back, ${profile.name.split(" ")[0]}` : "Your Dashboard"}
           </h1>
           <p className="mt-1 text-muted-foreground">
-            {profile.headline || "Ableo: Where Ability Meets Opportunity. Your disability-first job matching & career hub."}
+            {dashboardHeadline || "Ableo: Where Ability Meets Opportunity. Your disability-first job matching & career hub."}
           </p>
         </div>
         <Badge variant="outline" className="self-start sm:self-center bg-brand/5 border-brand/30 text-brand gap-1">

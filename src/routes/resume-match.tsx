@@ -12,7 +12,8 @@ import {
 } from "@/components/ui/select";
 import { useAppState } from "@/lib/app-state";
 import { analyseResume } from "@/lib/matching";
-import { DEMO_RESUMES, parseResumeText } from "@/lib/resume-parser";
+import { DEMO_RESUMES } from "@/lib/resume-parser";
+import { extractResumeText } from "@/lib/resume-file";
 
 export const Route = createFileRoute("/resume-match")({
   head: () => ({
@@ -21,7 +22,7 @@ export const Route = createFileRoute("/resume-match")({
       {
         name: "description",
         content:
-          "Upload your resume (PDF, DOCX, Image, TXT) and Ableo will analyze skill coverage, accommodation compatibility, and suggest improvements — fully accessible for screen readers and voice input.",
+          "Upload your resume (PDF, DOCX, TXT) and Ableo will analyze skill coverage, accommodation compatibility, and suggest improvements — fully accessible for screen readers and voice input.",
       },
       { property: "og:title", content: "Resume to Job Match — Ableo" },
       { property: "og:description", content: "Accessible resume analysis: skills match, accommodation fit, and AI suggestions for PwD." },
@@ -88,31 +89,27 @@ function ResumeMatchPage() {
 
           <div>
             <label htmlFor="resume-upload" className="block text-sm font-medium">
-              Upload CV / Resume (PDF, DOCX, Image, TXT)
+              Upload CV / Resume (PDF, DOCX, TXT)
             </label>
             <p className="mt-0.5 text-xs text-muted-foreground">
-              Automated OCR &amp; text extraction scans your document for skills and experience.
+              Your actual document text is extracted locally for skill and experience analysis.
             </p>
             <Input
               id="resume-upload"
               type="file"
-              accept=".txt,.md,.pdf,.doc,.docx,.png,.jpg,.jpeg"
+              accept=".txt,.md,.pdf,.docx"
               className="mt-1.5"
               onChange={async (e) => {
                 const file = e.target.files?.[0];
                 if (!file) return;
                 setIsScanning(true);
                 try {
-                  if (/\.(txt|md)$/i.test(file.name)) {
-                    const content = await file.text();
-                    setText(content);
-                    toast.success(`${file.name} loaded`);
-                  } else {
-                    await new Promise((r) => setTimeout(r, 700));
-                    const parsed = parseResumeText("", file.name);
-                    setText(parsed.rawText || DEMO_RESUMES[0]!.parsed.rawText);
-                    toast.success(`${file.name} scanned successfully via OCR!`);
-                  }
+                  const content = await extractResumeText(file);
+                  setText(content);
+                  saveProfile({ ...profile, resumeName: file.name, resumeText: content });
+                  toast.success(`${file.name} loaded and saved for matching.`);
+                } catch (error) {
+                  toast.error(error instanceof Error ? error.message : "Could not read this resume.");
                 } finally {
                   setIsScanning(false);
                 }
