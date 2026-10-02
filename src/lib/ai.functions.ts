@@ -1,0 +1,457 @@
+import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
+import type { SkillGapItem } from "./app-state";
+
+/* ------------------------------------------------------------------ */
+/*  Shared AI helper                                                   */
+/* ------------------------------------------------------------------ */
+
+/** Safely views unknown JSON as an array of objects (never trusts the model). */
+function asRecords(value: unknown): Record<string, unknown>[] {
+  return Array.isArray(value)
+    ? value.filter((v): v is Record<string, unknown> => typeof v === "object" && v !== null)
+    : [];
+}
+
+function asStringList(value: unknown): string[] {
+  return Array.isArray(value) ? value.map(String) : [];
+}
+
+async function callAI(system: string, user: string, maxTokens = 1200) {
+  const key = process.env["LOVABLE_API_KEY"];
+  if (!key) return { ok: false as const, error: "AI is not configured on this deployment." };
+  try {
+    const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Lovable-API-Key": key },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash",
+        messages: [
+          { role: "system", content: system },
+          { role: "user", content: user },
+        ],
+        max_tokens: maxTokens,
+      }),
+    });
+    if (!res.ok) {
+      const status = res.status;
+      return {
+        ok: false as const,
+        error:
+          status === 429
+            ? "AI is busy right now. Please try again in a moment."
+            : "We couldn't reach the AI assistant right now.",
+      };
+    }
+    const json = (await res.json()) as { choices?: { message?: { content?: string } }[] };
+    const content = json.choices?.[0]?.message?.content ?? "";
+    return { ok: true as const, content };
+  } catch {
+    return { ok: false as const, error: "We couldn't reach the AI assistant." };
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/*  Before You Apply (original)                                         */
+/* ------------------------------------------------------------------ */
+
+const briefingInput = z.object({ brief: z.string().min(1).max(6000) });
+
+/**
+ * Generates the plain-language part of the "Before you apply" panel.
+ * The payload is job + skills information only — never identity, disability or
+ * gender data — and the client falls back to deterministic advice on failure.
+ */
+export const generateApplyBriefing = createServerFn({ method: "POST" })
+  .inputValidator((data) => briefingInput.parse(data))
+  .handler(async ({ data }) => {
+    const system = [
+      "You advise job seekers in India on an accessibility-first job platform.",
+      "Write in plain, respectful, empowering language. Never mention disability, gender identity or protected characteristics.",
+      "Only use facts from the provided brief. Never invent accessibility information; if something is missing, say it is not provided.",
+      'Reply with JSON only: {"advice":["2 to 4 short sentences"],"question":"one question the candidate can send to HR"}',
+    ].join(" ");
+    const result = await callAI(system, data.brief, 900);
+    if (!result.ok) return { ok: false as const, error: result.error };
+    const match = result.content.match(/\{[\s\S]*\}/);
+    if (!match) return { ok: false as const, error: "The AI reply could not be read." };
+    const parsed = JSON.parse(match[0]) as { advice?: unknown; question?: unknown };
+    const advice = Array.isArray(parsed.advice)
+      ? parsed.advice
+          .map((a) => String(a))
+          .filter(Boolean)
+          .slice(0, 4)
+      : [];
+    if (!advice.length) return { ok: false as const, error: "The AI reply was empty." };
+    return {
+      ok: true as const,
+      advice,
+      question: typeof parsed.question === "string" ? parsed.question : "",
+    };
+  });
+
+/* ------------------------------------------------------------------ */
+/*  Career GPS — AI functions                                           */
+/* ------------------------------------------------------------------ */
+
+const assessmentInput = z.object({
+  profile: z.object({
+    name: z.string(),
+    headline: z.string(),
+    skills: z.array(z.string()),
+    education: z.string(),
+    experience: z.string(),
+    experienceBand: z.string(),
+    careerInterests: z.string(),
+    certifications: z.string(),
+    preferredLocation: z.string(),
+    workPreference: z.string(),
+  }),
+  additionalInfo: z.object({
+    interests: z.array(z.string()),
+    careerGoals: z.string(),
+  }),
+});
+
+/**
+ * AI Career Discovery — recommends 3-5 career paths based on the user's profile.
+ * Never uses disability, gender, pronouns, or identity data.
+ */
+export const generateCareerDiscoveries = createServerFn({ method: "POST" })
+  .inputValidator((data) => assessmentInput.parse(data))
+  .handler(async ({ data }) => {
+    const system = [
+      "You are a career advisor on an accessibility-first job platform in India.",
+      "Analyse the user's professional profile and recommend 3-5 career paths they could pursue.",
+      "Use ONLY education, skills, experience, interests, and career goals. Never use disability, gender identity, pronouns, or any protected characteristics.",
+      'Reply with JSON only: {"careers":[{"title":"Career Title","fitScore":85,"why":"Brief explanation of why this career may fit","relevantSkills":["skill1","skill2"],"skillsToDevelop":["skill1","skill2"],"nextAction":"One concrete next step"}]}',
+      "fitScore should be 40-100 based on alignment with their profile. Include a mix of strong and stretch options.",
+      "Keep explanations concise but helpful. Use Indian job market context where relevant.",
+    ].join(" ");
+
+    const brief = [
+      `Name: ${data.profile.name || "Not provided"}`,
+      `Headline: ${data.profile.headline || "Not provided"}`,
+      `Skills: ${data.profile.skills.join(", ") || "Not provided"}`,
+      `Education: ${data.profile.education || "Not provided"}`,
+      `Experience: ${data.profile.experience || "Not provided"} (${data.profile.experienceBand || "Not specified"})`,
+      `Career interests: ${data.profile.careerInterests || "Not provided"}`,
+      `Certifications: ${data.profile.certifications || "Not provided"}`,
+      `Preferred location: ${data.profile.preferredLocation || "Not provided"}`,
+      `Work preference: ${data.profile.workPreference || "Not provided"}`,
+      `Interests: ${data.additionalInfo.interests.join(", ") || "None specified"}`,
+      `Career goals: ${data.additionalInfo.careerGoals || "Not provided"}`,
+    ].join("\n");
+
+    const result = await callAI(system, brief);
+    if (!result.ok) return { ok: false as const, error: result.error };
+    const match = result.content.match(/\{[\s\S]*\}/);
+    if (!match) return { ok: false as const, error: "The AI reply could not be parsed." };
+    const parsed = JSON.parse(match[0]) as { careers?: unknown };
+    if (!Array.isArray(parsed.careers) || parsed.careers.length === 0)
+      return { ok: false as const, error: "The AI returned no career recommendations." };
+    const careers = asRecords(parsed.careers)
+      .slice(0, 5)
+      .map((c) => ({
+        title: String(c["title"] ?? ""),
+        fitScore: Math.min(100, Math.max(0, Number(c["fitScore"]) || 60)),
+        why: String(c["why"] ?? ""),
+        relevantSkills: asStringList(c["relevantSkills"]),
+        skillsToDevelop: asStringList(c["skillsToDevelop"]),
+        nextAction: String(c["nextAction"] ?? ""),
+      }));
+    return { ok: true as const, careers };
+  });
+
+const skillGapInput = z.object({
+  profileSkills: z.array(z.string()),
+  careerTitle: z.string(),
+});
+
+/**
+ * AI Skill Gap Analysis — compares user skills against a target career.
+ */
+export const generateSkillGap = createServerFn({ method: "POST" })
+  .inputValidator((data) => skillGapInput.parse(data))
+  .handler(async ({ data }) => {
+    const system = [
+      "You are a career skills analyst.",
+      "Compare the user's existing skills against what a typical professional in the target career needs.",
+      'Reply with JSON only: {"strongSkills":[{"skill":"name","status":"strong"}],"skillsToDevelop":[{"skill":"name","status":"develop"}]}',
+      'Status must be exactly "strong" or "develop".',
+      "If the user's profile doesn't contain enough information to determine a skill's status, include it with status \"unknown\".",
+      "Only include relevant, industry-standard skills for the career. Keep lists to 3-6 items each.",
+    ].join(" ");
+
+    const brief = `Career: ${data.careerTitle}\nUser skills: ${data.profileSkills.join(", ") || "Not provided"}`;
+    const result = await callAI(system, brief);
+    if (!result.ok) return { ok: false as const, error: result.error };
+    const match = result.content.match(/\{[\s\S]*\}/);
+    if (!match) return { ok: false as const, error: "The AI reply could not be parsed." };
+    const parsed = JSON.parse(match[0]) as {
+      strongSkills?: unknown;
+      skillsToDevelop?: unknown;
+    };
+    const normaliseStatus = (s: unknown): SkillGapItem["status"] =>
+      (s === "strong" || s === "develop" || s === "unknown"
+        ? s
+        : "unknown") as SkillGapItem["status"];
+    const toItems = (list: unknown): SkillGapItem[] =>
+      asRecords(list)
+        .slice(0, 6)
+        .map((s) => ({
+          skill: String(s["skill"] ?? ""),
+          status: normaliseStatus(s["status"]),
+        }));
+    const strongSkills = toItems(parsed.strongSkills ?? []);
+    const skillsToDevelop = toItems(parsed.skillsToDevelop ?? []);
+    return { ok: true as const, careerTitle: data.careerTitle, strongSkills, skillsToDevelop };
+  });
+
+const roadmapInput = z.object({
+  careerTitle: z.string(),
+  skillsToDevelop: z.array(z.string()),
+});
+
+/**
+ * AI Career Roadmap — generates a 30-day personalised learning roadmap.
+ */
+export const generateRoadmap = createServerFn({ method: "POST" })
+  .inputValidator((data) => roadmapInput.parse(data))
+  .handler(async ({ data }) => {
+    const system = [
+      "You are a career development coach creating a focused 30-day roadmap.",
+      "Generate exactly 4 weekly milestones for the user to build skills for their target career.",
+      'Reply with JSON only: {"milestones":[{"week":1,"title":"Week Title","whatToDo":"Specific action to take","whyItMatters":"Why this matters for the career","expectedOutcome":"What they should be able to do after"}]}',
+      "Be specific and practical. Focus on actionable tasks that can be completed in one week.",
+      "Use free or low-cost resources available in India where possible.",
+    ].join(" ");
+
+    const brief = `Target career: ${data.careerTitle}\nSkills to develop: ${data.skillsToDevelop.join(", ") || "General professional development"}`;
+    const result = await callAI(system, brief);
+    if (!result.ok) return { ok: false as const, error: result.error };
+    const match = result.content.match(/\{[\s\S]*\}/);
+    if (!match) return { ok: false as const, error: "The AI reply could not be parsed." };
+    const parsed = JSON.parse(match[0]) as { milestones?: unknown };
+    const records = asRecords(parsed.milestones);
+    if (records.length === 0)
+      return { ok: false as const, error: "The AI returned no roadmap milestones." };
+    const milestones = records.slice(0, 4).map((m, i) => ({
+      id: `milestone-${i + 1}`,
+      week: Number(m["week"]) || i + 1,
+      title: String(m["title"] ?? `Week ${i + 1}`),
+      whatToDo: String(m["whatToDo"] ?? ""),
+      whyItMatters: String(m["whyItMatters"] ?? ""),
+      expectedOutcome: String(m["expectedOutcome"] ?? ""),
+      status: "not_started" as const,
+    }));
+    return { ok: true as const, careerTitle: data.careerTitle, milestones };
+  });
+
+const portfolioInput = z.object({
+  careerTitle: z.string(),
+  profileSkills: z.array(z.string()),
+  skillsToDevelop: z.array(z.string()),
+});
+
+/**
+ * AI Portfolio Project — recommends a practical project based on career and skills.
+ */
+export const generatePortfolioProject = createServerFn({ method: "POST" })
+  .inputValidator((data) => portfolioInput.parse(data))
+  .handler(async ({ data }) => {
+    const system = [
+      "You are a career coach recommending a portfolio project.",
+      "Suggest one practical project that helps the user build skills for their target career.",
+      'Reply with JSON only: {"title":"Project Name","projectGoal":"What the project achieves","recommendedFeatures":["feature1","feature2"],"skillsPracticed":["skill1","skill2"],"expectedOutcome":"What they will learn and demonstrate"}',
+      "The project should be completable in 1-2 weeks and demonstrate real skills.",
+    ].join(" ");
+
+    const brief = [
+      `Target career: ${data.careerTitle}`,
+      `Existing skills: ${data.profileSkills.join(", ") || "Not provided"}`,
+      `Skills to develop: ${data.skillsToDevelop.join(", ") || "None identified"}`,
+    ].join("\n");
+
+    const result = await callAI(system, brief);
+    if (!result.ok) return { ok: false as const, error: result.error };
+    const match = result.content.match(/\{[\s\S]*\}/);
+    if (!match) return { ok: false as const, error: "The AI reply could not be parsed." };
+    const parsed = JSON.parse(match[0]) as Record<string, unknown>;
+    return {
+      ok: true as const,
+      title: String(parsed["title"] ?? "Portfolio Project"),
+      projectGoal: String(parsed["projectGoal"] ?? ""),
+      recommendedFeatures: asStringList(parsed["recommendedFeatures"]),
+      skillsPracticed: asStringList(parsed["skillsPracticed"]),
+      expectedOutcome: String(parsed["expectedOutcome"] ?? ""),
+    };
+  });
+
+const interviewInput = z.object({
+  careerTitle: z.string(),
+  profileSkills: z.array(z.string()),
+});
+
+/**
+ * AI Interview Coach — generates role-specific interview questions.
+ */
+export const generateInterviewQuestions = createServerFn({ method: "POST" })
+  .inputValidator((data) => interviewInput.parse(data))
+  .handler(async ({ data }) => {
+    const system = [
+      "You are an interview coach for Indian tech and professional jobs.",
+      "Generate 5 interview questions for the target career. Include a mix of technical and behavioural questions.",
+      'Reply with JSON only: {"questions":[{"question":"Question text","category":"Technical" or "Behavioural"}]}',
+      "Questions should be realistic and relevant to the role. Use respectful, professional language.",
+      "Never evaluate disability, gender, transgender identity, personality, mental health, or accent.",
+    ].join(" ");
+
+    const brief = `Career: ${data.careerTitle}\nUser skills: ${data.profileSkills.join(", ") || "Not provided"}`;
+    const result = await callAI(system, brief);
+    if (!result.ok) return { ok: false as const, error: result.error };
+    const match = result.content.match(/\{[\s\S]*\}/);
+    if (!match) return { ok: false as const, error: "The AI reply could not be parsed." };
+    const parsed = JSON.parse(match[0]) as { questions?: unknown };
+    const records = asRecords(parsed.questions);
+    if (records.length === 0) return { ok: false as const, error: "The AI returned no questions." };
+    const questions = records.slice(0, 5).map((q, i) => ({
+      id: `q-${i + 1}`,
+      question: String(q["question"] ?? ""),
+      category: String(q["category"] ?? "General"),
+    }));
+    return { ok: true as const, questions };
+  });
+
+const feedbackInput = z.object({
+  careerTitle: z.string(),
+  question: z.string(),
+  answer: z.string(),
+});
+
+const insightInput = z.object({
+  company: z.string(),
+  responses: z.number().int().min(0),
+  demo: z.boolean(),
+  categories: z.array(z.object({ label: z.string(), average: z.number(), count: z.number() })),
+  commonBarriers: z.array(z.object({ label: z.string(), count: z.number() })),
+});
+
+const accommodationInput = z.object({
+  roleTitle: z.string(),
+  selections: z.array(z.string()).min(1).max(8),
+  note: z.string().max(500),
+});
+
+/**
+ * AI Accommodation Request Assistant — drafts a concise professional
+ * accommodation request from ONLY the options the candidate explicitly
+ * selected. It must never invent medical information, diagnose a disability,
+ * or disclose any protected identity.
+ */
+export const generateAccommodationRequest = createServerFn({ method: "POST" })
+  .inputValidator((data) => accommodationInput.parse(data))
+  .handler(async ({ data }) => {
+    const system = [
+      "You draft short, professional accommodation requests for job candidates in India.",
+      "Use ONLY the accommodation options the candidate selected plus their optional note.",
+      "Never invent medical details, never diagnose anything, never mention disability status, gender or any protected identity.",
+      "Write one polite sentence requesting the arrangements, then one sentence inviting the employer to suggest alternatives.",
+      'Reply with JSON only: {"request":"the request text"}',
+    ].join(" ");
+
+    const brief = [
+      `Role: ${data.roleTitle}`,
+      `Selected accommodations: ${data.selections.join(", ")}`,
+      data.note ? `Candidate note: ${data.note}` : "No additional note.",
+    ].join("\n");
+
+    const result = await callAI(system, brief, 400);
+    if (!result.ok) return { ok: false as const, error: result.error };
+    const match = result.content.match(/\{[\s\S]*\}/);
+    if (!match) return { ok: false as const, error: "The AI reply could not be parsed." };
+    const parsed = JSON.parse(match[0]) as { request?: unknown };
+    const request = String(parsed["request"] ?? "").trim();
+    if (!request) return { ok: false as const, error: "The AI reply was empty." };
+    return { ok: true as const, request };
+  });
+
+/**
+ * AI Inclusion Insight — summarises AGGREGATED accessibility feedback only.
+ * The payload contains averages and counts; never an individual submission,
+ * never a candidate name, and no protected-identity data of any kind.
+ */
+export const generateInclusionInsight = createServerFn({ method: "POST" })
+  .inputValidator((data) => insightInput.parse(data))
+  .handler(async ({ data }) => {
+    const system = [
+      "You summarise aggregated, anonymous workplace-accessibility feedback for an employer on an Indian job platform.",
+      "Use ONLY the numbers provided. Never invent statistics, quotes or feedback. Never identify or infer anything about individuals.",
+      "Write two to three short plain-language sentences, then one concrete recommended action the employer could take.",
+      'Reply with JSON only: {"summary":["sentence1","sentence2"],"recommendedAction":"one specific action"}',
+    ].join(" ");
+
+    const brief = [
+      `Company: ${data.company}`,
+      `Total responses: ${data.responses}${data.demo ? " (clearly-labelled demo feedback)" : ""}`,
+      ...data.categories.map(
+        (c) => `${c.label}: ${c.count} ratings, average ${c.average.toFixed(1)} of 5`,
+      ),
+      data.commonBarriers.length
+        ? `Most-reported barrier themes (aggregate counts): ${data.commonBarriers
+            .map((b) => `${b.label} (${b.count})`)
+            .join(", ")}`
+        : "No barrier themes reported.",
+    ].join("\n");
+
+    const result = await callAI(system, brief, 700);
+    if (!result.ok) return { ok: false as const, error: result.error };
+    const match = result.content.match(/\{[\s\S]*\}/);
+    if (!match) return { ok: false as const, error: "The AI reply could not be parsed." };
+    const parsed = JSON.parse(match[0]) as { summary?: unknown; recommendedAction?: unknown };
+    const summary = Array.isArray(parsed.summary)
+      ? parsed.summary.map(String).filter(Boolean).slice(0, 4)
+      : [];
+    if (!summary.length) return { ok: false as const, error: "The AI reply was empty." };
+    return {
+      ok: true as const,
+      summary,
+      recommendedAction:
+        typeof parsed.recommendedAction === "string" ? parsed.recommendedAction : "",
+    };
+  });
+
+/**
+ * AI Interview Feedback — evaluates an answer and suggests improvements.
+ */
+export const generateInterviewFeedback = createServerFn({ method: "POST" })
+  .inputValidator((data) => feedbackInput.parse(data))
+  .handler(async ({ data }) => {
+    const system = [
+      "You are an interview coach providing feedback on a candidate's answer.",
+      "Evaluate the answer for technical relevance, completeness, and structure.",
+      'Reply with JSON only: {"technicalRelevance":80,"completeness":70,"structure":75,"feedback":"Brief positive feedback","howToImprove":"Specific suggestions"}',
+      "Scores should be 0-100. Be encouraging but honest.",
+      "Never evaluate disability, gender, transgender identity, personality, mental health, or accent.",
+    ].join(" ");
+
+    const brief = [
+      `Career: ${data.careerTitle}`,
+      `Question: ${data.question}`,
+      `Answer: ${data.answer}`,
+    ].join("\n");
+
+    const result = await callAI(system, brief, 800);
+    if (!result.ok) return { ok: false as const, error: result.error };
+    const match = result.content.match(/\{[\s\S]*\}/);
+    if (!match) return { ok: false as const, error: "The AI reply could not be parsed." };
+    const parsed = JSON.parse(match[0]) as Record<string, unknown>;
+    return {
+      ok: true as const,
+      technicalRelevance: Math.min(100, Math.max(0, Number(parsed["technicalRelevance"]) || 60)),
+      completeness: Math.min(100, Math.max(0, Number(parsed["completeness"]) || 60)),
+      structure: Math.min(100, Math.max(0, Number(parsed["structure"]) || 60)),
+      feedback: String(parsed["feedback"] ?? ""),
+      howToImprove: String(parsed["howToImprove"] ?? ""),
+    };
+  });

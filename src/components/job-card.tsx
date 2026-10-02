@@ -1,0 +1,274 @@
+import { useState } from "react";
+import { Link } from "@tanstack/react-router";
+import {
+  Accessibility,
+  Bookmark,
+  BookmarkCheck,
+  Building2,
+  CheckCircle2,
+  ChevronDown,
+  ChevronUp,
+  AlertCircle,
+  IndianRupee,
+  MapPin,
+  Sparkles,
+  ShieldCheck,
+  ArrowRight,
+  Eye,
+  Ear,
+  Hand,
+  Brain,
+  Heart,
+} from "lucide-react";
+import { ACCESS_FEATURES, type Job } from "@/lib/jobs-data";
+import { useAppState } from "@/lib/app-state";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { scoreJob } from "@/lib/matching";
+import { accessibilityFit } from "@/lib/accessibility";
+
+/** Map access feature keys to disability category icons */
+function getDisabilityIcons(access: string[]): { icon: typeof Eye; label: string }[] {
+  const icons: { icon: typeof Eye; label: string }[] = [];
+  if (access.some((a) => ["screen_reader", "keyboard_friendly", "accessible_application"].includes(a)))
+    icons.push({ icon: Eye, label: "Vision accessible" });
+  if (access.some((a) => ["captioned_meetings", "assistive_tech"].includes(a)))
+    icons.push({ icon: Ear, label: "Hearing accessible" });
+  if (access.some((a) => ["remote_work", "flexible_work", "accessible_workplace", "accessible_interview"].includes(a)))
+    icons.push({ icon: Hand, label: "Mobility accessible" });
+  return icons;
+}
+
+export function JobCard({ job }: { job: Job }) {
+  const { isSaved, toggleSaved, profile } = useAppState();
+  const [showWhy, setShowWhy] = useState(false);
+  const saved = isSaved(job.id);
+  const match = scoreJob(profile, job);
+  const a11y = accessibilityFit(profile.accessibilityPreferences, job);
+  const disabilityIcons = getDisabilityIcons(job.access);
+
+  // Compute skills match & gaps
+  const userSkillsLower = (profile.skills || []).map((s) => s.toLowerCase());
+  const matchedSkills = job.requiredSkills.filter((s) =>
+    userSkillsLower.some((us) => us.includes(s.toLowerCase()) || s.toLowerCase().includes(us)),
+  );
+  const missingSkills = job.requiredSkills.filter(
+    (s) => !userSkillsLower.some((us) => us.includes(s.toLowerCase()) || s.toLowerCase().includes(us)),
+  );
+  const primaryGap = missingSkills[0] ?? (job.preferredSkills && job.preferredSkills[0]) ?? "";
+
+  // Work preference alignment
+  const workMatches =
+    !profile.workPreference ||
+    profile.workPreference === "No preference" ||
+    profile.workPreference.toLowerCase() === job.workMode.toLowerCase();
+
+  return (
+    <article
+      className="surface-card p-4 sm:p-5 transition-shadow hover:shadow-md"
+      aria-labelledby={`job-${job.id}-title`}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h3 id={`job-${job.id}-title`} className="text-lg font-bold text-foreground">
+            <Link to="/jobs/$jobId" params={{ jobId: job.id }} className="hover:underline">
+              {job.title}
+            </Link>
+          </h3>
+          <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
+            <span className="flex items-center gap-1 font-medium text-foreground">
+              <Building2 aria-hidden="true" className="size-4" />
+              {job.company}
+            </span>
+            <span className="flex items-center gap-1">
+              <MapPin aria-hidden="true" className="size-4" />
+              {job.city}
+            </span>
+            <Badge variant="outline" className="font-normal text-xs">{job.workMode}</Badge>
+            <span>{job.employment}</span>
+            <span>{job.experience}</span>
+            {job.salary ? (
+              <span className="flex items-center gap-0.5 font-semibold text-foreground">
+                <IndianRupee aria-hidden="true" className="size-3.5" />
+                {job.salary.replace("₹", "")}
+              </span>
+            ) : null}
+          </p>
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="min-h-10 min-w-10 shrink-0"
+          aria-pressed={saved}
+          aria-label={saved ? `Remove ${job.title} from saved jobs` : `Save ${job.title}`}
+          onClick={() => toggleSaved(job.id)}
+        >
+          {saved ? (
+            <BookmarkCheck aria-hidden="true" className="size-4 text-brand" />
+          ) : (
+            <Bookmark aria-hidden="true" className="size-4" />
+          )}
+        </Button>
+      </div>
+
+      {/* Disability Accessibility Fit — Prominent Display */}
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        {/* Accessibility Fit Score (highlighted for PwD) */}
+        {a11y.hasPreferences ? (
+          <span
+            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold ${
+              a11y.score >= 80
+                ? "bg-success/15 text-success"
+                : a11y.score >= 50
+                  ? "bg-warning/15 text-warning"
+                  : "bg-destructive/10 text-destructive"
+            }`}
+          >
+            <Accessibility className="size-3.5" />
+            {a11y.score}% Accessibility Fit
+          </span>
+        ) : (
+          <span className="inline-flex items-center gap-1 rounded-full bg-success/15 px-3 py-1 text-xs font-bold text-success">
+            <ShieldCheck className="size-3.5" />
+            {job.access.length} Accommodations
+          </span>
+        )}
+
+        <span className="inline-flex items-center gap-1 rounded-full bg-brand/15 px-3 py-1 text-xs font-bold text-brand">
+          <Sparkles className="size-3.5" />
+          {match.total}% Skills Fit
+        </span>
+
+        {/* Disability category icons */}
+        {disabilityIcons.map(({ icon: Icon, label }) => (
+          <span
+            key={label}
+            className="inline-flex items-center gap-1 rounded-full bg-secondary px-2.5 py-1 text-xs font-medium text-secondary-foreground"
+            title={label}
+          >
+            <Icon className="size-3.5" aria-hidden="true" />
+            {label}
+          </span>
+        ))}
+      </div>
+
+      {/* Skills list */}
+      <p className="mt-3 text-sm">
+        <span className="font-semibold text-muted-foreground">Required: </span>
+        <span className="font-medium text-foreground">{job.requiredSkills.join(" • ")}</span>
+      </p>
+
+      {/* Disability Accommodation Badges — Prominent */}
+      <div className="mt-2.5">
+        <p className="text-xs font-semibold text-muted-foreground mb-1.5 flex items-center gap-1">
+          <Accessibility className="size-3" />
+          Disability Accommodations Provided:
+        </p>
+        <ul className="flex flex-wrap gap-1.5">
+          {job.access.map((a) => (
+            <li key={a}>
+              <Badge variant="secondary" className="font-normal text-xs py-0.5">
+                <span aria-hidden="true" className="text-success mr-1">✓</span>
+                {ACCESS_FEATURES[a]}
+              </Badge>
+            </li>
+          ))}
+          {job.access.length === 0 ? (
+            <li className="text-xs text-muted-foreground italic">
+              No accommodation information provided by employer
+            </li>
+          ) : null}
+        </ul>
+      </div>
+
+      {/* "Why this matches?" — Disability-aware explainer */}
+      <div className="mt-3.5 border-t border-border/60 pt-3">
+        <button
+          type="button"
+          onClick={() => setShowWhy((v) => !v)}
+          className="flex items-center gap-1.5 text-xs font-semibold text-brand hover:underline"
+          aria-expanded={showWhy}
+        >
+          <span>Why this matches your disability needs?</span>
+          {showWhy ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
+        </button>
+
+        {showWhy ? (
+          <div className="mt-2.5 rounded-lg border border-border/80 bg-secondary/40 p-3 text-xs space-y-1.5">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="size-4 text-success shrink-0" />
+              <span>
+                <strong>Skills matched: </strong>
+                {matchedSkills.length > 0 ? matchedSkills.join(", ") : "Profile foundation matches role requirements"}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Accessibility className="size-4 text-success shrink-0" />
+              <span>
+                <strong>Disability accommodation fit: </strong>
+                {a11y.hasPreferences
+                  ? a11y.availableCount > 0
+                    ? `${a11y.availableCount} of your ${a11y.preferenceCount} disability accommodation needs are provided by this employer`
+                    : `This employer has not confirmed your specific accommodation needs. Consider contacting them.`
+                  : `Employer provides ${job.access.length} disability accommodations. Set up your access needs in your profile to see your personal fit.`}
+              </span>
+            </div>
+
+            {a11y.hasPreferences && a11y.missing.length > 0 ? (
+              <div className="flex items-center gap-2 text-warning font-medium">
+                <AlertCircle className="size-4 shrink-0" />
+                <span>
+                  <strong>Missing accommodations: </strong>
+                  {a11y.missing.map((m) => m.label).join(", ")}
+                </span>
+              </div>
+            ) : null}
+
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="size-4 text-success shrink-0" />
+              <span>
+                <strong>Work preference: </strong>
+                {workMatches ? `${job.workMode} setup aligns with your profile` : `${job.workMode} work arrangement`}
+              </span>
+            </div>
+
+            {primaryGap ? (
+              <div className="flex items-center gap-2 text-warning font-medium">
+                <AlertCircle className="size-4 shrink-0" />
+                <span>
+                  <strong>Skill gap to close: </strong>
+                  {primaryGap}
+                </span>
+              </div>
+            ) : null}
+
+            <div className="mt-1 pt-1.5 border-t border-border/50 text-muted-foreground">
+              <ShieldCheck className="size-3.5 inline mr-1 text-brand" />
+              Accommodation source: {job.accessSource}. Ableo never infers disability or adds accommodation claims.
+            </div>
+          </div>
+        ) : null}
+      </div>
+
+      {/* Actions */}
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-2.5 pt-1">
+        <span className="text-xs text-muted-foreground">Posted {job.posted}</span>
+        <div className="flex items-center gap-2">
+          <Button asChild size="sm" variant="outline">
+            <Link to="/jobs/$jobId" params={{ jobId: job.id }}>
+              View Details & Accommodations
+            </Link>
+          </Button>
+          <Button asChild size="sm" className="gap-1 bg-brand text-brand-foreground hover:bg-brand/90 font-medium">
+            <Link to="/apply/$jobId" params={{ jobId: job.id }}>
+              Apply Now
+              <ArrowRight className="size-3.5" />
+            </Link>
+          </Button>
+        </div>
+      </div>
+    </article>
+  );
+}
