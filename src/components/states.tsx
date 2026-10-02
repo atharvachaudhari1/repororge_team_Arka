@@ -24,7 +24,13 @@ export function ListSkeleton({ count = 3, label = "Loading" }: { count?: number;
   );
 }
 
-export function BlockSkeleton({ lines = 4, label = "Loading" }: { lines?: number; label?: string }) {
+export function BlockSkeleton({
+  lines = 4,
+  label = "Loading",
+}: {
+  lines?: number;
+  label?: string;
+}) {
   return (
     <div role="status" aria-live="polite" className="surface-card p-5">
       <span className="sr-only">{label}…</span>
@@ -36,8 +42,14 @@ export function BlockSkeleton({ lines = 4, label = "Loading" }: { lines?: number
 }
 
 export function EmptyState({
-  title, body, children,
-}: { title: string; body: string; children?: ReactNode }) {
+  title,
+  body,
+  children,
+}: {
+  title: string;
+  body: string;
+  children?: ReactNode;
+}) {
   return (
     <div className="surface-card mt-4 p-6 text-center">
       <SearchX aria-hidden="true" className="mx-auto size-8 text-muted-foreground" />
@@ -49,8 +61,14 @@ export function EmptyState({
 }
 
 export function ErrorState({
-  title, message, onRetry,
-}: { title: string; message: string; onRetry?: () => void }) {
+  title,
+  message,
+  onRetry,
+}: {
+  title: string;
+  message: string;
+  onRetry?: () => void;
+}) {
   return (
     <div role="alert" className="surface-card mt-4 border-warning/40 p-5">
       <h3 className="flex items-center gap-2 font-semibold">

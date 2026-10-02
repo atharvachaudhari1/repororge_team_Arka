@@ -27,7 +27,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { JOBS } from "@/lib/jobs-data";
 
-export const Route = createFileRoute("/")(({
+export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "Ableo — Where Ability Meets Opportunity" },
@@ -39,12 +39,13 @@ export const Route = createFileRoute("/")(({
       { property: "og:title", content: "Ableo — Where Ability Meets Opportunity" },
       {
         property: "og:description",
-        content: "The job platform built from the ground up for People with Disabilities. Know your accommodations before you apply.",
+        content:
+          "The job platform built from the ground up for People with Disabilities. Know your accommodations before you apply.",
       },
     ],
   }),
   component: Landing,
-}));
+});
 
 const QUICK = [
   "Screen reader friendly",
@@ -125,20 +126,61 @@ function Landing() {
       <section className="relative overflow-hidden border-b border-border bg-background py-14 lg:py-20">
         {/* Decorative Ink Landscape in Background */}
         <div className="absolute inset-0 pointer-events-none opacity-45 dark:opacity-20 select-none overflow-hidden">
-          <svg className="w-full h-full" viewBox="0 0 1200 400" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M0 320 C 300 320, 450 350, 750 330 C 950 310, 1100 335, 1200 330" stroke="#191716" strokeWidth="1.2" strokeDasharray="3 3" />
-            <path d="M0 345 C 350 335, 550 375, 850 350 C 1050 335, 1150 360, 1200 350" stroke="#191716" strokeWidth="0.8" />
-            <path d="M100 300 Q 220 250 340 300 T 580 300" stroke="#191716" strokeWidth="1" opacity="0.6" />
-            <path d="M750 290 Q 880 240 1010 290 T 1200 290" stroke="#191716" strokeWidth="1" opacity="0.6" />
+          <svg
+            className="w-full h-full"
+            viewBox="0 0 1200 400"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M0 320 C 300 320, 450 350, 750 330 C 950 310, 1100 335, 1200 330"
+              stroke="#191716"
+              strokeWidth="1.2"
+              strokeDasharray="3 3"
+            />
+            <path
+              d="M0 345 C 350 335, 550 375, 850 350 C 1050 335, 1150 360, 1200 350"
+              stroke="#191716"
+              strokeWidth="0.8"
+            />
+            <path
+              d="M100 300 Q 220 250 340 300 T 580 300"
+              stroke="#191716"
+              strokeWidth="1"
+              opacity="0.6"
+            />
+            <path
+              d="M750 290 Q 880 240 1010 290 T 1200 290"
+              stroke="#191716"
+              strokeWidth="1"
+              opacity="0.6"
+            />
             {/* Pine silhouettes */}
-            <path d="M30 320 L45 230 L60 320 Z M25 320 L45 250 L65 320 Z" fill="#191716" opacity="0.85" />
+            <path
+              d="M30 320 L45 230 L60 320 Z M25 320 L45 250 L65 320 Z"
+              fill="#191716"
+              opacity="0.85"
+            />
             <path d="M70 330 L82 250 L94 330 Z" fill="#191716" opacity="0.75" />
             <path d="M1100 330 L1115 240 L1130 330 Z" fill="#191716" opacity="0.8" />
             <path d="M1140 335 L1152 260 L1164 335 Z" fill="#191716" opacity="0.7" />
             {/* Hot air balloon in terracotta */}
             <g transform="translate(920, 80)">
-              <ellipse cx="28" cy="35" rx="22" ry="30" fill="#CF4E3D" stroke="#191716" strokeWidth="1.5" />
-              <path d="M18 52 L38 52 L34 64 L22 64 Z" fill="#E5B34C" stroke="#191716" strokeWidth="1.2" />
+              <ellipse
+                cx="28"
+                cy="35"
+                rx="22"
+                ry="30"
+                fill="#CF4E3D"
+                stroke="#191716"
+                strokeWidth="1.5"
+              />
+              <path
+                d="M18 52 L38 52 L34 64 L22 64 Z"
+                fill="#E5B34C"
+                stroke="#191716"
+                strokeWidth="1.2"
+              />
               <rect x="25" y="67" width="6" height="5" fill="#191716" />
               <path d="M25 64 L25 67 M31 64 L31 67" stroke="#191716" strokeWidth="1" />
             </g>
@@ -148,24 +190,37 @@ function Landing() {
         <div className="relative mx-auto grid max-w-6xl gap-10 px-4 lg:grid-cols-[1.2fr_1fr] items-center">
           <div>
             <div className="inline-flex items-center gap-2 rounded-full border border-[#191716]/60 bg-white/70 dark:bg-stone-900/70 px-3.5 py-1 text-xs font-serif italic text-stone-700 dark:text-stone-300 mb-4 backdrop-blur-sm">
-              <Accessibility aria-hidden="true" className="size-3.5 text-stone-700 dark:text-stone-300" />
+              <Accessibility
+                aria-hidden="true"
+                className="size-3.5 text-stone-700 dark:text-stone-300"
+              />
               <span>Built for People with Disabilities • Team Arka</span>
             </div>
-            
+
             <h1 className="font-serif text-4xl sm:text-5xl lg:text-6xl font-normal leading-[1.1] tracking-tight text-foreground">
               A career roadmap <br className="hidden sm:inline" />
               for <span className="italic">everyone</span>.
             </h1>
-            
+
             <p className="mt-4 max-w-xl text-base sm:text-lg text-stone-600 dark:text-stone-400 font-sans leading-relaxed">
-              Your career is a journey. Take it with confidence. Ableo matches your skills to employers with verified disability accommodations — transparently and with zero guesswork.
+              Your career is a journey. Take it with confidence. Ableo matches your skills to
+              employers with verified disability accommodations — transparently and with zero
+              guesswork.
             </p>
 
             <div className="mt-4 flex flex-wrap gap-2 text-xs font-sans text-stone-600 dark:text-stone-400">
-              <span className="inline-flex items-center gap-1 rounded-full border border-stone-300 dark:border-stone-700 bg-card px-3 py-1">♿ Screen-reader verified</span>
-              <span className="inline-flex items-center gap-1 rounded-full border border-stone-300 dark:border-stone-700 bg-card px-3 py-1">🎙️ Voice navigation</span>
-              <span className="inline-flex items-center gap-1 rounded-full border border-stone-300 dark:border-stone-700 bg-card px-3 py-1">💬 Live captions</span>
-              <span className="inline-flex items-center gap-1 rounded-full border border-stone-300 dark:border-stone-700 bg-card px-3 py-1">🔒 100% Private</span>
+              <span className="inline-flex items-center gap-1 rounded-full border border-stone-300 dark:border-stone-700 bg-card px-3 py-1">
+                ♿ Screen-reader verified
+              </span>
+              <span className="inline-flex items-center gap-1 rounded-full border border-stone-300 dark:border-stone-700 bg-card px-3 py-1">
+                🎙️ Voice navigation
+              </span>
+              <span className="inline-flex items-center gap-1 rounded-full border border-stone-300 dark:border-stone-700 bg-card px-3 py-1">
+                💬 Live captions
+              </span>
+              <span className="inline-flex items-center gap-1 rounded-full border border-stone-300 dark:border-stone-700 bg-card px-3 py-1">
+                🔒 100% Private
+              </span>
             </div>
 
             <div className="mt-8 flex flex-wrap gap-3">
@@ -195,23 +250,33 @@ function Landing() {
 
             <dl className="mt-10 grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
               <div className="p-3.5 rounded-2xl bg-card border border-border shadow-[0_1px_4px_rgba(0,0,0,0.02)]">
-                <dt className="text-xs uppercase tracking-wider text-stone-500 font-serif">Accessible roles</dt>
-                <dd className="font-serif text-2xl font-normal text-foreground mt-0.5">{JOBS.length}</dd>
+                <dt className="text-xs uppercase tracking-wider text-stone-500 font-serif">
+                  Accessible roles
+                </dt>
+                <dd className="font-serif text-2xl font-normal text-foreground mt-0.5">
+                  {JOBS.length}
+                </dd>
               </div>
               <div className="p-3.5 rounded-2xl bg-card border border-border shadow-[0_1px_4px_rgba(0,0,0,0.02)]">
-                <dt className="text-xs uppercase tracking-wider text-stone-500 font-serif">Employers</dt>
+                <dt className="text-xs uppercase tracking-wider text-stone-500 font-serif">
+                  Employers
+                </dt>
                 <dd className="font-serif text-2xl font-normal text-foreground mt-0.5">
                   {new Set(JOBS.map((j) => j.company)).size}
                 </dd>
               </div>
               <div className="p-3.5 rounded-2xl bg-card border border-border shadow-[0_1px_4px_rgba(0,0,0,0.02)]">
-                <dt className="text-xs uppercase tracking-wider text-stone-500 font-serif">Remote-friendly</dt>
+                <dt className="text-xs uppercase tracking-wider text-stone-500 font-serif">
+                  Remote-friendly
+                </dt>
                 <dd className="font-serif text-2xl font-normal text-foreground mt-0.5">
                   {JOBS.filter((j) => j.workMode === "Remote").length}
                 </dd>
               </div>
               <div className="p-3.5 rounded-2xl bg-card border border-border shadow-[0_1px_4px_rgba(0,0,0,0.02)]">
-                <dt className="text-xs uppercase tracking-wider text-stone-500 font-serif">Vision ready</dt>
+                <dt className="text-xs uppercase tracking-wider text-stone-500 font-serif">
+                  Vision ready
+                </dt>
                 <dd className="font-serif text-2xl font-normal text-foreground mt-0.5">
                   {JOBS.filter((j) => j.access.includes("screen_reader")).length}
                 </dd>
@@ -228,12 +293,15 @@ function Landing() {
               Search by typing, voice, or screen reader
             </h2>
             <p className="mt-2 text-xs sm:text-sm text-stone-600 dark:text-stone-400 font-sans leading-relaxed">
-              Search by job title, specific accommodation (e.g. "Screen reader", "Captions", "Wheelchair"), or city.
+              Search by job title, specific accommodation (e.g. "Screen reader", "Captions",
+              "Wheelchair"), or city.
             </p>
             <div className="mt-5">
               <JobSearchBar value={q} onChange={setQ} onSubmit={search} id="hero-search" />
             </div>
-            <h3 className="mt-6 text-xs uppercase tracking-wider font-serif text-stone-500">Quick accessibility filters</h3>
+            <h3 className="mt-6 text-xs uppercase tracking-wider font-serif text-stone-500">
+              Quick accessibility filters
+            </h3>
             <ul className="mt-2.5 flex flex-wrap gap-1.5">
               {QUICK.map((item) => (
                 <li key={item}>
@@ -257,23 +325,32 @@ function Landing() {
           <span className="inline-block rounded-full border border-stone-300 dark:border-stone-700 bg-card px-3.5 py-1 text-xs font-serif italic text-stone-600 dark:text-stone-400 mb-3">
             Disability-First Architecture
           </span>
-          <h2 id="disability-heading" className="font-serif text-3xl sm:text-4xl font-normal text-foreground">
+          <h2
+            id="disability-heading"
+            className="font-serif text-3xl sm:text-4xl font-normal text-foreground"
+          >
             Every Disability. Every Barrier. Addressed.
           </h2>
           <p className="mt-3 text-stone-600 dark:text-stone-400 font-sans leading-relaxed text-sm sm:text-base">
-            Ableo is built from scratch for blind users, Deaf users, wheelchair users, neurodivergent professionals, 
-            and anyone with chronic health needs — designing with disabled people, not for them.
+            Ableo is built from scratch for blind users, Deaf users, wheelchair users,
+            neurodivergent professionals, and anyone with chronic health needs — designing with
+            disabled people, not for them.
           </p>
         </div>
 
         <ul className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {DISABILITY_PILLARS.map((p) => (
-            <li key={p.title} className="rounded-2xl border border-border bg-card p-6 shadow-[0_2px_8px_rgba(0,0,0,0.02)] hover:border-[#191716]/40 transition-all">
+            <li
+              key={p.title}
+              className="rounded-2xl border border-border bg-card p-6 shadow-[0_2px_8px_rgba(0,0,0,0.02)] hover:border-[#191716]/40 transition-all"
+            >
               <span className="flex size-11 items-center justify-center rounded-full border border-stone-300 dark:border-stone-700 bg-secondary text-stone-800 dark:text-stone-200">
                 <p.icon aria-hidden="true" className="size-5" />
               </span>
               <h3 className="mt-4 font-serif text-xl font-normal text-foreground">{p.title}</h3>
-              <p className="mt-2 text-xs sm:text-sm text-stone-600 dark:text-stone-400 font-sans leading-relaxed">{p.body}</p>
+              <p className="mt-2 text-xs sm:text-sm text-stone-600 dark:text-stone-400 font-sans leading-relaxed">
+                {p.body}
+              </p>
               <div className="mt-4 flex flex-wrap gap-1.5 pt-3 border-t border-border/50">
                 {p.features.map((f) => (
                   <span
@@ -291,26 +368,41 @@ function Landing() {
       </section>
 
       {/* How It Works — PwD Journey */}
-      <section className="border-y border-border bg-secondary/30 py-16" aria-labelledby="how-heading">
+      <section
+        className="border-y border-border bg-secondary/30 py-16"
+        aria-labelledby="how-heading"
+      >
         <div className="mx-auto max-w-6xl px-4">
           <div className="text-center max-w-2xl mx-auto">
-            <span className="text-xs font-serif uppercase tracking-widest text-stone-500">How It Works</span>
-            <h2 id="how-heading" className="font-serif text-3xl sm:text-4xl font-normal text-foreground mt-2">
+            <span className="text-xs font-serif uppercase tracking-widest text-stone-500">
+              How It Works
+            </span>
+            <h2
+              id="how-heading"
+              className="font-serif text-3xl sm:text-4xl font-normal text-foreground mt-2"
+            >
               Designed for Every Ability
             </h2>
             <p className="mt-2 text-sm text-stone-600 dark:text-stone-400 leading-relaxed font-sans">
-              Whether you're blind, Deaf, use mobility equipment, or are neurodivergent — 
-              Ableo adapts seamlessly at each stage of your search.
+              Whether you're blind, Deaf, use mobility equipment, or are neurodivergent — Ableo
+              adapts seamlessly at each stage of your search.
             </p>
           </div>
           <ol className="mt-12 grid gap-6 sm:grid-cols-3">
             {HOW_IT_WORKS.map((step) => (
-              <li key={step.step} className="rounded-2xl border border-border bg-card p-6 shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
+              <li
+                key={step.step}
+                className="rounded-2xl border border-border bg-card p-6 shadow-[0_2px_8px_rgba(0,0,0,0.02)]"
+              >
                 <span className="flex size-9 items-center justify-center rounded-full border border-[#191716] bg-[#7BD3C2] text-[#141817] font-serif font-bold text-sm shadow-[1px_1px_0px_#141817]">
                   {step.step}
                 </span>
-                <h3 className="mt-4 font-serif text-xl font-normal text-foreground">{step.title}</h3>
-                <p className="mt-2 text-xs sm:text-sm text-stone-600 dark:text-stone-400 font-sans leading-relaxed">{step.desc}</p>
+                <h3 className="mt-4 font-serif text-xl font-normal text-foreground">
+                  {step.title}
+                </h3>
+                <p className="mt-2 text-xs sm:text-sm text-stone-600 dark:text-stone-400 font-sans leading-relaxed">
+                  {step.desc}
+                </p>
               </li>
             ))}
           </ol>
@@ -323,8 +415,8 @@ function Landing() {
           Multi-Modal Accessible Interaction
         </h2>
         <p className="mt-2 max-w-2xl text-sm sm:text-base text-stone-600 dark:text-stone-400 font-sans">
-          Interact with Ableo using whichever sensory mode suits you best. 
-          Every feature is fully operable through multiple inputs and outputs.
+          Interact with Ableo using whichever sensory mode suits you best. Every feature is fully
+          operable through multiple inputs and outputs.
         </p>
         <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {[
@@ -349,12 +441,17 @@ function Landing() {
               body: "100% keyboard-navigable. Built for switch devices and sip-and-puff inputs.",
             },
           ].map((p) => (
-            <div key={p.title} className="rounded-2xl border border-border bg-card p-5 shadow-[0_2px_6px_rgba(0,0,0,0.02)]">
+            <div
+              key={p.title}
+              className="rounded-2xl border border-border bg-card p-5 shadow-[0_2px_6px_rgba(0,0,0,0.02)]"
+            >
               <span className="flex size-10 items-center justify-center rounded-full border border-stone-300 dark:border-stone-700 bg-secondary text-stone-800 dark:text-stone-200">
                 <p.icon aria-hidden="true" className="size-5" />
               </span>
               <h3 className="mt-3 font-serif text-lg font-normal text-foreground">{p.title}</h3>
-              <p className="mt-1 text-xs text-stone-600 dark:text-stone-400 font-sans leading-relaxed">{p.body}</p>
+              <p className="mt-1 text-xs text-stone-600 dark:text-stone-400 font-sans leading-relaxed">
+                {p.body}
+              </p>
             </div>
           ))}
         </div>

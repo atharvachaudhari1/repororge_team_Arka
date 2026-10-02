@@ -12,11 +12,25 @@ export type Filters = {
 };
 
 export const EMPTY_FILTERS: Filters = {
-  q: "", workModes: [], cities: [], employment: [], experience: [], access: [], inclusion: [],
+  q: "",
+  workModes: [],
+  cities: [],
+  employment: [],
+  experience: [],
+  access: [],
+  inclusion: [],
 };
 
 function haystack(j: Job) {
-  return [j.title, j.company, j.city, j.workMode, j.category, ...j.requiredSkills, ...j.preferredSkills]
+  return [
+    j.title,
+    j.company,
+    j.city,
+    j.workMode,
+    j.category,
+    ...j.requiredSkills,
+    ...j.preferredSkills,
+  ]
     .join(" ")
     .toLowerCase();
 }
@@ -42,14 +56,21 @@ export function recommendJobs(profile: Profile, limit = 6) {
   const scored = JOBS.map((j) => {
     let score = 0;
     const jobSkills = [...j.requiredSkills, ...j.preferredSkills].map((s) => s.toLowerCase());
-    score += skills.filter((s) => jobSkills.some((js) => js.includes(s) || s.includes(js))).length * 3;
+    score +=
+      skills.filter((s) => jobSkills.some((js) => js.includes(s) || s.includes(js))).length * 3;
     if (profile.workPreference && profile.workPreference === j.workMode) score += 2;
     if (
       profile.preferredLocation &&
       j.city.toLowerCase().includes(profile.preferredLocation.toLowerCase().trim())
     )
       score += 2;
-    if (profile.headline && j.title.toLowerCase().split(" ").some((w) => w.length > 3 && profile.headline.toLowerCase().includes(w)))
+    if (
+      profile.headline &&
+      j.title
+        .toLowerCase()
+        .split(" ")
+        .some((w) => w.length > 3 && profile.headline.toLowerCase().includes(w))
+    )
       score += 2;
     return { job: j, score };
   });

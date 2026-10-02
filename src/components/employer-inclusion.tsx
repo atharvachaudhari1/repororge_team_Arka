@@ -1,10 +1,11 @@
 import { Building2, ShieldCheck, CircleDashed } from "lucide-react";
 import type { Job } from "@/lib/jobs-data";
+import { ACCESS_FEATURES, INCLUSION_FEATURES, JOBS } from "@/lib/jobs-data";
 import {
-  ACCESS_FEATURES, INCLUSION_FEATURES, JOBS,
-} from "@/lib/jobs-data";
-import {
-  TRANSPARENCY_LABEL, accessTransparency, inclusionTransparency, transparencyCounts,
+  TRANSPARENCY_LABEL,
+  accessTransparency,
+  inclusionTransparency,
+  transparencyCounts,
 } from "@/lib/accessibility";
 import { employerInsights } from "@/lib/insights";
 import { useAppState } from "@/lib/app-state";
@@ -16,10 +17,7 @@ import { StarsReadOnly } from "./accessibility-feedback";
  */
 function LabelledRow({ label, level }: { label: string; level: string }) {
   const known = level === "verified" || level === "employer" || level === "unspecified";
-  const Icon =
-    level === "unspecified"
-      ? CircleDashed
-      : ShieldCheck;
+  const Icon = level === "unspecified" ? CircleDashed : ShieldCheck;
   return (
     <li className="flex items-start gap-2 py-1.5">
       <Icon
@@ -37,10 +35,17 @@ function LabelledRow({ label, level }: { label: string; level: string }) {
 }
 
 const HIRING: (keyof typeof ACCESS_FEATURES)[] = [
-  "accessible_application", "accessible_interview", "keyboard_friendly", "screen_reader",
+  "accessible_application",
+  "accessible_interview",
+  "keyboard_friendly",
+  "screen_reader",
 ];
 const WORKPLACE: (keyof typeof ACCESS_FEATURES)[] = [
-  "remote_work", "flexible_work", "accessible_workplace", "assistive_tech", "captioned_meetings",
+  "remote_work",
+  "flexible_work",
+  "accessible_workplace",
+  "assistive_tech",
+  "captioned_meetings",
 ];
 
 function Group({ title, items }: { title: string; items: string[] }) {
@@ -86,9 +91,18 @@ export function EmployerInclusionCard({ job }: { job: Job }) {
       </p>
 
       <div className="mt-4 grid gap-4 sm:grid-cols-2">
-        <Group title="Hiring accessibility" items={job.access.filter((a) => HIRING.includes(a)).map(label)} />
-        <Group title="Workplace" items={job.access.filter((a) => WORKPLACE.includes(a)).map(label)} />
-        <Group title="Inclusion information" items={job.inclusion.map((i) => INCLUSION_FEATURES[i])} />
+        <Group
+          title="Hiring accessibility"
+          items={job.access.filter((a) => HIRING.includes(a)).map(label)}
+        />
+        <Group
+          title="Workplace"
+          items={job.access.filter((a) => WORKPLACE.includes(a)).map(label)}
+        />
+        <Group
+          title="Inclusion information"
+          items={job.inclusion.map((i) => INCLUSION_FEATURES[i])}
+        />
         <div>
           <h4 className="text-sm font-semibold">Transparency</h4>
           <dl className="mt-1 space-y-1 text-sm">
@@ -129,12 +143,20 @@ export function EmployerInclusionCard({ job }: { job: Job }) {
                   label="Accessibility practices"
                   level={
                     workplaceProvided > 0
-                      ? job.accessSource === "Verified by AccessPath" ? "verified" : "employer"
+                      ? job.accessSource === "Verified by AccessPath"
+                        ? "verified"
+                        : "employer"
                       : "unspecified"
                   }
                 />
-                <LabelledRow label="Inclusive hiring" level={levelOfInclusion("inclusive_hiring")} />
-                <LabelledRow label="Interview accessibility" level={levelOfAccess("accessible_interview")} />
+                <LabelledRow
+                  label="Inclusive hiring"
+                  level={levelOfInclusion("inclusive_hiring")}
+                />
+                <LabelledRow
+                  label="Interview accessibility"
+                  level={levelOfAccess("accessible_interview")}
+                />
                 <LabelledRow label="Flexible work" level={levelOfAccess("flexible_work")} />
                 {/* These three are never invented: AccessPath does not collect them per listing. */}
                 <LabelledRow label="Preferred name support" level="unspecified" />

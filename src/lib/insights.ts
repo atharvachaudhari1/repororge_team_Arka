@@ -35,9 +35,7 @@ export function employerInsights(company: string, feedback: Feedback[]): Employe
   if (mine.length >= MIN_RESPONSES) {
     const rows = FEEDBACK_CATEGORIES.map(({ key, label }) => {
       const values = mine.map((f) => f.ratings[key]).filter((v): v is number => Boolean(v));
-      const average = values.length
-        ? values.reduce((a, b) => a + b, 0) / values.length
-        : 0;
+      const average = values.length ? values.reduce((a, b) => a + b, 0) / values.length : 0;
       return { key, label, average, count: values.length };
     });
     return { rows, responses: mine.length, demo: false, enough: true };

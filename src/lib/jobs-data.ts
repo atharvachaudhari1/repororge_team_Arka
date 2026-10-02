@@ -51,7 +51,8 @@ export type Job = {
   access: AccessFeature[];
   inclusion: InclusionFeature[];
   /** Source of the accessibility information shown on this listing. */
-  accessSource: "Provided by employer" | "Verified by AccessPath" | "Discovered via TinyFish Web Search";
+  accessSource:
+    "Provided by employer" | "Verified by AccessPath" | "Discovered via TinyFish Web Search";
   /** True when the employer added accessibility information after posting. */
   accessUpdated?: boolean;
 };
@@ -756,7 +757,14 @@ const rows: Tuple[] = [
     ],
     ["Accessibility Testing", "WCAG 2.1", "Screen Readers", "WAI-ARIA", "JavaScript"],
     ["axe-core", "Cypress", "Python", "Mobile Accessibility"],
-    ["screen_reader", "assistive_tech", "accessible_workplace", "flexible_work", "accessible_interview", "keyboard_friendly"],
+    [
+      "screen_reader",
+      "assistive_tech",
+      "accessible_workplace",
+      "flexible_work",
+      "accessible_interview",
+      "keyboard_friendly",
+    ],
     ["equal_opportunity", "inclusive_hiring", "lgbtq_policy"],
     "Discovered via TinyFish Web Search",
   ],
@@ -780,7 +788,13 @@ const rows: Tuple[] = [
     ],
     ["React", "TypeScript", "HTML5", "CSS", "WAI-ARIA"],
     ["Next.js", "Design Systems", "Jest", "Tailwind CSS"],
-    ["keyboard_friendly", "accessible_application", "remote_work", "flexible_work", "accessible_workplace"],
+    [
+      "keyboard_friendly",
+      "accessible_application",
+      "remote_work",
+      "flexible_work",
+      "accessible_workplace",
+    ],
     ["equal_opportunity", "gender_neutral_facilities", "inclusive_hiring"],
     "Discovered via TinyFish Web Search",
   ],
@@ -828,7 +842,13 @@ const rows: Tuple[] = [
     ],
     ["Customer Support", "Communication", "CRM Tools", "Problem Solving"],
     ["Zendesk", "Live Chat", "Email Etiquette"],
-    ["remote_work", "flexible_work", "captioned_meetings", "accessible_interview", "assistive_tech"],
+    [
+      "remote_work",
+      "flexible_work",
+      "captioned_meetings",
+      "accessible_interview",
+      "assistive_tech",
+    ],
     ["equal_opportunity", "inclusive_hiring", "gender_neutral_facilities"],
     "Discovered via TinyFish Web Search",
   ],

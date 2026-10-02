@@ -11,7 +11,12 @@ export type SendEmailOptions = {
   text: string;
 };
 
-export async function sendEmail({ to, subject, html, text }: SendEmailOptions): Promise<{ sent: boolean; provider: string; error?: string }> {
+export async function sendEmail({
+  to,
+  subject,
+  html,
+  text,
+}: SendEmailOptions): Promise<{ sent: boolean; provider: string; error?: string }> {
   const resendApiKey = process.env["RESEND_API_KEY"];
   const fromEmail = process.env["EMAIL_FROM"] || "Ableo <support@ableo.app>";
 

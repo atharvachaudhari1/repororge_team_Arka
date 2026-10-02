@@ -5,18 +5,21 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/lib/auth-context";
-import {
-  requestPasswordReset,
-  confirmPasswordReset,
-  type AccountRole,
-} from "@/lib/auth.functions";
+import { requestPasswordReset, confirmPasswordReset, type AccountRole } from "@/lib/auth.functions";
+
+export type LoginSearch = {
+  role?: "candidate" | "employer" | undefined;
+  redirect?: string | undefined;
+  token?: string | undefined;
+  email?: string | undefined;
+};
 
 export const Route = createFileRoute("/login")({
-  validateSearch: (search: Record<string, unknown>) => ({
-    role: search.role === "employer" ? ("employer" as const) : ("candidate" as const),
-    redirect: isSafeReturnTo(search.redirect) ? search.redirect : undefined,
-    token: typeof search.token === "string" ? search.token : undefined,
-    email: typeof search.email === "string" ? search.email : undefined,
+  validateSearch: (search: Record<string, unknown>): LoginSearch => ({
+    role: search["role"] === "employer" ? "employer" : "candidate",
+    redirect: isSafeReturnTo(search["redirect"]) ? search["redirect"] : undefined,
+    token: typeof search["token"] === "string" ? search["token"] : undefined,
+    email: typeof search["email"] === "string" ? search["email"] : undefined,
   }),
   component: LoginPage,
 });
@@ -31,7 +34,8 @@ function isSafeReturnTo(value: unknown): value is string {
 }
 
 function LoginPage() {
-  const { role: initialRole, redirect, token: searchToken, email: searchEmail } = Route.useSearch();
+  const { role: searchRole, redirect, token: searchToken, email: searchEmail } = Route.useSearch();
+  const initialRole: AccountRole = searchRole === "employer" ? "employer" : "candidate";
   const navigate = useNavigate();
   const { login, register } = useAuth();
   const requestResetFn = useServerFn(requestPasswordReset);
@@ -39,7 +43,7 @@ function LoginPage() {
 
   const [role, setRole] = useState<AccountRole>(initialRole);
   const [mode, setMode] = useState<"login" | "register" | "forgot_password">(
-    searchToken ? "forgot_password" : "login"
+    searchToken ? "forgot_password" : "login",
   );
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState(searchEmail || "");
@@ -129,15 +133,15 @@ function LoginPage() {
           {mode === "register"
             ? "Create your account"
             : mode === "forgot_password"
-            ? "Reset your password"
-            : "Welcome back"}
+              ? "Reset your password"
+              : "Welcome back"}
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
           {mode === "register"
             ? "Choose your portal and set up a secure account."
             : mode === "forgot_password"
-            ? "Enter your account email to receive a password reset code."
-            : "Choose the portal you need, then sign in with your credentials."}
+              ? "Enter your account email to receive a password reset code."
+              : "Choose the portal you need, then sign in with your credentials."}
         </p>
 
         {mode !== "forgot_password" && (
@@ -242,8 +246,8 @@ function LoginPage() {
               {isSubmitting
                 ? "Please wait…"
                 : mode === "register"
-                ? `Create ${role} account`
-                : `Sign in as ${role === "candidate" ? "user" : "employer"}`}
+                  ? `Create ${role} account`
+                  : `Sign in as ${role === "candidate" ? "user" : "employer"}`}
             </Button>
           </form>
         )}
@@ -368,7 +372,9 @@ function LoginPage() {
               setSuccessMsg("");
             }}
           >
-            {mode === "register" ? "Already have an account? Sign in" : "New here? Create an account"}
+            {mode === "register"
+              ? "Already have an account? Sign in"
+              : "New here? Create an account"}
           </button>
         )}
       </div>

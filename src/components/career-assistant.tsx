@@ -33,7 +33,11 @@ function answer(q: string, profile: Profile, jobs: Job[]): { text: string; jobId
   }
 
   if (/remote/.test(t)) {
-    const remote = rankJobs(profile, jobs.filter((j) => j.workMode === "Remote"), 3);
+    const remote = rankJobs(
+      profile,
+      jobs.filter((j) => j.workMode === "Remote"),
+      3,
+    );
     return {
       text: remote.length
         ? `Here are the remote roles that fit your profile best: ${remote
@@ -56,7 +60,10 @@ function answer(q: string, profile: Profile, jobs: Job[]): { text: string; jobId
   if (/missing|skill gap|which skills/.test(t)) {
     const gaps = new Map<string, number>();
     ranked.forEach((m) => m.missingRequired.forEach((s) => gaps.set(s, (gaps.get(s) ?? 0) + 1)));
-    const list = [...gaps.entries()].sort((a, b) => b[1] - a[1]).slice(0, 4).map(([s]) => s);
+    const list = [...gaps.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 4)
+      .map(([s]) => s);
     return {
       text: list.length
         ? `Across your top matches, the skills that come up most and are missing from your profile are ${list.join(", ")}. Adding evidence for even one of them lifts several match scores.`
@@ -86,7 +93,9 @@ function answer(q: string, profile: Profile, jobs: Job[]): { text: string; jobId
         ? `Based on your profile I would apply to: ${ranked
             .slice(0, 3)
             .map((m) => `${m.job.title} at ${m.job.company} (${m.total}%)`)
-            .join("; ")}. Start with the highest match, and check the accessibility information on each listing before applying.`
+            .join(
+              "; ",
+            )}. Start with the highest match, and check the accessibility information on each listing before applying.`
         : "There are no listings to recommend yet.",
       jobIds: ranked.slice(0, 3).map((m) => m.job.id),
     };
@@ -129,7 +138,12 @@ export function CareerAssistant() {
     setMsgs((prev) => [
       ...prev,
       { id: nextId.current++, role: "user", text: q },
-      { id: nextId.current++, role: "assistant", text: a.text, ...(a.jobIds ? { jobIds: a.jobIds } : {}) },
+      {
+        id: nextId.current++,
+        role: "assistant",
+        text: a.text,
+        ...(a.jobIds ? { jobIds: a.jobIds } : {}),
+      },
     ]);
     setInput("");
   }
@@ -147,7 +161,9 @@ export function CareerAssistant() {
           An
         </span>
         <div className="text-left pr-1 hidden sm:block">
-          <p className="text-[9px] uppercase font-serif tracking-widest text-stone-500 leading-none">Chat with</p>
+          <p className="text-[9px] uppercase font-serif tracking-widest text-stone-500 leading-none">
+            Chat with
+          </p>
           <p className="text-xs font-serif font-bold text-stone-900 dark:text-stone-100">Angie</p>
         </div>
         <span className="rounded-full border border-[#191716] bg-[#7BD3C2] px-2.5 py-0.5 text-[11px] font-semibold text-[#141817]">
@@ -167,15 +183,22 @@ export function CareerAssistant() {
                 An
               </span>
               <div>
-                <p className="text-[9px] uppercase font-serif tracking-widest text-stone-500 leading-none">Chat with</p>
-                <h2 className="font-serif text-base font-normal text-foreground">Angie • Ableo Advisor</h2>
+                <p className="text-[9px] uppercase font-serif tracking-widest text-stone-500 leading-none">
+                  Chat with
+                </p>
+                <h2 className="font-serif text-base font-normal text-foreground">
+                  Angie • Ableo Advisor
+                </h2>
               </div>
             </div>
             <button
               type="button"
               className="flex size-8 items-center justify-center rounded-full border border-stone-300 dark:border-stone-700 hover:bg-secondary text-stone-600 transition-colors"
               aria-label="Close career assistant"
-              onClick={() => { tts.stop(); setOpen(false); }}
+              onClick={() => {
+                tts.stop();
+                setOpen(false);
+              }}
             >
               <X className="size-4" />
             </button>
@@ -239,7 +262,9 @@ export function CareerAssistant() {
               send(input);
             }}
           >
-            <label htmlFor="assistant-input" className="sr-only">Ask the career assistant</label>
+            <label htmlFor="assistant-input" className="sr-only">
+              Ask the career assistant
+            </label>
             <Input
               id="assistant-input"
               value={input}

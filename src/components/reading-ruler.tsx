@@ -4,7 +4,8 @@ import { useAppState } from "@/lib/app-state";
 import { Button } from "@/components/ui/button";
 
 export function ReadingRuler() {
-  const { readingRuler, setReadingRuler, readingRulerHeight, setReadingRulerHeight } = useAppState();
+  const { readingRuler, setReadingRuler, readingRulerHeight, setReadingRulerHeight } =
+    useAppState();
   const [mouseY, setMouseY] = useState(250);
 
   useEffect(() => {

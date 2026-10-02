@@ -1,6 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { AlertTriangle, Check, FileText, Sparkles, Upload, Loader2, ArrowRight } from "lucide-react";
+import {
+  AlertTriangle,
+  Check,
+  FileText,
+  Sparkles,
+  Upload,
+  Loader2,
+  ArrowRight,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,7 +16,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import { useAppState } from "@/lib/app-state";
 import { analyseResume } from "@/lib/matching";
@@ -26,7 +38,11 @@ export const Route = createFileRoute("/resume-match")({
           "Upload your resume (PDF, DOCX, TXT) and Ableo will analyze skill coverage, accommodation compatibility, and suggest improvements — fully accessible for screen readers and voice input.",
       },
       { property: "og:title", content: "Resume to Job Match — Ableo" },
-      { property: "og:description", content: "Accessible resume analysis: skills match, accommodation fit, and AI suggestions for PwD." },
+      {
+        property: "og:description",
+        content:
+          "Accessible resume analysis: skills match, accommodation fit, and AI suggestions for PwD.",
+      },
     ],
   }),
   component: ResumeMatchPage,
@@ -52,7 +68,8 @@ function ResumeMatchPage() {
         <div>
           <h1 className="text-3xl font-bold">Resume to Job Match</h1>
           <p className="mt-1 text-muted-foreground">
-            Ableo AI analyzes your resume against target job requirements, identifying matched skills, missing criteria, and ATS recommendations.
+            Ableo AI analyzes your resume against target job requirements, identifying matched
+            skills, missing criteria, and ATS recommendations.
           </p>
         </div>
         <div className="flex items-center gap-2 self-start sm:self-center">
@@ -125,7 +142,9 @@ function ResumeMatchPage() {
                   saveProfile({ ...profile, resumeName: file.name, resumeText: content });
                   toast.success(`${file.name} loaded and saved for matching.`);
                 } catch (error) {
-                  toast.error(error instanceof Error ? error.message : "Could not read this resume.");
+                  toast.error(
+                    error instanceof Error ? error.message : "Could not read this resume.",
+                  );
                 } finally {
                   setIsScanning(false);
                 }
@@ -166,9 +185,13 @@ function ResumeMatchPage() {
 
         <div className="space-y-6">
           <section aria-labelledby="job-heading" className="surface-card p-5">
-            <h2 id="job-heading" className="text-xl font-semibold">Choose Target Role</h2>
+            <h2 id="job-heading" className="text-xl font-semibold">
+              Choose Target Role
+            </h2>
             <div className="mt-3">
-              <label htmlFor="job-select" className="block text-sm font-medium">Role</label>
+              <label htmlFor="job-select" className="block text-sm font-medium">
+                Role
+              </label>
               <Select value={jobId} onValueChange={setJobId}>
                 <SelectTrigger id="job-select" className="mt-1.5">
                   <SelectValue placeholder="Select a job" />
@@ -201,13 +224,20 @@ function ResumeMatchPage() {
                     requirement coverage
                   </span>
                 </p>
-                <Progress value={result.coverage} className="mt-2" aria-label={`Coverage ${result.coverage} percent`} />
+                <Progress
+                  value={result.coverage}
+                  className="mt-2"
+                  aria-label={`Coverage ${result.coverage} percent`}
+                />
 
                 <h3 className="mt-4 text-sm font-semibold">Matched Skills</h3>
                 {result.matched.length ? (
                   <ul className="mt-2 flex flex-wrap gap-1.5 text-sm">
                     {result.matched.map((s) => (
-                      <li key={s} className="flex items-center gap-1 rounded-md bg-success/10 px-2 py-0.5 text-xs font-medium text-success">
+                      <li
+                        key={s}
+                        className="flex items-center gap-1 rounded-md bg-success/10 px-2 py-0.5 text-xs font-medium text-success"
+                      >
                         <Check aria-hidden="true" className="size-3.5" />
                         {s}
                       </li>
@@ -224,7 +254,10 @@ function ResumeMatchPage() {
                   <ul className="mt-2 space-y-1.5 text-sm">
                     {[...result.missingRequired, ...result.missingPreferred].map((s) => (
                       <li key={s} className="flex items-center gap-2 text-xs">
-                        <AlertTriangle aria-hidden="true" className="size-3.5 text-warning shrink-0" />
+                        <AlertTriangle
+                          aria-hidden="true"
+                          className="size-3.5 text-warning shrink-0"
+                        />
                         <span className="font-medium text-foreground">{s}</span>
                         <span className="text-muted-foreground">
                           {result.missingRequired.includes(s) ? "(required)" : "(preferred)"}
@@ -233,13 +266,17 @@ function ResumeMatchPage() {
                     ))}
                   </ul>
                 ) : (
-                  <p className="mt-1 text-sm text-muted-foreground">All listed skills found in your resume!</p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    All listed skills found in your resume!
+                  </p>
                 )}
 
                 <h3 className="mt-4 text-sm font-semibold">Experience Match</h3>
                 <p className="mt-1 text-sm">
                   {result.experience}% — role asks for {job.experience}
-                  {profile.experienceBand ? `, your profile says ${profile.experienceBand}` : ". Add experience level to your profile for accuracy."}
+                  {profile.experienceBand
+                    ? `, your profile says ${profile.experienceBand}`
+                    : ". Add experience level to your profile for accuracy."}
                 </p>
 
                 {result.notes.length ? (
@@ -253,12 +290,18 @@ function ResumeMatchPage() {
                   </>
                 ) : null}
 
-                <Button className="mt-4 w-full" onClick={() => setShowImprove((v) => !v)} aria-expanded={showImprove}>
+                <Button
+                  className="mt-4 w-full"
+                  onClick={() => setShowImprove((v) => !v)}
+                  aria-expanded={showImprove}
+                >
                   {showImprove ? "Hide bullet suggestions" : "Suggested Bullet Improvements"}
                 </Button>
                 {showImprove ? (
                   <div className="mt-3 rounded-md border border-border bg-secondary/50 p-3">
-                    <h3 className="text-xs font-semibold uppercase tracking-wider text-brand">Suggested Bullet Points</h3>
+                    <h3 className="text-xs font-semibold uppercase tracking-wider text-brand">
+                      Suggested Bullet Points
+                    </h3>
                     <ul className="mt-2 list-disc space-y-2 pl-4 text-xs">
                       {result.bullets.map((b) => (
                         <li key={b}>{b}</li>
@@ -268,7 +311,11 @@ function ResumeMatchPage() {
                 ) : null}
 
                 <div className="mt-5 pt-3 border-t border-border flex items-center justify-between">
-                  <Link to="/jobs/$jobId" params={{ jobId: job.id }} className="text-xs font-medium text-brand hover:underline">
+                  <Link
+                    to="/jobs/$jobId"
+                    params={{ jobId: job.id }}
+                    className="text-xs font-medium text-brand hover:underline"
+                  >
                     View Job &amp; Accommodations
                   </Link>
                   <Button asChild size="sm" className="gap-1 bg-brand text-brand-foreground">

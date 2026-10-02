@@ -364,11 +364,15 @@ function read<T>(fallback: T): T {
                 }),
               );
             }
-          } catch {}
+          } catch {
+            void 0;
+          }
           window.localStorage.removeItem(oldKey);
         }
       }
-    } catch {}
+    } catch {
+      void 0;
+    }
 
     const raw = window.localStorage.getItem(KEY);
     if (!raw) return fallback;
@@ -568,6 +572,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     interviewSession,
     actionPlans,
     accessUpdates,
+    isEmployerMode,
   ]);
 
   useEffect(() => {
@@ -652,6 +657,8 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   }, [dyslexiaFont]);
 
   const value: State = {
+    isEmployerMode,
+    setIsEmployerMode,
     theme,
     setTheme,
     toggleTheme: () => setTheme((t) => (t === "dark" ? "light" : "dark")),

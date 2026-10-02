@@ -11,7 +11,10 @@ export function AccessibleJobView({ job }: { job: Job }) {
     { heading: "What you will do", items: job.responsibilities },
     { heading: "Required skills", items: job.requiredSkills },
     { heading: "Preferred skills", items: job.preferredSkills },
-    { heading: "Work arrangement", items: [job.workMode, job.city, job.employment, `${job.experience} experience`] },
+    {
+      heading: "Work arrangement",
+      items: [job.workMode, job.city, job.employment, `${job.experience} experience`],
+    },
     {
       heading: "Accessibility",
       items: job.access.length
@@ -20,17 +23,25 @@ export function AccessibleJobView({ job }: { job: Job }) {
     },
     {
       heading: "Inclusion",
-      items: job.inclusion.length ? job.inclusion.map((i) => INCLUSION_FEATURES[i]) : ["Not specified"],
+      items: job.inclusion.length
+        ? job.inclusion.map((i) => INCLUSION_FEATURES[i])
+        : ["Not specified"],
     },
     { heading: "Salary", items: [job.salary ?? "Not disclosed"] },
-    { heading: "How to apply", items: ["Use the Apply button on this page. Interview preferences are optional."] },
+    {
+      heading: "How to apply",
+      items: ["Use the Apply button on this page. Interview preferences are optional."],
+    },
   ];
 
   return (
     <div className="mt-4 space-y-5">
       {blocks.map((b) => (
         <section key={b.heading} aria-labelledby={`av-${b.heading.replace(/\s+/g, "-")}`}>
-          <h3 id={`av-${b.heading.replace(/\s+/g, "-")}`} className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+          <h3
+            id={`av-${b.heading.replace(/\s+/g, "-")}`}
+            className="text-sm font-semibold uppercase tracking-wide text-muted-foreground"
+          >
             {b.heading}
           </h3>
           {b.items.length === 1 ? (

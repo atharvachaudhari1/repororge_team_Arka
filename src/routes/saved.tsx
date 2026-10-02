@@ -7,7 +7,10 @@ export const Route = createFileRoute("/saved")({
   head: () => ({
     meta: [
       { title: "Saved Jobs — AccessPath" },
-      { name: "description", content: "Review the jobs you saved on AccessPath and decide where to apply." },
+      {
+        name: "description",
+        content: "Review the jobs you saved on AccessPath and decide where to apply.",
+      },
       { property: "og:title", content: "Saved Jobs — AccessPath" },
       { property: "og:description", content: "Your shortlist of inclusive job opportunities." },
     ],
@@ -33,7 +36,9 @@ function SavedPage() {
             Save roles while you search so you can compare accessibility details later.
           </p>
           <Button asChild className="mt-4">
-            <Link to="/jobs" search={{ q: "" }}>Find jobs</Link>
+            <Link to="/jobs" search={{ q: "" }}>
+              Find jobs
+            </Link>
           </Button>
         </div>
       ) : (

@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
 import type { SkillGapItem } from "./app-state";
 
 /* ------------------------------------------------------------------ */
@@ -21,8 +22,7 @@ async function callAI(system: string, user: string, maxTokens = 1200) {
   if (!key) {
     return {
       ok: false as const,
-      error:
-        "AI is not configured. Add the GEMINI_API_KEY server-side secret, then redeploy.",
+      error: "AI is not configured. Add the GEMINI_API_KEY server-side secret, then redeploy.",
     };
   }
   try {
@@ -36,7 +36,7 @@ async function callAI(system: string, user: string, maxTokens = 1200) {
           contents: [{ role: "user", parts: [{ text: user }] }],
           generationConfig: { maxOutputTokens: maxTokens },
         }),
-      }
+      },
     );
     if (!res.ok) {
       const status = res.status;
@@ -46,8 +46,8 @@ async function callAI(system: string, user: string, maxTokens = 1200) {
           status === 429
             ? "AI is busy right now. Please try again in a moment."
             : status === 401 || status === 403
-            ? "The Gemini API key is invalid or does not have access to this model."
-            : "We couldn't reach the AI assistant right now.",
+              ? "The Gemini API key is invalid or does not have access to this model."
+              : "We couldn't reach the AI assistant right now.",
       };
     }
     const json = (await res.json()) as {
@@ -438,7 +438,7 @@ export const generateInclusionInsight = createServerFn({ method: "POST" })
       `Company: ${data.company}`,
       `Total responses: ${data.responses}${data.demo ? " (clearly-labelled demo feedback)" : ""}`,
       ...data.categories.map(
-        (c) => `${c.label}: ${c.count} ratings, average ${c.average.toFixed(1)} of 5`
+        (c) => `${c.label}: ${c.count} ratings, average ${c.average.toFixed(1)} of 5`,
       ),
       data.commonBarriers.length
         ? `Most-reported barrier themes (aggregate counts): ${data.commonBarriers
@@ -546,9 +546,15 @@ export const explainJobMatch = createServerFn({ method: "POST" })
       `Matched Skills: ${data.matchedSkills.join(", ") || "None directly matched"}`,
       `Missing/Gap Skills: ${data.missingSkills.join(", ") || "None - all requirements met"}`,
       `Candidate Work Preference: ${data.workPreference || "Not specified"} vs Job Mode: ${data.jobWorkMode || "Not specified"}`,
-      data.accessibilityFitScore !== undefined ? `Accessibility Fit: ${data.accessibilityFitScore}%` : "",
-      data.userQuestion ? `Candidate Question: "${data.userQuestion}"` : "Question: Explain my match breakdown and how to improve.",
-    ].filter(Boolean).join("\n");
+      data.accessibilityFitScore !== undefined
+        ? `Accessibility Fit: ${data.accessibilityFitScore}%`
+        : "",
+      data.userQuestion
+        ? `Candidate Question: "${data.userQuestion}"`
+        : "Question: Explain my match breakdown and how to improve.",
+    ]
+      .filter(Boolean)
+      .join("\n");
 
     const result = await callAI(system, brief, 900);
     if (result.ok) {
@@ -578,7 +584,9 @@ export const explainJobMatch = createServerFn({ method: "POST" })
       : `Your ${data.matchScore}% score is driven by strong alignment with ${data.matchedSkills.length} required skills (${data.matchedSkills.join(", ")}). Work mode and experience match expectations. ${data.missingSkills.length ? `A slight gap exists in ${data.missingSkills.join(", ")}, which accounts for the remaining score.` : "You cover every required skill."}`;
 
     const improvementTips = [
-      ...(data.missingSkills.slice(0, 2).map((s) => `Add a small personal project or showcase coursework utilizing ${s}.`)),
+      ...data.missingSkills
+        .slice(0, 2)
+        .map((s) => `Add a small personal project or showcase coursework utilizing ${s}.`),
       `Highlight measurable impact for your ${data.matchedSkills[0] || "primary"} skills on your resume (e.g. reduced load times, improved accessibility).`,
       `Mirror the exact role terminology (${data.jobTitle}) in your professional headline.`,
     ];

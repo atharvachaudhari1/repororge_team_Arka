@@ -1,6 +1,9 @@
 import {
-  ACCESS_FEATURES, INCLUSION_FEATURES,
-  type AccessFeature, type InclusionFeature, type Job,
+  ACCESS_FEATURES,
+  INCLUSION_FEATURES,
+  type AccessFeature,
+  type InclusionFeature,
+  type Job,
 } from "./jobs-data";
 
 /**
@@ -80,11 +83,13 @@ export function accessTransparency(job: Job): TransparencyRow[] {
 }
 
 export function inclusionTransparency(job: Job): TransparencyRow[] {
-  return (Object.entries(INCLUSION_FEATURES) as [InclusionFeature, string][]).map(([key, label]) => ({
-    key,
-    label,
-    level: levelFor(job, job.inclusion.includes(key)),
-  }));
+  return (Object.entries(INCLUSION_FEATURES) as [InclusionFeature, string][]).map(
+    ([key, label]) => ({
+      key,
+      label,
+      level: levelFor(job, job.inclusion.includes(key)),
+    }),
+  );
 }
 
 export function transparencyCounts(job: Job) {
@@ -113,8 +118,12 @@ export function accessibilityFit(preferences: string[], job: Job): Accessibility
   const prefs = normalisePrefs(preferences);
   const rows = accessTransparency(job);
   const provided = rows.filter((r) => r.level !== "unspecified");
-  const available = rows.filter((r) => prefs.includes(r.key as AccessFeature) && r.level !== "unspecified");
-  const missing = rows.filter((r) => prefs.includes(r.key as AccessFeature) && r.level === "unspecified");
+  const available = rows.filter(
+    (r) => prefs.includes(r.key as AccessFeature) && r.level !== "unspecified",
+  );
+  const missing = rows.filter(
+    (r) => prefs.includes(r.key as AccessFeature) && r.level === "unspecified",
+  );
   const score = prefs.length ? Math.round((available.length / prefs.length) * 100) : 0;
   const summary = prefs.length
     ? `You have ${available.length} of ${prefs.length} preferred accessibility features available for this role.`

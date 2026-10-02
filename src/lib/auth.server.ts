@@ -7,15 +7,8 @@ import {
 } from "@tanstack/react-start/server";
 import { ObjectId } from "mongodb";
 import type { AccountRole, AuthUser } from "./auth.functions";
-import {
-  isMongoConfigured,
-  getMongoDb,
-  checkMongoConnection,
-} from "./mongodb.server";
-import {
-  sendPasswordResetEmail,
-  sendEmailVerificationCode,
-} from "./mailer.server";
+import { isMongoConfigured, getMongoDb, checkMongoConnection } from "./mongodb.server";
+import { sendPasswordResetEmail, sendEmailVerificationCode } from "./mailer.server";
 
 type UserRow = {
   id: number | string;
@@ -39,8 +32,7 @@ export async function getDatabase(): Promise<SqliteDatabase> {
         import("node:path"),
       ]);
       const databasePath =
-        process.env["ABLEO_AUTH_DB"] ??
-        pathModule.join(process.cwd(), "data", "ableo-auth.sqlite");
+        process.env["ABLEO_AUTH_DB"] ?? pathModule.join(process.cwd(), "data", "ableo-auth.sqlite");
       fsModule.mkdirSync(pathModule.dirname(databasePath), { recursive: true });
       const db = new sqliteModule.default(databasePath);
       db.pragma("journal_mode = WAL");
@@ -152,7 +144,7 @@ export async function hashResetToken(token: string): Promise<string> {
 async function createSession(
   dbOrMongo: SqliteDatabase | "mongo",
   userId: number | string,
-  role?: AccountRole
+  role?: AccountRole,
 ) {
   const token = (await crypto()).randomBytes(32).toString("hex");
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
@@ -183,7 +175,7 @@ export function setSessionCookie(token: string) {
   try {
     setCookie(COOKIE_NAME, token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: process.env["NODE_ENV"] === "production",
       sameSite: "lax",
       path: "/",
       maxAge: 7 * 24 * 60 * 60, // 7 days in seconds
@@ -227,7 +219,7 @@ export function getClientIp(): string {
 
 async function recordFailedLoginAttempt(
   dbOrMongo: SqliteDatabase | "mongo",
-  key: string
+  key: string,
 ): Promise<number> {
   const lockDurationMs = 15 * 60 * 1000;
   const now = new Date();
@@ -249,27 +241,30 @@ async function recordFailedLoginAttempt(
           lastAttempt: now,
         },
       },
-      { upsert: true }
+      { upsert: true },
     );
     return newAttempts;
   }
 
   const row = dbOrMongo.prepare("SELECT attempts FROM login_attempts WHERE key = ?").get(key) as
-    | { attempts: number }
-    | undefined;
+    { attempts: number } | undefined;
   const newAttempts = (row?.attempts ?? 0) + 1;
   let lockUntil: string | null = null;
   if (newAttempts >= 5) {
     lockUntil = new Date(Date.now() + lockDurationMs).toISOString();
   }
-  dbOrMongo.prepare(`
+  dbOrMongo
+    .prepare(
+      `
     INSERT INTO login_attempts (key, attempts, lock_until, last_attempt)
     VALUES (?, ?, ?, ?)
     ON CONFLICT(key) DO UPDATE SET
       attempts = excluded.attempts,
       lock_until = excluded.lock_until,
       last_attempt = excluded.last_attempt
-  `).run(key, newAttempts, lockUntil, now.toISOString());
+  `,
+    )
+    .run(key, newAttempts, lockUntil, now.toISOString());
   return newAttempts;
 }
 
@@ -332,14 +327,13 @@ export async function registerAccountHandler(data: {
   // SQLite implementation (active if MongoDB is unconfigured or unavailable)
   const db = await getDatabase();
   const existing = db.prepare("SELECT id FROM users WHERE email = ?").get(normalizedEmail) as
-    | { id: number }
-    | undefined;
+    { id: number } | undefined;
   if (existing) {
     return { ok: false as const, error: "An account already exists for this email address." };
   }
   const result = db
     .prepare(
-      "INSERT INTO users (full_name, email, role, password_hash, password_salt, email_verified) VALUES (?, ?, ?, ?, ?, 0)"
+      "INSERT INTO users (full_name, email, role, password_hash, password_salt, email_verified) VALUES (?, ?, ?, ?, ?, 0)",
     )
     .run(cleanName, normalizedEmail, safeRole, hashed, salt);
   const row = db.prepare("SELECT * FROM users WHERE id = ?").get(result.lastInsertRowid) as UserRow;
@@ -374,7 +368,10 @@ export async function loginAccountHandler(data: {
 
       if (ipLock || emailLock) {
         const lockUntilDate = (ipLock?.["lockUntil"] || emailLock?.["lockUntil"]) as Date;
-        const remainingMinutes = Math.max(1, Math.ceil((lockUntilDate.getTime() - Date.now()) / (60 * 1000)));
+        const remainingMinutes = Math.max(
+          1,
+          Math.ceil((lockUntilDate.getTime() - Date.now()) / (60 * 1000)),
+        );
         return {
           ok: false as const,
           error: `Too many failed login attempts. Temporarily locked for security. Please try again in ${remainingMinutes} minute${remainingMinutes === 1 ? "" : "s"} or reset your password.`,
@@ -395,7 +392,10 @@ export async function loginAccountHandler(data: {
         const pSalt = String(userDoc["passwordSalt"] || userDoc["password_salt"] || "");
         const expected = Buffer.from(pHash, "hex");
         const supplied = Buffer.from(await passwordHash(data.password, pSalt), "hex");
-        if (expected.length !== supplied.length || !(await crypto()).timingSafeEqual(expected, supplied)) {
+        if (
+          expected.length !== supplied.length ||
+          !(await crypto()).timingSafeEqual(expected, supplied)
+        ) {
           authFailed = true;
         }
       }
@@ -455,14 +455,18 @@ export async function loginAccountHandler(data: {
 
   if (ipLock || emailLock) {
     const lockUntil = ipLock ? new Date(ipLock.lock_until) : new Date(emailLock!.lock_until);
-    const remainingMinutes = Math.max(1, Math.ceil((lockUntil.getTime() - Date.now()) / (60 * 1000)));
+    const remainingMinutes = Math.max(
+      1,
+      Math.ceil((lockUntil.getTime() - Date.now()) / (60 * 1000)),
+    );
     return {
       ok: false as const,
       error: `Too many failed login attempts. Temporarily locked for security. Please try again in ${remainingMinutes} minute${remainingMinutes === 1 ? "" : "s"} or reset your password.`,
     };
   }
 
-  const row = db.prepare("SELECT * FROM users WHERE email = ?").get(data.email) as UserRow | undefined;
+  const row = db.prepare("SELECT * FROM users WHERE email = ?").get(data.email) as
+    UserRow | undefined;
   const isRowAdmin = isUserAdmin(row);
   let authFailed = false;
 
@@ -471,7 +475,10 @@ export async function loginAccountHandler(data: {
   } else {
     const expected = Buffer.from(row.password_hash, "hex");
     const supplied = Buffer.from(await passwordHash(data.password, row.password_salt), "hex");
-    if (expected.length !== supplied.length || !(await crypto()).timingSafeEqual(expected, supplied)) {
+    if (
+      expected.length !== supplied.length ||
+      !(await crypto()).timingSafeEqual(expected, supplied)
+    ) {
       authFailed = true;
     }
   }
@@ -511,7 +518,7 @@ export async function loginAccountHandler(data: {
   };
 }
 
-export async function readSessionHandler(data: { token?: string }) {
+export async function readSessionHandler(data: { token?: string | undefined }) {
   const cookieToken = getSessionCookieToken();
   const token = cookieToken || data.token;
   if (!token) return { user: null };
@@ -558,7 +565,7 @@ export async function readSessionHandler(data: { token?: string }) {
   const db = await getDatabase();
   const row = db
     .prepare(
-      "SELECT users.* FROM sessions JOIN users ON users.id = sessions.user_id WHERE sessions.token = ? AND sessions.expires_at > ?"
+      "SELECT users.* FROM sessions JOIN users ON users.id = sessions.user_id WHERE sessions.token = ? AND sessions.expires_at > ?",
     )
     .get(token, new Date().toISOString()) as UserRow | undefined;
 
@@ -570,7 +577,7 @@ export async function readSessionHandler(data: { token?: string }) {
   return { user: { ...publicUser(row), isAdmin: isUserAdmin(row) } };
 }
 
-export async function logoutAccountHandler(data: { token?: string }) {
+export async function logoutAccountHandler(data: { token?: string | undefined }) {
   const cookieToken = getSessionCookieToken();
   const token = cookieToken || data.token;
 
@@ -578,7 +585,9 @@ export async function logoutAccountHandler(data: { token?: string }) {
     try {
       const mongo = await getMongoDb();
       await mongo.collection("sessions").deleteMany({ token });
-    } catch (err) { void err; }
+    } catch (err) {
+      void err;
+    }
   }
 
   const db = await getDatabase();
@@ -611,7 +620,8 @@ export async function requestPasswordResetHandler(data: { email: string }) {
       }
       return {
         ok: true as const,
-        message: "If an account exists with this email address, password reset instructions have been sent to your inbox.",
+        message:
+          "If an account exists with this email address, password reset instructions have been sent to your inbox.",
       };
     } catch (err) {
       console.warn("MongoDB Atlas requestPasswordReset note:", err);
@@ -620,28 +630,25 @@ export async function requestPasswordResetHandler(data: { email: string }) {
 
   const db = await getDatabase();
   const user = db.prepare("SELECT id, email FROM users WHERE email = ?").get(normalizedEmail) as
-    | { id: number; email: string }
-    | undefined;
+    { id: number; email: string } | undefined;
 
   if (user) {
     db.prepare("INSERT INTO password_resets (email, token, expires_at) VALUES (?, ?, ?)").run(
       normalizedEmail,
       hashedToken,
-      expiresAt.toISOString()
+      expiresAt.toISOString(),
     );
     void sendPasswordResetEmail({ to: normalizedEmail, token: rawResetToken });
   }
 
   return {
     ok: true as const,
-    message: "If an account exists with this email address, password reset instructions have been sent to your inbox.",
+    message:
+      "If an account exists with this email address, password reset instructions have been sent to your inbox.",
   };
 }
 
-export async function confirmPasswordResetHandler(data: {
-  token: string;
-  newPassword: string;
-}) {
+export async function confirmPasswordResetHandler(data: { token: string; newPassword: string }) {
   const token = data.token.trim();
   if (!token || token.length < 16) {
     return { ok: false as const, error: "Invalid password reset token format." };
@@ -682,12 +689,11 @@ export async function confirmPasswordResetHandler(data: {
             password_salt: newSalt,
             updatedAt: new Date(),
           },
-        }
+        },
       );
-      await mongo.collection("password_resets").updateOne(
-        { _id: resetDoc["_id"] },
-        { $set: { usedAt: new Date() } }
-      );
+      await mongo
+        .collection("password_resets")
+        .updateOne({ _id: resetDoc["_id"] }, { $set: { usedAt: new Date() } });
       await mongo.collection("sessions").deleteMany({ userId: userDoc["_id"].toString() });
       await mongo.collection("login_attempts").deleteMany({ key: `email:${email}` });
 
@@ -715,7 +721,7 @@ export async function confirmPasswordResetHandler(data: {
   const db = await getDatabase();
   const resetRow = db
     .prepare(
-      "SELECT * FROM password_resets WHERE (token = ? OR token = ?) AND expires_at > ? AND used_at IS NULL"
+      "SELECT * FROM password_resets WHERE (token = ? OR token = ?) AND expires_at > ? AND used_at IS NULL",
     )
     .get(hashedToken, token, new Date().toISOString()) as { id: number; email: string } | undefined;
 
@@ -726,7 +732,8 @@ export async function confirmPasswordResetHandler(data: {
     };
   }
 
-  const user = db.prepare("SELECT * FROM users WHERE email = ?").get(resetRow.email) as UserRow | undefined;
+  const user = db.prepare("SELECT * FROM users WHERE email = ?").get(resetRow.email) as
+    UserRow | undefined;
   if (!user) {
     return { ok: false as const, error: "User account not found." };
   }
@@ -734,12 +741,17 @@ export async function confirmPasswordResetHandler(data: {
   db.prepare("UPDATE users SET password_hash = ?, password_salt = ? WHERE id = ?").run(
     newHash,
     newSalt,
-    user.id
+    user.id,
   );
-  db.prepare("UPDATE password_resets SET used_at = ? WHERE id = ?").run(new Date().toISOString(), resetRow.id);
+  db.prepare("UPDATE password_resets SET used_at = ? WHERE id = ?").run(
+    new Date().toISOString(),
+    resetRow.id,
+  );
 
   db.prepare("DELETE FROM sessions WHERE user_id = ?").run(user.id);
-  db.prepare("DELETE FROM login_attempts WHERE key LIKE ?").run(`email:${user.email.toLowerCase()}`);
+  db.prepare("DELETE FROM login_attempts WHERE key LIKE ?").run(
+    `email:${user.email.toLowerCase()}`,
+  );
 
   const isAdmin = isUserAdmin(user);
   const sessionToken = await createSession(db, user.id, user.role);
@@ -763,8 +775,13 @@ export async function requestEmailVerificationHandler(data: { email: string }) {
         createdAt: new Date(),
       });
       void sendEmailVerificationCode({ to: normalizedEmail, code });
-      return { ok: true as const, message: "A 6-digit verification code has been sent to your email." };
-    } catch (err) { void err; }
+      return {
+        ok: true as const,
+        message: "A 6-digit verification code has been sent to your email.",
+      };
+    } catch (err) {
+      void err;
+    }
   }
 
   const db = await getDatabase();
@@ -772,7 +789,7 @@ export async function requestEmailVerificationHandler(data: { email: string }) {
   db.prepare("INSERT INTO email_verifications (email, code, expires_at) VALUES (?, ?, ?)").run(
     normalizedEmail,
     code,
-    expiresAt.toISOString()
+    expiresAt.toISOString(),
   );
   void sendEmailVerificationCode({ to: normalizedEmail, code });
   return { ok: true as const, message: "A 6-digit verification code has been sent to your email." };
@@ -791,25 +808,25 @@ export async function verifyEmailHandler(data: { email: string; code: string }) 
         expiresAt: { $gt: new Date() },
       });
       if (row) {
-        await mongo.collection("users").updateOne(
-          { email: normalizedEmail },
-          { $set: { emailVerified: true, email_verified: 1 } }
-        );
+        await mongo
+          .collection("users")
+          .updateOne(
+            { email: normalizedEmail },
+            { $set: { emailVerified: true, email_verified: 1 } },
+          );
         await mongo.collection("email_verifications").deleteOne({ _id: row["_id"] });
         return { ok: true as const, message: "Email successfully verified!" };
       }
       return { ok: false as const, error: "Invalid or expired verification code." };
-    } catch (err) { void err; }
+    } catch (err) {
+      void err;
+    }
   }
 
   const db = await getDatabase();
   const row = db
-    .prepare(
-      "SELECT * FROM email_verifications WHERE email = ? AND code = ? AND expires_at > ?"
-    )
-    .get(normalizedEmail, code, new Date().toISOString()) as
-    | { id: number }
-    | undefined;
+    .prepare("SELECT * FROM email_verifications WHERE email = ? AND code = ? AND expires_at > ?")
+    .get(normalizedEmail, code, new Date().toISOString()) as { id: number } | undefined;
 
   if (!row) {
     return { ok: false as const, error: "Invalid or expired verification code." };
@@ -902,7 +919,7 @@ export async function verifyAiAuthAndRateLimit(): Promise<
           $inc: { count: 1 },
           $setOnInsert: { windowStart: new Date() },
         },
-        { upsert: true }
+        { upsert: true },
       );
 
       await mongo.collection("ai_rate_limits").updateOne(
@@ -911,7 +928,7 @@ export async function verifyAiAuthAndRateLimit(): Promise<
           $inc: { count: 1 },
           $setOnInsert: { windowStart: new Date() },
         },
-        { upsert: true }
+        { upsert: true },
       );
 
       return {
@@ -934,7 +951,7 @@ export async function verifyAiAuthAndRateLimit(): Promise<
   const db = await getDatabase();
   const row = db
     .prepare(
-      "SELECT users.* FROM sessions JOIN users ON users.id = sessions.user_id WHERE sessions.token = ? AND sessions.expires_at > ?"
+      "SELECT users.* FROM sessions JOIN users ON users.id = sessions.user_id WHERE sessions.token = ? AND sessions.expires_at > ?",
     )
     .get(token, new Date().toISOString()) as UserRow | undefined;
 
@@ -975,17 +992,21 @@ export async function verifyAiAuthAndRateLimit(): Promise<
     };
   }
 
-  db.prepare(`
+  db.prepare(
+    `
     INSERT INTO ai_rate_limits (key, count, window_start)
     VALUES (?, 1, ?)
     ON CONFLICT(key) DO UPDATE SET count = count + 1
-  `).run(userKey, userRec ? userRec.window_start : new Date().toISOString());
+  `,
+  ).run(userKey, userRec ? userRec.window_start : new Date().toISOString());
 
-  db.prepare(`
+  db.prepare(
+    `
     INSERT INTO ai_rate_limits (key, count, window_start)
     VALUES (?, 1, ?)
     ON CONFLICT(key) DO UPDATE SET count = count + 1
-  `).run(ipKey, ipRec ? ipRec.window_start : new Date().toISOString());
+  `,
+  ).run(ipKey, ipRec ? ipRec.window_start : new Date().toISOString());
 
   return { ok: true, user: publicUser(row), ip };
 }
@@ -996,7 +1017,8 @@ export async function getDatabaseStatusHandler() {
     return {
       type: "sqlite" as const,
       connected: true,
-      message: "Running on SQLite storage (local). To connect MongoDB Atlas, set MONGODB_URI in .env.",
+      message:
+        "Running on SQLite storage (local). To connect MongoDB Atlas, set MONGODB_URI in .env.",
     };
   }
   const check = await checkMongoConnection();

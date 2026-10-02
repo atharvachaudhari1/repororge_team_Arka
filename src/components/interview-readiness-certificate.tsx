@@ -33,7 +33,7 @@ export function InterviewReadinessCertificateModal({ open, onOpenChange, session
 
   const totalQuestions = session.questions.length;
   const answeredCount = Object.keys(session.answers).filter(
-    (k) => (session.answers[k] ?? "").trim().length > 0
+    (k) => (session.answers[k] ?? "").trim().length > 0,
   ).length;
 
   const baseScore = session.feedback
@@ -41,13 +41,13 @@ export function InterviewReadinessCertificateModal({ open, onOpenChange, session
         (session.feedback.technicalRelevance +
           session.feedback.completeness +
           session.feedback.structure) /
-          3
+          3,
       )
     : 85;
 
   const readinessScore = Math.min(
     98,
-    Math.round(baseScore * 0.7 + (answeredCount / Math.max(1, totalQuestions)) * 30)
+    Math.round(baseScore * 0.7 + (answeredCount / Math.max(1, totalQuestions)) * 30),
   );
 
   const handleDownload = () => {
@@ -121,7 +121,8 @@ export function InterviewReadinessCertificateModal({ open, onOpenChange, session
             </Badge>
           </div>
           <DialogDescription>
-            Performance evaluation and readiness certificate for <strong>{session.careerTitle}</strong>.
+            Performance evaluation and readiness certificate for{" "}
+            <strong>{session.careerTitle}</strong>.
           </DialogDescription>
         </DialogHeader>
 
@@ -140,7 +141,11 @@ export function InterviewReadinessCertificateModal({ open, onOpenChange, session
               Interview Readiness Index
             </span>
             <span className="text-4xl font-extrabold text-brand mt-1 block">{readinessScore}%</span>
-            <Progress value={readinessScore} className="mt-2" aria-label={`Readiness score ${readinessScore} percent`} />
+            <Progress
+              value={readinessScore}
+              className="mt-2"
+              aria-label={`Readiness score ${readinessScore} percent`}
+            />
           </div>
 
           <div className="grid grid-cols-2 gap-2 text-left pt-2 text-xs">
@@ -168,10 +173,16 @@ export function InterviewReadinessCertificateModal({ open, onOpenChange, session
             Interview Preparation Insights
           </h4>
           <ul className="list-disc pl-4 space-y-1 text-muted-foreground">
-            <li>Answers demonstrated domain experience and practical problem-solving capability.</li>
+            <li>
+              Answers demonstrated domain experience and practical problem-solving capability.
+            </li>
             <li>Ready to request accommodations respectfully during recruitment phone screens.</li>
             <li>
-              Remember to ask the interviewer: <em>"Can you describe how your team ensures accessible documentation and meeting captions?"</em>
+              Remember to ask the interviewer:{" "}
+              <em>
+                "Can you describe how your team ensures accessible documentation and meeting
+                captions?"
+              </em>
             </li>
           </ul>
         </div>

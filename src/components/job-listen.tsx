@@ -30,11 +30,23 @@ export function JobListen({ job }: { job: Job }) {
               <Play aria-hidden="true" />
               {tts.state === "paused" ? "Resume" : "Listen to job"}
             </Button>
-            <Button size="sm" variant="outline" className="min-h-11" onClick={tts.pause} disabled={tts.state !== "speaking"}>
+            <Button
+              size="sm"
+              variant="outline"
+              className="min-h-11"
+              onClick={tts.pause}
+              disabled={tts.state !== "speaking"}
+            >
               <Pause aria-hidden="true" />
               Pause
             </Button>
-            <Button size="sm" variant="outline" className="min-h-11" onClick={tts.stop} disabled={tts.state === "idle"}>
+            <Button
+              size="sm"
+              variant="outline"
+              className="min-h-11"
+              onClick={tts.stop}
+              disabled={tts.state === "idle"}
+            >
               <Square aria-hidden="true" />
               Stop
             </Button>
@@ -55,7 +67,9 @@ export function JobListen({ job }: { job: Job }) {
               ))}
             </ul>
           </details>
-          <p aria-live="polite" className="sr-only">Read aloud {tts.state}</p>
+          <p aria-live="polite" className="sr-only">
+            Read aloud {tts.state}
+          </p>
         </>
       ) : (
         <p className="mt-1 text-sm text-muted-foreground">

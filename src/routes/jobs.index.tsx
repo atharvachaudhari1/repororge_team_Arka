@@ -6,16 +6,14 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { JobCard } from "@/components/job-card";
 import { JobSearchBar } from "@/components/job-search-bar";
 import { JobMapExplorer } from "@/components/job-map-explorer";
-import {
-  ACCESS_FEATURES, CITIES, INCLUSION_FEATURES,
-} from "@/lib/jobs-data";
+import { ACCESS_FEATURES, CITIES, INCLUSION_FEATURES } from "@/lib/jobs-data";
 import { EMPTY_FILTERS, filterJobs, type Filters } from "@/lib/search";
 import { useAppState } from "@/lib/app-state";
 import type { QueryChip } from "@/lib/voice-query";
 
 export const Route = createFileRoute("/jobs/")({
-  validateSearch: (search: Record<string, unknown>) => ({
-    q: typeof search["q"] === "string" ? (search["q"] as string) : "",
+  validateSearch: (search: Record<string, unknown>): { q?: string | undefined } => ({
+    q: typeof search["q"] === "string" ? (search["q"] as string) : undefined,
   }),
   head: () => ({
     meta: [
@@ -50,7 +48,10 @@ const GROUPS: Group[] = [
   {
     key: "employment",
     legend: "Employment type",
-    options: ["Full-time", "Part-time", "Internship", "Contract"].map((v) => ({ value: v, label: v })),
+    options: ["Full-time", "Part-time", "Internship", "Contract"].map((v) => ({
+      value: v,
+      label: v,
+    })),
   },
   {
     key: "experience",
@@ -76,16 +77,24 @@ const GROUPS: Group[] = [
 
 function JobsPage() {
   const { q } = Route.useSearch();
+  const searchQ = q ?? "";
   const navigate = useNavigate();
   const { allJobs } = useAppState();
-  const [filters, setFilters] = useState<Filters>({ ...EMPTY_FILTERS, q });
+  const [filters, setFilters] = useState<Filters>({ ...EMPTY_FILTERS, q: searchQ });
   const [viewMode, setViewMode] = useState<"list" | "map">("list");
-  const [pending, setPending] = useState<{ filters: Filters; chips: QueryChip[]; heard: string } | null>(null);
+  const [pending, setPending] = useState<{
+    filters: Filters;
+    chips: QueryChip[];
+    heard: string;
+  } | null>(null);
   const [announcement, setAnnouncement] = useState("");
   const filterPanel = useRef<HTMLDivElement | null>(null);
-  const query = filters.q || q;
+  const query = filters.q || searchQ;
 
-  const results = useMemo(() => filterJobs({ ...filters, q: query }, allJobs), [filters, query, allJobs]);
+  const results = useMemo(
+    () => filterJobs({ ...filters, q: query }, allJobs),
+    [filters, query, allJobs],
+  );
   const activeCount = GROUPS.reduce((n, g) => n + (filters[g.key] as string[]).length, 0);
 
   const toggle = (key: keyof Filters, value: string) =>
@@ -146,14 +155,18 @@ function JobsPage() {
         />
       </div>
 
-      <p aria-live="polite" className="sr-only">{announcement}</p>
+      <p aria-live="polite" className="sr-only">
+        {announcement}
+      </p>
 
       {pending ? (
         <section
           aria-labelledby="voice-understood"
           className="surface-card mt-4 border-brand/40 p-4"
         >
-          <h2 id="voice-understood" className="font-semibold">I understood:</h2>
+          <h2 id="voice-understood" className="font-semibold">
+            I understood:
+          </h2>
           <p className="mt-1 text-sm text-muted-foreground">You said: “{pending.heard}”</p>
           <ul className="mt-3 flex flex-wrap gap-2">
             {pending.chips.length ? (
@@ -173,7 +186,9 @@ function JobsPage() {
             <Button
               onClick={() => {
                 applyParsed(pending.filters);
-                setAnnouncement(`Filters applied. ${pending.chips.length} interpreted from your voice search.`);
+                setAnnouncement(
+                  `Filters applied. ${pending.chips.length} interpreted from your voice search.`,
+                );
                 setPending(null);
               }}
             >

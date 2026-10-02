@@ -7,6 +7,7 @@ import {
   useRouterState,
   HeadContent,
   Scripts,
+  type ErrorComponentProps,
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
 
@@ -44,7 +45,7 @@ function NotFoundComponent() {
   );
 }
 
-function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
+function ErrorComponent({ error, reset }: ErrorComponentProps) {
   console.error(error);
   const router = useRouter();
   useEffect(() => {
@@ -96,12 +97,17 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:title", content: "Ableo — The Disability-First Job Platform" },
       {
         property: "og:description",
-        content: "The job platform built from the ground up for People with Disabilities. Accessible job matching, accommodation transparency, and inclusive career tools.",
+        content:
+          "The job platform built from the ground up for People with Disabilities. Accessible job matching, accommodation transparency, and inclusive career tools.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:title", content: "Ableo — The Disability-First Job Platform" },
-      { name: "twitter:description", content: "Built for PwD. Accessible job matching, accommodation transparency, and disability-first career tools by Team Arka." },
+      {
+        name: "twitter:description",
+        content:
+          "Built for PwD. Accessible job matching, accommodation transparency, and disability-first career tools by Team Arka.",
+      },
     ],
     links: [
       {
@@ -147,17 +153,23 @@ function RootComponent() {
       <AuthProvider>
         <AppStateProvider>
           <div className="flex min-h-dvh flex-col bg-background text-foreground">
-          <SiteHeader />
-          <main id="main" className="flex-1">
-            {/* The public landing page is open to everyone; all tools and portals require an account. */}
-            {isPublicPage ? <Outlet /> : <PortalGate role={requiredRole}><Outlet /></PortalGate>}
-          </main>
-          <SiteFooter />
-          <LiveCaptions />
-          <VoiceAssistantModal />
-          <ReadingRuler />
-          <CareerAssistant />
-          <Toaster />
+            <SiteHeader />
+            <main id="main" className="flex-1">
+              {/* The public landing page is open to everyone; all tools and portals require an account. */}
+              {isPublicPage ? (
+                <Outlet />
+              ) : (
+                <PortalGate role={requiredRole}>
+                  <Outlet />
+                </PortalGate>
+              )}
+            </main>
+            <SiteFooter />
+            <LiveCaptions />
+            <VoiceAssistantModal />
+            <ReadingRuler />
+            <CareerAssistant />
+            <Toaster />
           </div>
         </AppStateProvider>
       </AuthProvider>

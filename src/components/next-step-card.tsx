@@ -81,8 +81,16 @@ export function nextStep(
 }
 
 export function NextStepCard({
-  profile, jobs, applications, savedJobs,
-}: { profile: Profile; jobs: Job[]; applications: Application[]; savedJobs: string[] }) {
+  profile,
+  jobs,
+  applications,
+  savedJobs,
+}: {
+  profile: Profile;
+  jobs: Job[];
+  applications: Application[];
+  savedJobs: string[];
+}) {
   const step = nextStep(profile, jobs, applications, savedJobs);
   return (
     <section
@@ -93,7 +101,10 @@ export function NextStepCard({
         <Compass aria-hidden="true" className="size-4 text-stone-700 dark:text-stone-300" />
         Recommended Next Step
       </p>
-      <h2 id="next-step-heading" className="mt-2 font-serif text-2xl font-normal text-foreground leading-snug">
+      <h2
+        id="next-step-heading"
+        className="mt-2 font-serif text-2xl font-normal text-foreground leading-snug"
+      >
         {step.title}
       </h2>
       <p className="mt-1.5 text-xs sm:text-sm text-stone-600 dark:text-stone-400 font-sans leading-relaxed">

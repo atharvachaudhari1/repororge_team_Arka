@@ -131,16 +131,19 @@ export function VoiceAssistantModal() {
       return;
     }
 
-    setFeedback(`Heard: "${rawText}". Try saying "Find jobs", "Dashboard", "Profile", or "High contrast".`);
+    setFeedback(
+      `Heard: "${rawText}". Try saying "Find jobs", "Dashboard", "Profile", or "High contrast".`,
+    );
   };
 
   const voice = useVoiceSearch(handleVoiceCommand);
+  const { supported, listening, start } = voice;
 
   useEffect(() => {
-    if (voiceAssistantOpen && voice.supported && !voice.listening) {
-      voice.start();
+    if (voiceAssistantOpen && supported && !listening) {
+      start();
     }
-  }, [voiceAssistantOpen, voice.supported]);
+  }, [voiceAssistantOpen, supported, listening, start]);
 
   if (!voiceAssistantOpen) return null;
 
@@ -178,7 +181,9 @@ export function VoiceAssistantModal() {
         <div className="my-6 text-center">
           <div
             className={`mx-auto flex size-20 items-center justify-center rounded-full transition-transform ${
-              voice.listening ? "animate-pulse bg-brand text-brand-foreground shadow-lg shadow-brand/40" : "bg-muted text-muted-foreground"
+              voice.listening
+                ? "animate-pulse bg-brand text-brand-foreground shadow-lg shadow-brand/40"
+                : "bg-muted text-muted-foreground"
             }`}
           >
             {voice.listening ? <Mic className="size-9" /> : <MicOff className="size-9" />}
@@ -210,22 +215,12 @@ export function VoiceAssistantModal() {
 
         <div className="mt-5 flex gap-2">
           {voice.listening ? (
-            <Button
-              type="button"
-              variant="outline"
-              className="flex-1"
-              onClick={voice.stop}
-            >
+            <Button type="button" variant="outline" className="flex-1" onClick={voice.stop}>
               <MicOff className="size-4 mr-1.5" />
               Pause Listening
             </Button>
           ) : (
-            <Button
-              type="button"
-              variant="default"
-              className="flex-1"
-              onClick={voice.start}
-            >
+            <Button type="button" variant="default" className="flex-1" onClick={voice.start}>
               <Mic className="size-4 mr-1.5" />
               Start Listening
             </Button>

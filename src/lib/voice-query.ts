@@ -25,14 +25,23 @@ const EMPLOYMENT_WORDS: [string[], string][] = [
 ];
 
 const ACCESS_WORDS: [string[], keyof typeof ACCESS_FEATURES][] = [
-  [["accessible interview", "interview accessible", "accessible interviews"], "accessible_interview"],
+  [
+    ["accessible interview", "interview accessible", "accessible interviews"],
+    "accessible_interview",
+  ],
   [["screen reader", "screenreader", "nvda", "jaws", "talkback"], "screen_reader"],
-  [["flexible hours", "flexible working", "flexible schedule", "flexible timing", "flexible work"], "flexible_work"],
+  [
+    ["flexible hours", "flexible working", "flexible schedule", "flexible timing", "flexible work"],
+    "flexible_work",
+  ],
   [["caption", "captions", "captioned", "subtitles"], "captioned_meetings"],
   [["assistive technology", "assistive tech", "braille", "magnifier"], "assistive_tech"],
   [["keyboard"], "keyboard_friendly"],
   [["accessible application", "accessible website", "accessible apply"], "accessible_application"],
-  [["accessible workplace", "accessible office", "step free", "wheelchair"], "accessible_workplace"],
+  [
+    ["accessible workplace", "accessible office", "step free", "wheelchair"],
+    "accessible_workplace",
+  ],
 ];
 
 const INCLUSION_WORDS: [string[], keyof typeof INCLUSION_FEATURES][] = [
@@ -47,9 +56,20 @@ const FILLER =
 
 /** Converts a spoken sentence into structured filters plus a free-text remainder. */
 export function parseVoiceQuery(text: string): { filters: Filters; chips: QueryChip[] } {
-  const raw = ` ${text.toLowerCase().replace(/[.,!?]/g, " ").replace(/\s+/g, " ")} `;
+  const raw = ` ${text
+    .toLowerCase()
+    .replace(/[.,!?]/g, " ")
+    .replace(/\s+/g, " ")} `;
   let rest = raw;
-  const filters: Filters = { ...EMPTY_FILTERS, workModes: [], cities: [], employment: [], experience: [], access: [], inclusion: [] };
+  const filters: Filters = {
+    ...EMPTY_FILTERS,
+    workModes: [],
+    cities: [],
+    employment: [],
+    experience: [],
+    access: [],
+    inclusion: [],
+  };
   const chips: QueryChip[] = [];
 
   const take = (phrases: string[]) => {
@@ -110,6 +130,8 @@ export function describeFilters(filters: Filters) {
   if (filters.q) parts.push(filters.q);
   parts.push(...filters.workModes, ...filters.cities, ...filters.experience, ...filters.employment);
   parts.push(...filters.access.map((a) => ACCESS_FEATURES[a as keyof typeof ACCESS_FEATURES] ?? a));
-  parts.push(...filters.inclusion.map((i) => INCLUSION_FEATURES[i as keyof typeof INCLUSION_FEATURES] ?? i));
+  parts.push(
+    ...filters.inclusion.map((i) => INCLUSION_FEATURES[i as keyof typeof INCLUSION_FEATURES] ?? i),
+  );
   return parts;
 }

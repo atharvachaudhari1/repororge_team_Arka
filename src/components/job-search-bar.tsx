@@ -89,7 +89,9 @@ export function JobSearchBar({
         </Button>
       </div>
       <p aria-live="polite" className="sr-only">
-        {listening ? "Listening. Say something like: remote software developer jobs in Chennai." : status}
+        {listening
+          ? "Listening. Say something like: remote software developer jobs in Chennai."
+          : status}
       </p>
       {!supported ? (
         <p className="text-xs text-muted-foreground sm:sr-only">

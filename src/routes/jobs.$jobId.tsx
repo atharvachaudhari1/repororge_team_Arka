@@ -1,6 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { Bookmark, BookmarkCheck, FileText, LayoutList, RefreshCcw, ShieldCheck, Sparkles } from "lucide-react";
+import {
+  Bookmark,
+  BookmarkCheck,
+  FileText,
+  LayoutList,
+  RefreshCcw,
+  ShieldCheck,
+  Sparkles,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getJob } from "@/lib/jobs-data";
 import { useAppState } from "@/lib/app-state";

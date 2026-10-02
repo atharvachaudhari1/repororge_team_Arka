@@ -58,7 +58,8 @@ export function InterviewCoach() {
     },
     {
       id: "q-2",
-      question: "How do you handle situations where requirements or timelines change suddenly? What accommodations or tools help you stay productive in fast-paced environments?",
+      question:
+        "How do you handle situations where requirements or timelines change suddenly? What accommodations or tools help you stay productive in fast-paced environments?",
       category: "Behavioural & Accommodations",
     },
     {
@@ -68,22 +69,26 @@ export function InterviewCoach() {
     },
     {
       id: "q-4",
-      question: "How would you approach requesting workplace accommodations from a new employer? What information would you share, and when?",
+      question:
+        "How would you approach requesting workplace accommodations from a new employer? What information would you share, and when?",
       category: "Disability & Workplace",
     },
     {
       id: "q-5",
-      question: "What specific accommodations or work environments enable you to do your highest quality work? How have past employers supported your access needs?",
+      question:
+        "What specific accommodations or work environments enable you to do your highest quality work? How have past employers supported your access needs?",
       category: "Workplace & Collaboration",
     },
     {
       id: "q-6",
-      question: "Describe a time when you had to advocate for accessibility in a product, process, or workplace. What was the outcome?",
+      question:
+        "Describe a time when you had to advocate for accessibility in a product, process, or workplace. What was the outcome?",
       category: "Disability Advocacy",
     },
     {
       id: "q-7",
-      question: "If an interviewer asked about your disability (which they legally shouldn't in many places), how would you choose to handle that situation?",
+      question:
+        "If an interviewer asked about your disability (which they legally shouldn't in many places), how would you choose to handle that situation?",
       category: "Disability Rights & Preparedness",
     },
   ];
@@ -157,8 +162,10 @@ export function InterviewCoach() {
           technicalRelevance: Math.min(95, 70 + Math.min(25, wordCount / 2)),
           completeness: Math.min(90, 65 + Math.min(25, wordCount / 3)),
           structure: 80,
-          feedback: "Great concrete response! You clearly structured your key points and referenced relevant experience.",
-          howToImprove: "Consider using the STAR method (Situation, Task, Action, Result) to highlight measurable business or user outcomes.",
+          feedback:
+            "Great concrete response! You clearly structured your key points and referenced relevant experience.",
+          howToImprove:
+            "Consider using the STAR method (Situation, Task, Action, Result) to highlight measurable business or user outcomes.",
         });
       }
     } catch {

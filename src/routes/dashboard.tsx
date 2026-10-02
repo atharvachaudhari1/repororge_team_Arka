@@ -39,7 +39,11 @@ export const Route = createFileRoute("/dashboard")({
       },
     ],
   }),
-  component: () => <PortalGate role="candidate"><Dashboard /></PortalGate>,
+  component: () => (
+    <PortalGate role="candidate">
+      <Dashboard />
+    </PortalGate>
+  ),
 });
 
 type FilterCategory = "all" | "remote" | "vision" | "hearing" | "mobility";
@@ -55,7 +59,9 @@ function Dashboard() {
   // Access preferences summary
   const accessPrefs = profile.accessibilityPreferences || [];
   const hasAccessNeeds = accessPrefs.length > 0;
-  const configuredNeeds = accessPrefs.filter((p) => !p.startsWith("self_") && !p.startsWith("custom:"));
+  const configuredNeeds = accessPrefs.filter(
+    (p) => !p.startsWith("self_") && !p.startsWith("custom:"),
+  );
   const configuredLabels = prefLabels(configuredNeeds);
 
   // Filtered jobs
@@ -72,7 +78,7 @@ function Dashboard() {
       }
 
       if (activeFilter === "remote") {
-        return job.remote || job.workMode.toLowerCase().includes("remote");
+        return job.workMode.toLowerCase().includes("remote");
       }
       if (activeFilter === "vision") {
         return (
@@ -101,23 +107,64 @@ function Dashboard() {
       <section className="relative overflow-hidden rounded-3xl border border-[#191716]/15 dark:border-stone-800 bg-[#FAF7F2] dark:bg-[#1C1A18] p-6 sm:p-10 lg:p-12 mb-10 shadow-[0_2px_12px_rgba(0,0,0,0.03)]">
         {/* Decorative Ink Sketch Elements in Background */}
         <div className="absolute inset-0 pointer-events-none opacity-40 dark:opacity-20 select-none overflow-hidden">
-          <svg className="w-full h-full" viewBox="0 0 1000 320" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <svg
+            className="w-full h-full"
+            viewBox="0 0 1000 320"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
             {/* Horizon and lake shorelines */}
-            <path d="M0 240 C 250 240, 350 265, 600 245 C 800 230, 900 250, 1000 245" stroke="#191716" strokeWidth="1.2" strokeDasharray="3 3" />
-            <path d="M0 260 C 280 255, 450 285, 700 265 C 880 255, 950 270, 1000 265" stroke="#191716" strokeWidth="0.8" />
+            <path
+              d="M0 240 C 250 240, 350 265, 600 245 C 800 230, 900 250, 1000 245"
+              stroke="#191716"
+              strokeWidth="1.2"
+              strokeDasharray="3 3"
+            />
+            <path
+              d="M0 260 C 280 255, 450 285, 700 265 C 880 255, 950 270, 1000 265"
+              stroke="#191716"
+              strokeWidth="0.8"
+            />
             {/* Distant mountain ridges */}
-            <path d="M120 220 Q 220 180 320 220 T 520 220" stroke="#191716" strokeWidth="1" opacity="0.6" />
-            <path d="M650 215 Q 760 175 870 215 T 1000 215" stroke="#191716" strokeWidth="1" opacity="0.6" />
+            <path
+              d="M120 220 Q 220 180 320 220 T 520 220"
+              stroke="#191716"
+              strokeWidth="1"
+              opacity="0.6"
+            />
+            <path
+              d="M650 215 Q 760 175 870 215 T 1000 215"
+              stroke="#191716"
+              strokeWidth="1"
+              opacity="0.6"
+            />
             {/* Pine silhouettes left */}
-            <path d="M40 240 L55 170 L70 240 Z M35 240 L55 190 L75 240 Z" fill="#191716" opacity="0.85" />
+            <path
+              d="M40 240 L55 170 L70 240 Z M35 240 L55 190 L75 240 Z"
+              fill="#191716"
+              opacity="0.85"
+            />
             <path d="M80 245 L92 185 L104 245 Z" fill="#191716" opacity="0.75" />
             {/* Pine silhouettes right */}
             <path d="M910 245 L925 175 L940 245 Z" fill="#191716" opacity="0.8" />
             <path d="M945 250 L958 190 L970 250 Z" fill="#191716" opacity="0.7" />
             {/* Hot air balloon in terracotta */}
             <g transform="translate(760, 60)">
-              <ellipse cx="25" cy="30" rx="20" ry="26" fill="#CF4E3D" stroke="#191716" strokeWidth="1.5" />
-              <path d="M15 45 L35 45 L30 55 L20 55 Z" fill="#E5B34C" stroke="#191716" strokeWidth="1.2" />
+              <ellipse
+                cx="25"
+                cy="30"
+                rx="20"
+                ry="26"
+                fill="#CF4E3D"
+                stroke="#191716"
+                strokeWidth="1.5"
+              />
+              <path
+                d="M15 45 L35 45 L30 55 L20 55 Z"
+                fill="#E5B34C"
+                stroke="#191716"
+                strokeWidth="1.2"
+              />
               <rect x="22" y="58" width="6" height="5" fill="#191716" />
               <path d="M22 55 L22 58 M28 55 L28 58" stroke="#191716" strokeWidth="1" />
             </g>
@@ -134,19 +181,25 @@ function Dashboard() {
 
           <h1 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-normal tracking-tight text-stone-900 dark:text-stone-100 leading-tight">
             {profile.name ? (
-              <>A career roadmap for <span className="italic">{profile.name.split(" ")[0]}</span>.</>
+              <>
+                A career roadmap for <span className="italic">{profile.name.split(" ")[0]}</span>.
+              </>
             ) : (
-              <>A career roadmap for <span className="italic">everyone</span>.</>
+              <>
+                A career roadmap for <span className="italic">everyone</span>.
+              </>
             )}
           </h1>
 
           <p className="mt-3 text-sm sm:text-base text-stone-600 dark:text-stone-400 font-sans max-w-lg mx-auto leading-relaxed">
-            {profile.headline || "Your career is a journey. Find roles matched to your skills and verified accommodations with confidence."}
+            {profile.headline ||
+              "Your career is a journey. Find roles matched to your skills and verified accommodations with confidence."}
           </p>
 
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
             <Link
               to="/jobs"
+              search={{ q: "" }}
               className="inline-flex items-center gap-2 rounded-full border border-[#191716] bg-[#7BD3C2] px-6 py-2.5 text-sm font-semibold text-[#141817] shadow-[2px_2px_0px_#141817] transition-all hover:bg-[#6ec2b1] hover:-translate-y-0.5 active:translate-y-0"
             >
               Explore matched roles
@@ -155,6 +208,7 @@ function Dashboard() {
 
             <Link
               to="/jobs"
+              search={{ q: "" }}
               className="inline-flex items-center gap-2 rounded-full border border-[#191716]/80 dark:border-stone-400 bg-white/80 dark:bg-stone-900 px-5 py-2.5 text-sm font-medium text-stone-900 dark:text-stone-100 shadow-[1px_1px_0px_rgba(0,0,0,0.15)] transition-all hover:bg-stone-50 hover:-translate-y-0.5"
             >
               <MapPin className="size-4 text-[#CF4E3D]" />
@@ -175,8 +229,12 @@ function Dashboard() {
         <div className="hidden sm:flex absolute bottom-5 left-6 items-center gap-2 select-none">
           <div className="flex size-14 items-center justify-center rounded-full border-2 border-[#191716] bg-[#E5B34C] text-[#191716] shadow-[2px_2px_0px_#191716] rotate-[-8deg] hover:rotate-0 transition-transform">
             <div className="text-center">
-              <span className="block text-[8px] font-bold uppercase tracking-widest leading-none">ABLEO</span>
-              <span className="block text-[11px] font-black tracking-tight leading-none mt-0.5">GUIDE</span>
+              <span className="block text-[8px] font-bold uppercase tracking-widest leading-none">
+                ABLEO
+              </span>
+              <span className="block text-[11px] font-black tracking-tight leading-none mt-0.5">
+                GUIDE
+              </span>
             </div>
           </div>
           <div className="text-left text-[11px] text-stone-600 dark:text-stone-400 font-serif italic">
@@ -194,7 +252,11 @@ function Dashboard() {
             <Briefcase className="size-4" />
           </div>
           <p className="mt-2 font-serif text-3xl font-normal text-foreground">{avg}%</p>
-          <Link to="/jobs" className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-stone-600 dark:text-stone-400 hover:text-foreground">
+          <Link
+            to="/jobs"
+            search={{ q: "" }}
+            className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-stone-600 dark:text-stone-400 hover:text-foreground"
+          >
             Explore {allJobs.length} roles →
           </Link>
         </div>
@@ -204,7 +266,9 @@ function Dashboard() {
             <span className="text-xs font-serif tracking-wider uppercase">Profile Readiness</span>
             <UserCheck className="size-4" />
           </div>
-          <p className="mt-2 font-serif text-3xl font-normal text-foreground">{profileCompletion}%</p>
+          <p className="mt-2 font-serif text-3xl font-normal text-foreground">
+            {profileCompletion}%
+          </p>
           <div className="mt-3 h-1.5 w-full rounded-full bg-stone-200 dark:bg-stone-800 overflow-hidden">
             <div className="h-full bg-[#7BD3C2]" style={{ width: `${profileCompletion}%` }} />
           </div>
@@ -215,8 +279,13 @@ function Dashboard() {
             <span className="text-xs font-serif tracking-wider uppercase">Active Applications</span>
             <FileCheck2 className="size-4" />
           </div>
-          <p className="mt-2 font-serif text-3xl font-normal text-foreground">{applications.length}</p>
-          <Link to="/applications" className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-stone-600 dark:text-stone-400 hover:text-foreground">
+          <p className="mt-2 font-serif text-3xl font-normal text-foreground">
+            {applications.length}
+          </p>
+          <Link
+            to="/applications"
+            className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-stone-600 dark:text-stone-400 hover:text-foreground"
+          >
             Track status →
           </Link>
         </div>
@@ -227,7 +296,10 @@ function Dashboard() {
             <Bookmark className="size-4" />
           </div>
           <p className="mt-2 font-serif text-3xl font-normal text-foreground">{savedJobs.length}</p>
-          <Link to="/saved" className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-stone-600 dark:text-stone-400 hover:text-foreground">
+          <Link
+            to="/saved"
+            className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-stone-600 dark:text-stone-400 hover:text-foreground"
+          >
             View saved list →
           </Link>
         </div>
@@ -283,7 +355,9 @@ function Dashboard() {
                 <button
                   key={tab.id}
                   type="button"
-                  onClick={() => setActiveFilter(activeFilter === tab.id ? "all" : (tab.id as FilterCategory))}
+                  onClick={() =>
+                    setActiveFilter(activeFilter === tab.id ? "all" : (tab.id as FilterCategory))
+                  }
                   className={`rounded-full px-4 py-1.5 text-xs transition-all ${
                     activeFilter === tab.id
                       ? "bg-[#7BD3C2] text-[#141817] font-semibold border border-[#191716] shadow-[1px_1px_0px_#141817]"
@@ -296,6 +370,7 @@ function Dashboard() {
 
               <Link
                 to="/jobs"
+                search={{ q: "" }}
                 className="ml-auto inline-flex items-center gap-1.5 rounded-full border border-stone-300 dark:border-stone-700 bg-secondary/70 px-3.5 py-1.5 text-xs font-medium text-stone-700 dark:text-stone-300 hover:text-foreground hover:bg-secondary transition-all"
               >
                 <MapPin className="size-3.5 text-[#CF4E3D]" />
@@ -308,8 +383,12 @@ function Dashboard() {
           <div className="space-y-4">
             {filteredJobs.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-border p-12 text-center bg-card">
-                <p className="font-serif text-lg text-foreground">No roles match your search or filter</p>
-                <p className="mt-1 text-xs text-stone-500">Try clearing your filters to see more recommendations.</p>
+                <p className="font-serif text-lg text-foreground">
+                  No roles match your search or filter
+                </p>
+                <p className="mt-1 text-xs text-stone-500">
+                  Try clearing your filters to see more recommendations.
+                </p>
                 <button
                   type="button"
                   className="mt-4 rounded-full border border-[#191716] bg-[#7BD3C2] px-4 py-1.5 text-xs font-semibold text-[#141817] shadow-[1px_1px_0px_#141817]"
@@ -322,9 +401,7 @@ function Dashboard() {
                 </button>
               </div>
             ) : (
-              filteredJobs.slice(0, 8).map(({ job }) => (
-                <JobCard key={job.id} job={job} />
-              ))
+              filteredJobs.slice(0, 8).map(({ job }) => <JobCard key={job.id} job={job} />)
             )}
           </div>
 
@@ -332,6 +409,7 @@ function Dashboard() {
             <div className="pt-2 text-center">
               <Link
                 to="/jobs"
+                search={{ q: "" }}
                 className="inline-flex items-center gap-1.5 rounded-full border border-[#191716] bg-card px-5 py-2 text-xs font-semibold text-foreground hover:bg-secondary transition-all shadow-[1px_1px_0px_#141817]"
               >
                 View all {allJobs.length} listings
@@ -350,7 +428,10 @@ function Dashboard() {
                 <Accessibility className="size-4 text-stone-700 dark:text-stone-300" />
                 Your Accommodation Needs
               </h2>
-              <Link to="/profile" className="text-xs font-semibold text-stone-600 dark:text-stone-400 hover:text-foreground underline">
+              <Link
+                to="/profile"
+                className="text-xs font-semibold text-stone-600 dark:text-stone-400 hover:text-foreground underline"
+              >
                 Edit
               </Link>
             </div>
@@ -380,7 +461,8 @@ function Dashboard() {
             ) : (
               <div className="mt-3.5">
                 <p className="text-xs text-stone-500">
-                  No accommodations configured yet. Add your requirements to see personalized fit scores.
+                  No accommodations configured yet. Add your requirements to see personalized fit
+                  scores.
                 </p>
                 <Link
                   to="/profile"
@@ -406,13 +488,18 @@ function Dashboard() {
                 <span className="absolute -bottom-0.5 -right-0.5 size-3 rounded-full border border-[#191716] bg-[#7BD3C2]" />
               </div>
               <div>
-                <p className="text-[10px] uppercase font-serif tracking-widest text-stone-500">Chat with</p>
-                <h3 className="font-serif text-lg font-normal text-stone-900 dark:text-stone-100">Angie & AI Coach</h3>
+                <p className="text-[10px] uppercase font-serif tracking-widest text-stone-500">
+                  Chat with
+                </p>
+                <h3 className="font-serif text-lg font-normal text-stone-900 dark:text-stone-100">
+                  Angie & AI Coach
+                </h3>
               </div>
             </div>
 
             <p className="mt-3 text-xs text-stone-600 dark:text-stone-400 font-sans leading-relaxed">
-              Have questions about disclosing accommodations or need mock interview practice? Let's talk through your strategy.
+              Have questions about disclosing accommodations or need mock interview practice? Let's
+              talk through your strategy.
             </p>
 
             <div className="mt-4">
@@ -429,15 +516,21 @@ function Dashboard() {
           {/* Applications Status Summary */}
           <div className="rounded-2xl border border-border bg-card p-6 shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
             <div className="flex items-center justify-between">
-              <h2 className="font-serif text-base font-normal text-foreground">Recent Applications</h2>
-              <Link to="/applications" className="text-xs font-semibold text-stone-600 dark:text-stone-400 hover:text-foreground underline">
+              <h2 className="font-serif text-base font-normal text-foreground">
+                Recent Applications
+              </h2>
+              <Link
+                to="/applications"
+                className="text-xs font-semibold text-stone-600 dark:text-stone-400 hover:text-foreground underline"
+              >
                 View all ({applications.length})
               </Link>
             </div>
 
             {applications.length === 0 ? (
               <p className="mt-3 text-xs text-stone-500">
-                You haven't submitted any applications yet. When you apply, track progress and requested accommodations here.
+                You haven't submitted any applications yet. When you apply, track progress and
+                requested accommodations here.
               </p>
             ) : (
               <div className="mt-3 divide-y divide-border">

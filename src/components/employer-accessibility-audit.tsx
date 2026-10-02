@@ -22,7 +22,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import type { Job } from "@/lib/jobs-data";
+import type { Job, AccessFeature, InclusionFeature } from "@/lib/jobs-data";
 import { ACCESS_FEATURES, INCLUSION_FEATURES } from "@/lib/jobs-data";
 
 interface Props {
@@ -44,8 +44,8 @@ type AuditItem = {
 export function EmployerAccessibilityAuditModal({ job, open, onOpenChange }: Props) {
   const [selectedFilter, setSelectedFilter] = useState<string>("All");
 
-  const hasAccess = (key: string) => job.access.includes(key as any);
-  const hasInclusion = (key: string) => job.inclusion.includes(key as any);
+  const hasAccess = (key: AccessFeature) => job.access.includes(key);
+  const hasInclusion = (key: InclusionFeature) => job.inclusion.includes(key);
 
   const auditItems: AuditItem[] = [
     {
@@ -53,65 +53,78 @@ export function EmployerAccessibilityAuditModal({ job, open, onOpenChange }: Pro
       category: "Perceivable",
       wcagCriterion: "WCAG 1.1.1 / 1.4.3",
       title: "Screen Reader & Assistive Tech Compatibility",
-      description: "Application portal and assessments support JAWS, NVDA, VoiceOver, and high-contrast styling.",
+      description:
+        "Application portal and assessments support JAWS, NVDA, VoiceOver, and high-contrast styling.",
       status: hasAccess("screen_reader")
         ? job.accessSource === "Verified by AccessPath"
           ? "verified"
           : "supported"
         : "partial",
-      recommendation: "Ensure all test assessments provide text alternatives and ARIA-compliant form fields.",
+      recommendation:
+        "Ensure all test assessments provide text alternatives and ARIA-compliant form fields.",
     },
     {
       id: "wcag-2",
       category: "Operable",
       wcagCriterion: "WCAG 2.1.1 / 2.4.7",
       title: "Full Keyboard Navigation (No Mouse Required)",
-      description: "Candidate can complete entire application and test flows using standard keyboard controls without focus traps.",
+      description:
+        "Candidate can complete entire application and test flows using standard keyboard controls without focus traps.",
       status: hasAccess("keyboard_friendly")
         ? job.accessSource === "Verified by AccessPath"
           ? "verified"
           : "supported"
         : "not_specified",
-      recommendation: "Verify all modal dialogs trap focus correctly and dismiss cleanly with Escape key.",
+      recommendation:
+        "Verify all modal dialogs trap focus correctly and dismiss cleanly with Escape key.",
     },
     {
       id: "wcag-3",
       category: "Perceivable",
       wcagCriterion: "WCAG 1.2.2 / 1.2.4",
       title: "Interview Real-Time Captions & Video Alternatives",
-      description: "Interviews hosted on Google Meet / Zoom with automated or live CART captions and chat backups.",
+      description:
+        "Interviews hosted on Google Meet / Zoom with automated or live CART captions and chat backups.",
       status: hasAccess("captioned_meetings") ? "verified" : "partial",
-      recommendation: "Provide pre-meeting tech checks to ensure candidate caption preferences are configured.",
+      recommendation:
+        "Provide pre-meeting tech checks to ensure candidate caption preferences are configured.",
     },
     {
       id: "wcag-4",
       category: "Workplace & Interview",
       wcagCriterion: "RPwD Act 2016 / Section 20",
       title: "Accessible Interview Process & Accommodations Guarantee",
-      description: "Structured policy offering extra time, alternative formats, and remote options without bias.",
+      description:
+        "Structured policy offering extra time, alternative formats, and remote options without bias.",
       status: hasAccess("accessible_interview") ? "verified" : "supported",
-      recommendation: "Send interview format and question themes 24 hours in advance upon candidate request.",
+      recommendation:
+        "Send interview format and question themes 24 hours in advance upon candidate request.",
     },
     {
       id: "wcag-5",
       category: "Operable",
       wcagCriterion: "Physical / Built Environment",
       title: "Physical Workplace Accessibility & Transit",
-      description: "Wheelchair ramps, accessible elevators, and tactile paths for on-site / hybrid office visits.",
+      description:
+        "Wheelchair ramps, accessible elevators, and tactile paths for on-site / hybrid office visits.",
       status:
         job.workMode === "Remote"
           ? "verified"
           : hasAccess("accessible_workplace")
             ? "supported"
             : "not_specified",
-      recommendation: job.workMode === "Remote" ? "Fully remote: physical commute barriers eliminated." : "Add virtual office tour showing wheelchair access.",
+      recommendation:
+        job.workMode === "Remote"
+          ? "Fully remote: physical commute barriers eliminated."
+          : "Add virtual office tour showing wheelchair access.",
     },
     {
       id: "wcag-6",
       category: "Understandable",
       wcagCriterion: "WCAG 3.3.1 / 3.3.2",
       title: "Accessible Application Forms & Clear Instructions",
-      description: "No time-limited application barriers; explicit field requirements and error explanations.",
+      description:
+        "No time-limited application barriers; explicit field requirements and error explanations.",
       status: hasAccess("accessible_application") ? "verified" : "supported",
     },
     {
@@ -119,14 +132,20 @@ export function EmployerAccessibilityAuditModal({ job, open, onOpenChange }: Pro
       category: "Workplace & Interview",
       wcagCriterion: "Inclusive Employment",
       title: "Equal Opportunity & LGBTQ+ Inclusive Policies",
-      description: "Formal inclusion policy, preferred name respect, and candidate-controlled privacy.",
-      status: hasInclusion("equal_opportunity") || hasInclusion("lgbtq_policy") ? "verified" : "supported",
+      description:
+        "Formal inclusion policy, preferred name respect, and candidate-controlled privacy.",
+      status:
+        hasInclusion("equal_opportunity") || hasInclusion("lgbtq_policy")
+          ? "verified"
+          : "supported",
     },
   ];
 
   const verifiedCount = auditItems.filter((i) => i.status === "verified").length;
   const supportedCount = auditItems.filter((i) => i.status === "supported").length;
-  const score = Math.round(((verifiedCount * 1.0 + supportedCount * 0.7) / auditItems.length) * 100);
+  const score = Math.round(
+    ((verifiedCount * 1.0 + supportedCount * 0.7) / auditItems.length) * 100,
+  );
   const grade = score >= 90 ? "A+" : score >= 80 ? "A" : score >= 70 ? "B" : "C";
 
   const visibleItems =
@@ -143,7 +162,7 @@ export function EmployerAccessibilityAuditModal({ job, open, onOpenChange }: Pro
       "",
       "--- AUDIT DETAILS ---",
       ...auditItems.map(
-        (i) => `[${i.status.toUpperCase()}] ${i.title} (${i.wcagCriterion}): ${i.description}`
+        (i) => `[${i.status.toUpperCase()}] ${i.title} (${i.wcagCriterion}): ${i.description}`,
       ),
     ].join("\n");
     navigator.clipboard.writeText(text);
@@ -202,7 +221,11 @@ export function EmployerAccessibilityAuditModal({ job, open, onOpenChange }: Pro
               </div>
             </div>
           </div>
-          <Progress value={score} className="mt-3" aria-label={`Accessibility score ${score} percent`} />
+          <Progress
+            value={score}
+            className="mt-3"
+            aria-label={`Accessibility score ${score} percent`}
+          />
         </div>
 
         {/* Category Filters */}

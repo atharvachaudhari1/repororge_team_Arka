@@ -1,20 +1,17 @@
 import { useEffect, useRef, useState, useMemo, type ReactNode } from "react";
-import {
-  Building2,
-  Users,
-  X,
-} from "lucide-react";
+import type { Map as LeafletMap, LayerGroup, TileLayer } from "leaflet";
+import { Building2, Users, X } from "lucide-react";
 import "leaflet/dist/leaflet.css";
 import { DEFAULT_MAP_CENTER, DEFAULT_MAP_ZOOM, type Coordinates } from "@/lib/locations";
 
 export type MapMarkerItem = {
   id: string;
   title: string;
-  subtitle?: string;
+  subtitle?: string | undefined;
   position: Coordinates;
-  type?: "job" | "candidate" | "office";
-  badge?: string;
-  data?: any;
+  type?: "job" | "candidate" | "office" | undefined;
+  badge?: string | undefined;
+  data?: unknown;
 };
 
 type FreeMapViewProps = {
@@ -40,8 +37,8 @@ export function FreeMapView({
   className = "",
 }: FreeMapViewProps) {
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
-  const mapInstanceRef = useRef<any>(null);
-  const markersLayerRef = useRef<any>(null);
+  const mapInstanceRef = useRef<(LeafletMap & { _tileLayer?: TileLayer }) | null>(null);
+  const markersLayerRef = useRef<LayerGroup | null>(null);
   const [activeMarkerId, setActiveMarkerId] = useState<string | null>(selectedMarkerId || null);
   const [mapLoaded, setMapLoaded] = useState(false);
   const [tileStyle, setTileStyle] = useState<"osm" | "esri">("osm");
@@ -63,7 +60,7 @@ export function FreeMapView({
       if (!isMounted || !mapContainerRef.current) return;
 
       // Fix default icon paths if needed
-      delete (L.Icon.Default.prototype as any)._getIconUrl;
+      delete (L.Icon.Default.prototype as { _getIconUrl?: unknown })._getIconUrl;
       L.Icon.Default.mergeOptions({
         iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
         iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
@@ -94,7 +91,7 @@ export function FreeMapView({
       }).addTo(map);
 
       mapInstanceRef.current = map;
-      (map as any)._tileLayer = tileLayer;
+      mapInstanceRef.current._tileLayer = tileLayer;
 
       const markersGroup = L.layerGroup().addTo(map);
       markersLayerRef.current = markersGroup;
@@ -127,6 +124,8 @@ export function FreeMapView({
         mapInstanceRef.current = null;
       }
     };
+    // Map container DOM creation happens once on mount; dynamic marker and tile changes are handled by subsequent effects below.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Update tile layer if style changes
@@ -162,6 +161,7 @@ export function FreeMapView({
     import("leaflet").then((mod) => {
       const L = mod.default;
       const group = markersLayerRef.current;
+      if (!group) return;
       group.clearLayers();
 
       markers.forEach((marker) => {
@@ -198,9 +198,13 @@ export function FreeMapView({
         leafletMarker.on("click", () => {
           setActiveMarkerId(marker.id);
           onSelectMarker?.(marker);
-          mapInstanceRef.current?.flyTo([marker.position.lat, marker.position.lng], Math.max(mapInstanceRef.current.getZoom(), 11), {
-            duration: 0.6,
-          });
+          mapInstanceRef.current?.flyTo(
+            [marker.position.lat, marker.position.lng],
+            Math.max(mapInstanceRef.current.getZoom(), 11),
+            {
+              duration: 0.6,
+            },
+          );
         });
 
         leafletMarker.addTo(group);
@@ -214,7 +218,7 @@ export function FreeMapView({
       mapInstanceRef.current.flyTo(
         [activeMarker.position.lat, activeMarker.position.lng],
         Math.max(mapInstanceRef.current.getZoom(), 11),
-        { duration: 0.5 }
+        { duration: 0.5 },
       );
     }
   }, [activeMarker]);

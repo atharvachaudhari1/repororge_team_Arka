@@ -36,14 +36,24 @@ export const loginAccount = createServerFn({ method: "POST" })
   });
 
 export const readSession = createServerFn({ method: "POST" })
-  .validator((data: unknown) => z.object({ token: z.string().optional() }).default({}).parse(data ?? {}))
+  .validator((data: unknown) =>
+    z
+      .object({ token: z.string().optional() })
+      .default({})
+      .parse(data ?? {}),
+  )
   .handler(async ({ data }) => {
     const { readSessionHandler } = await import("./auth.server");
     return readSessionHandler(data);
   });
 
 export const logoutAccount = createServerFn({ method: "POST" })
-  .validator((data: unknown) => z.object({ token: z.string().optional() }).default({}).parse(data ?? {}))
+  .validator((data: unknown) =>
+    z
+      .object({ token: z.string().optional() })
+      .default({})
+      .parse(data ?? {}),
+  )
   .handler(async ({ data }) => {
     const { logoutAccountHandler } = await import("./auth.server");
     return logoutAccountHandler(data);
@@ -63,7 +73,7 @@ export const confirmPasswordReset = createServerFn({ method: "POST" })
         token: z.string().trim().min(16, "Enter your reset token").max(128),
         newPassword: z.string().min(8, "Password must be at least 8 characters").max(128),
       })
-      .parse(data)
+      .parse(data),
   )
   .handler(async ({ data }) => {
     const { confirmPasswordResetHandler } = await import("./auth.server");
@@ -78,15 +88,15 @@ export const requestEmailVerification = createServerFn({ method: "POST" })
   });
 
 export const verifyEmail = createServerFn({ method: "POST" })
-  .validator((data) => z.object({ email: z.string().trim().email(), code: z.string().min(4) }).parse(data))
+  .validator((data) =>
+    z.object({ email: z.string().trim().email(), code: z.string().min(4) }).parse(data),
+  )
   .handler(async ({ data }) => {
     const { verifyEmailHandler } = await import("./auth.server");
     return verifyEmailHandler(data);
   });
 
-export const getDatabaseStatus = createServerFn({ method: "GET" })
-  .handler(async () => {
-    const { getDatabaseStatusHandler } = await import("./auth.server");
-    return getDatabaseStatusHandler();
-  });
-
+export const getDatabaseStatus = createServerFn({ method: "GET" }).handler(async () => {
+  const { getDatabaseStatusHandler } = await import("./auth.server");
+  return getDatabaseStatusHandler();
+});

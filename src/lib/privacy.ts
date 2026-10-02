@@ -10,8 +10,12 @@ export type PrivacyRow = {
   value: string;
   mode: PrivacyMode;
   /** Toggle rows map onto a boolean profile field. */
-  field?: "shareDisplayName" | "shareLegalName" | "sharePronouns"
-    | "shareAccessibilityWithEmployers" | "shareAccommodationsByDefault";
+  field?:
+    | "shareDisplayName"
+    | "shareLegalName"
+    | "sharePronouns"
+    | "shareAccessibilityWithEmployers"
+    | "shareAccommodationsByDefault";
   help: string;
 };
 
@@ -70,8 +74,9 @@ export function privacyRows(profile: Profile): PrivacyRow[] {
     {
       key: "career",
       label: "Career profile",
-      value: [profile.headline, profile.skills.slice(0, 4).join(", ")].filter(Boolean).join(" — ")
-        || "Not added yet",
+      value:
+        [profile.headline, profile.skills.slice(0, 4).join(", ")].filter(Boolean).join(" — ") ||
+        "Not added yet",
       mode: "always",
       help: "Headline, skills, education and experience. This is what you are assessed on.",
     },

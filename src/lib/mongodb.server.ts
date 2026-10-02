@@ -26,10 +26,7 @@ export function sanitizeMongoUri(raw: string | null | undefined): string | null 
 
 export function getMongoUri(): string | null {
   const raw =
-    process.env["MONGODB_URI"] ||
-    process.env["MONGO_URI"] ||
-    process.env["MONGODB_URL"] ||
-    null;
+    process.env["MONGODB_URI"] || process.env["MONGO_URI"] || process.env["MONGODB_URL"] || null;
   return sanitizeMongoUri(raw);
 }
 
@@ -42,7 +39,7 @@ export async function getMongoClient(): Promise<MongoClient> {
   const uri = getMongoUri();
   if (!uri) {
     throw new Error(
-      "MONGODB_URI environment variable is missing. Please add your MongoDB Atlas connection string to .env."
+      "MONGODB_URI environment variable is missing. Please add your MongoDB Atlas connection string to .env.",
     );
   }
 

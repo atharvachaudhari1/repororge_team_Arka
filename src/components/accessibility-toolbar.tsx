@@ -16,7 +16,12 @@ import {
   Accessibility,
   ScanLine,
 } from "lucide-react";
-import { useAppState, type FontSize, type MotionPref, type AccessibilityPreset } from "@/lib/app-state";
+import {
+  useAppState,
+  type FontSize,
+  type MotionPref,
+  type AccessibilityPreset,
+} from "@/lib/app-state";
 import { useTextToSpeech } from "@/lib/speech";
 import {
   Sheet,
@@ -82,10 +87,14 @@ export function AccessibilityControlsContent({ inDrawer = false }: { inDrawer?: 
           <div className="flex items-center gap-2">
             <span className="size-2 rounded-full bg-[#191716] animate-pulse" />
             <span className="font-medium">
-              {activePreset === "blind" && "Vision mode active: high contrast, extra-large text, reduced motion."}
-              {activePreset === "motor" && "Motor mode active: enlarged touch targets, voice control enabled."}
-              {activePreset === "deaf" && "Hearing mode active: live subtitles enabled across audio/video."}
-              {activePreset === "cognitive" && "Focus mode active: dyslexia-friendly font, reduced animation."}
+              {activePreset === "blind" &&
+                "Vision mode active: high contrast, extra-large text, reduced motion."}
+              {activePreset === "motor" &&
+                "Motor mode active: enlarged touch targets, voice control enabled."}
+              {activePreset === "deaf" &&
+                "Hearing mode active: live subtitles enabled across audio/video."}
+              {activePreset === "cognitive" &&
+                "Focus mode active: dyslexia-friendly font, reduced animation."}
             </span>
           </div>
           <button
@@ -247,7 +256,11 @@ export function AccessibilityControlsContent({ inDrawer = false }: { inDrawer?: 
             onClick={toggleTheme}
             className="inline-flex items-center gap-1.5 rounded-full border border-stone-300 dark:border-stone-700 bg-card hover:bg-stone-100 dark:hover:bg-stone-800 px-3.5 py-1.5 text-xs text-stone-700 dark:text-stone-300 transition-all"
           >
-            {theme === "dark" ? <Sun className="size-3.5 text-amber-500" /> : <Moon className="size-3.5 text-stone-700" />}
+            {theme === "dark" ? (
+              <Sun className="size-3.5 text-amber-500" />
+            ) : (
+              <Moon className="size-3.5 text-stone-700" />
+            )}
             {theme === "dark" ? "Light Mode" : "Dark Mode"}
           </button>
         </div>
@@ -338,11 +351,15 @@ export function AccessibilitySection({ className = "" }: { className?: string })
             <Accessibility className="size-3.5 text-[#191716] dark:text-stone-200" />
             <span>Multi-Modal Assistive Suite</span>
           </div>
-          <h2 id="a11y-section-heading" className="font-serif text-xl sm:text-2xl font-normal text-stone-900 dark:text-stone-100">
+          <h2
+            id="a11y-section-heading"
+            className="font-serif text-xl sm:text-2xl font-normal text-stone-900 dark:text-stone-100"
+          >
             Accessibility & Adaptive Workspace
           </h2>
           <p className="mt-1 text-xs sm:text-sm text-stone-600 dark:text-stone-400 font-sans">
-            Customize Ableo for your comfort — choose assistive disability presets, resize text, enable high contrast, activate reading ruler, or control via voice.
+            Customize Ableo for your comfort — choose assistive disability presets, resize text,
+            enable high contrast, activate reading ruler, or control via voice.
           </p>
         </div>
       </div>
@@ -375,7 +392,10 @@ export function AccessibilitySheetTrigger() {
           )}
         </button>
       </SheetTrigger>
-      <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto bg-[#FAF7F2] dark:bg-[#1C1A18] border-l border-border p-6">
+      <SheetContent
+        side="right"
+        className="w-full sm:max-w-md overflow-y-auto bg-[#FAF7F2] dark:bg-[#1C1A18] border-l border-border p-6"
+      >
         <SheetHeader className="mb-6 pb-4 border-b border-border text-left">
           <div className="flex items-center gap-2">
             <span className="flex size-7 items-center justify-center rounded-full bg-[#7BD3C2] text-[#141817] font-bold text-xs">
@@ -386,7 +406,8 @@ export function AccessibilitySheetTrigger() {
             </SheetTitle>
           </div>
           <SheetDescription className="text-xs text-muted-foreground mt-1 font-sans">
-            Adjust visual contrast, font sizes, screen reading, reading ruler, and disability accommodation presets.
+            Adjust visual contrast, font sizes, screen reading, reading ruler, and disability
+            accommodation presets.
           </SheetDescription>
         </SheetHeader>
 

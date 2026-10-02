@@ -5,8 +5,14 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { DEFAULT_PRIVACY, useAppState } from "@/lib/app-state";
@@ -24,7 +30,8 @@ export const Route = createFileRoute("/privacy")({
       { property: "og:title", content: "My Privacy — AccessPath" },
       {
         property: "og:description",
-        content: "You control what employers see: preferred name, pronouns, accessibility preferences and more.",
+        content:
+          "You control what employers see: preferred name, pronouns, accessibility preferences and more.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -58,7 +65,11 @@ function PrivacyPage() {
   const rows = privacyRows(profile);
   const preview = privacyPreview(profile);
 
-  const setField = (field: NonNullable<ReturnType<typeof privacyRows>[number]["field"]>, value: boolean, label: string) => {
+  const setField = (
+    field: NonNullable<ReturnType<typeof privacyRows>[number]["field"]>,
+    value: boolean,
+    label: string,
+  ) => {
     saveProfile({ ...profile, [field]: value });
     setAnnouncement(`${label} is now ${value ? "shared with employers" : "private"}.`);
   };
@@ -76,10 +87,14 @@ function PrivacyPage() {
         used only to show you how well a workplace fits how you work.
       </p>
 
-      <p aria-live="polite" className="sr-only">{announcement}</p>
+      <p aria-live="polite" className="sr-only">
+        {announcement}
+      </p>
 
       <section aria-labelledby="fields-heading" className="surface-card mt-6 p-5">
-        <h2 id="fields-heading" className="text-xl font-semibold">Profile information</h2>
+        <h2 id="fields-heading" className="text-xl font-semibold">
+          Profile information
+        </h2>
         <ul className="mt-4 divide-y divide-border">
           {rows.map((row) => {
             const shared = isShared(row, profile);
@@ -121,7 +136,9 @@ function PrivacyPage() {
       </section>
 
       <section aria-labelledby="preview-heading" className="surface-card mt-6 p-5">
-        <h2 id="preview-heading" className="text-xl font-semibold">Privacy preview</h2>
+        <h2 id="preview-heading" className="text-xl font-semibold">
+          Privacy preview
+        </h2>
         <p className="mt-1 text-sm text-muted-foreground">
           An example of what an employer can see if you apply right now.
         </p>
@@ -165,13 +182,17 @@ function PrivacyPage() {
       </section>
 
       <section aria-labelledby="reset-heading" className="surface-card mt-6 p-5">
-        <h2 id="reset-heading" className="text-xl font-semibold">Reset privacy settings</h2>
+        <h2 id="reset-heading" className="text-xl font-semibold">
+          Reset privacy settings
+        </h2>
         <p className="mt-1 text-sm text-muted-foreground">
           Return every switch to the private-first defaults. Your profile details are not deleted.
         </p>
         <AlertDialog>
           <AlertDialogTrigger asChild>
-            <Button variant="outline" className="mt-3">Reset privacy settings</Button>
+            <Button variant="outline" className="mt-3">
+              Reset privacy settings
+            </Button>
           </AlertDialogTrigger>
           <AlertDialogContent>
             <AlertDialogHeader>

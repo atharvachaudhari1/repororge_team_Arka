@@ -1,22 +1,16 @@
 import { useState, useMemo, type ReactNode } from "react";
-import {
-  APIProvider,
-  Map,
-  AdvancedMarker,
-  InfoWindow,
-  Pin,
-} from "@vis.gl/react-google-maps";
+import { APIProvider, Map, AdvancedMarker, InfoWindow, Pin } from "@vis.gl/react-google-maps";
 import { MapPin, Navigation, Info, ExternalLink, Sparkles, Building2, Users } from "lucide-react";
 import { DEFAULT_MAP_CENTER, DEFAULT_MAP_ZOOM, type Coordinates } from "@/lib/locations";
 
 export type MapMarkerItem = {
   id: string;
   title: string;
-  subtitle?: string;
+  subtitle?: string | undefined;
   position: Coordinates;
-  type?: "job" | "candidate" | "office";
-  badge?: string;
-  data?: any;
+  type?: "job" | "candidate" | "office" | undefined;
+  badge?: string | undefined;
+  data?: unknown;
 };
 
 type GoogleMapViewProps = {
@@ -41,7 +35,7 @@ export function GoogleMapView({
   className = "",
 }: GoogleMapViewProps) {
   // Read key from Vite env
-  const apiKey = (import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string) || "";
+  const apiKey = (import.meta.env["VITE_GOOGLE_MAPS_API_KEY"] as string) || "";
   const [activeMarkerId, setActiveMarkerId] = useState<string | null>(selectedMarkerId || null);
 
   const activeMarker = useMemo(() => {
@@ -57,7 +51,10 @@ export function GoogleMapView({
   // If a valid Google Maps API Key is provided, render official Google Maps SDK
   if (apiKey) {
     return (
-      <div className={`relative overflow-hidden rounded-2xl border border-[#191716]/15 bg-card shadow-[0_2px_12px_rgba(0,0,0,0.03)] ${className}`} style={{ height }}>
+      <div
+        className={`relative overflow-hidden rounded-2xl border border-[#191716]/15 bg-card shadow-[0_2px_12px_rgba(0,0,0,0.03)] ${className}`}
+        style={{ height }}
+      >
         <APIProvider apiKey={apiKey} libraries={["marker"]}>
           <Map
             mapId="DEMO_MAP_ID"
@@ -84,8 +81,8 @@ export function GoogleMapView({
                       isSelected
                         ? "scale-110 bg-[#191716] text-[#FAF7F2] border-[#191716] ring-2 ring-[#7BD3C2]"
                         : isCandidate
-                        ? "bg-[#FAF7F2] text-[#191716] border-[#191716]/70 hover:bg-[#7BD3C2]"
-                        : "bg-[#7BD3C2] text-[#141817] border-[#191716] hover:bg-[#6ec2b1]"
+                          ? "bg-[#FAF7F2] text-[#191716] border-[#191716]/70 hover:bg-[#7BD3C2]"
+                          : "bg-[#7BD3C2] text-[#141817] border-[#191716] hover:bg-[#6ec2b1]"
                     }`}
                   >
                     {isCandidate ? (
@@ -119,7 +116,9 @@ export function GoogleMapView({
                     <div>
                       <h4 className="font-semibold text-sm font-serif">{activeMarker.title}</h4>
                       {activeMarker.subtitle && (
-                        <p className="text-xs text-muted-foreground mt-0.5">{activeMarker.subtitle}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {activeMarker.subtitle}
+                        </p>
                       )}
                     </div>
                   )}
@@ -161,7 +160,7 @@ function InteractiveSchematicMap({
   markers: MapMarkerItem[];
   activeMarker: MapMarkerItem | null;
   onSelectMarker: (marker: MapMarkerItem) => void;
-  renderPopup?: (marker: MapMarkerItem) => ReactNode;
+  renderPopup?: ((marker: MapMarkerItem) => ReactNode) | undefined;
   height: string;
   className: string;
 }) {
@@ -185,23 +184,35 @@ function InteractiveSchematicMap({
 
   const filteredMarkers = useMemo(() => {
     if (selectedCityFilter === "all") return markers;
-    return markers.filter((m) => m.title.toLowerCase().includes(selectedCityFilter.toLowerCase()) || m.subtitle?.toLowerCase().includes(selectedCityFilter.toLowerCase()));
+    return markers.filter(
+      (m) =>
+        m.title.toLowerCase().includes(selectedCityFilter.toLowerCase()) ||
+        m.subtitle?.toLowerCase().includes(selectedCityFilter.toLowerCase()),
+    );
   }, [markers, selectedCityFilter]);
 
   return (
-    <div className={`relative flex flex-col overflow-hidden rounded-3xl border border-[#191716]/15 bg-[#FAF7F2] dark:bg-[#1A1816] shadow-[0_2px_12px_rgba(0,0,0,0.03)] ${className}`} style={{ height }}>
+    <div
+      className={`relative flex flex-col overflow-hidden rounded-3xl border border-[#191716]/15 bg-[#FAF7F2] dark:bg-[#1A1816] shadow-[0_2px_12px_rgba(0,0,0,0.03)] ${className}`}
+      style={{ height }}
+    >
       {/* Top Banner Notice for Google Maps Platform key */}
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#191716]/10 dark:border-stone-800 bg-[#7BD3C2]/15 px-4 py-2 text-xs text-[#141817] dark:text-stone-300">
         <div className="flex items-center gap-2">
           <span className="flex size-5 items-center justify-center rounded-full bg-[#7BD3C2] text-[#141817] font-bold text-[10px]">
             GMP
           </span>
-          <span className="font-serif">
-            Google Maps Platform Ready • Prototyping Mode
-          </span>
+          <span className="font-serif">Google Maps Platform Ready • Prototyping Mode</span>
         </div>
         <div className="flex items-center gap-3 text-[11px] text-stone-600 dark:text-stone-400">
-          <span>Set <code className="bg-black/10 dark:bg-white/10 px-1 py-0.5 rounded">VITE_GOOGLE_MAPS_API_KEY</code> in <code className="bg-black/10 dark:bg-white/10 px-1 py-0.5 rounded">.env</code> to activate live satellite & terrain</span>
+          <span>
+            Set{" "}
+            <code className="bg-black/10 dark:bg-white/10 px-1 py-0.5 rounded">
+              VITE_GOOGLE_MAPS_API_KEY
+            </code>{" "}
+            in <code className="bg-black/10 dark:bg-white/10 px-1 py-0.5 rounded">.env</code> to
+            activate live satellite & terrain
+          </span>
         </div>
       </div>
 
@@ -214,7 +225,13 @@ function InteractiveSchematicMap({
         >
           <defs>
             <pattern id="map-grid" width="40" height="40" patternUnits="userSpaceOnUse">
-              <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#191716" strokeWidth="0.5" strokeDasharray="2 2" />
+              <path
+                d="M 40 0 L 0 0 0 40"
+                fill="none"
+                stroke="#191716"
+                strokeWidth="0.5"
+                strokeDasharray="2 2"
+              />
             </pattern>
           </defs>
           <rect width="100%" height="100%" fill="url(#map-grid)" />
@@ -255,7 +272,9 @@ function InteractiveSchematicMap({
           </div>
           <div className="flex items-center gap-1.5">
             <span className="size-2.5 rounded-full bg-[#FAF7F2] border border-[#191716]" />
-            <span className="text-[11px] text-stone-700 dark:text-stone-300">Applicants / Talent</span>
+            <span className="text-[11px] text-stone-700 dark:text-stone-300">
+              Applicants / Talent
+            </span>
           </div>
         </div>
 
@@ -278,8 +297,8 @@ function InteractiveSchematicMap({
                   isSelected
                     ? "scale-110 bg-[#191716] text-[#FAF7F2] border-2 border-[#7BD3C2] shadow-lg ring-4 ring-[#7BD3C2]/30"
                     : isCandidate
-                    ? "bg-[#FAF7F2] text-[#191716] border border-[#191716]/80 hover:bg-[#7BD3C2] hover:scale-105"
-                    : "bg-[#7BD3C2] text-[#141817] border border-[#191716] hover:bg-[#6ec2b1] hover:scale-105 shadow-[1px_1px_0px_#141817]"
+                      ? "bg-[#FAF7F2] text-[#191716] border border-[#191716]/80 hover:bg-[#7BD3C2] hover:scale-105"
+                      : "bg-[#7BD3C2] text-[#141817] border border-[#191716] hover:bg-[#6ec2b1] hover:scale-105 shadow-[1px_1px_0px_#141817]"
                 }`}
                 aria-label={`${marker.title} at ${marker.subtitle || ""}`}
               >
@@ -314,9 +333,13 @@ function InteractiveSchematicMap({
                 <div className="space-y-2">
                   <div className="flex items-start justify-between">
                     <div>
-                      <h4 className="font-serif font-bold text-base text-foreground">{activeMarker.title}</h4>
+                      <h4 className="font-serif font-bold text-base text-foreground">
+                        {activeMarker.title}
+                      </h4>
                       {activeMarker.subtitle && (
-                        <p className="text-xs text-stone-600 dark:text-stone-400">{activeMarker.subtitle}</p>
+                        <p className="text-xs text-stone-600 dark:text-stone-400">
+                          {activeMarker.subtitle}
+                        </p>
                       )}
                     </div>
                     <button

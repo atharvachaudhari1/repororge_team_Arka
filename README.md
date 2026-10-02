@@ -3,6 +3,7 @@
 <img src="https://img.shields.io/badge/♿-AccessPath-149187?style=for-the-badge&labelColor=0f172a&color=149187" alt="AccessPath" height="40"/>
 
 # AccessPath
+
 ### AI-Powered Inclusive Career & Employment Platform
 
 **Find Jobs Without Barriers.**
@@ -71,15 +72,15 @@ transgender, and underserved job seekers — powered by explainable AI.
 
 ## 🌟 Overview
 
-**AccessPath** is an AI-powered, accessibility-first career platform that goes beyond job listings. It helps visually impaired, transgender, and underserved candidates not just *find* jobs — but *understand*, *access*, and *apply* with confidence.
+**AccessPath** is an AI-powered, accessibility-first career platform that goes beyond job listings. It helps visually impaired, transgender, and underserved candidates not just _find_ jobs — but _understand_, _access_, and _apply_ with confidence.
 
-| Traditional Job Portals | AccessPath |
-|---|---|
-| Job listings + keyword search | Career discovery + explainable AI |
-| Apply blindly | Understand your match score |
-| Unknown workplace accessibility | Transparent accessibility info |
-| One-size-fits-all experience | Personalised, adaptive, inclusive |
-| Identity disclosure required | Candidate-controlled privacy |
+| Traditional Job Portals         | AccessPath                        |
+| ------------------------------- | --------------------------------- |
+| Job listings + keyword search   | Career discovery + explainable AI |
+| Apply blindly                   | Understand your match score       |
+| Unknown workplace accessibility | Transparent accessibility info    |
+| One-size-fits-all experience    | Personalised, adaptive, inclusive |
+| Identity disclosure required    | Candidate-controlled privacy      |
 
 > **We are not building another job board.**
 > **We are building the access layer between people and opportunity.**
@@ -160,12 +161,15 @@ AccessPath adds an **intelligence and accessibility layer** on top of the employ
 ## 🎯 Core Philosophy
 
 ### 1. ♿ Accessibility First
+
 Accessibility is designed into the product from day one — not bolted on.
 
 ### 2. 🔐 Candidate Control
+
 You decide what personal and sensitive information you share, with whom, and when.
 
 ### 3. ⚖️ Fair AI
+
 Protected identity characteristics must never influence job ranking or recommendations.
 
 ---
@@ -188,9 +192,11 @@ Search and filter jobs by:
 Speak naturally. AccessPath converts your words into structured filters.
 
 **Example input:**
-> *"Find remote frontend developer jobs in Chennai with accessible interviews."*
+
+> _"Find remote frontend developer jobs in Chennai with accessible interviews."_
 
 **Result:**
+
 ```
 Role       →  Frontend Developer
 Location   →  Chennai
@@ -206,23 +212,23 @@ Filter     →  Accessible Interview ✓
 
 Filter jobs by declared accessibility support.
 
-| Filter | Description |
-|---|---|
-| Screen-reader friendly | Application usable with assistive tech |
-| Keyboard navigation | No mouse required |
-| Accessible interview | Interview format is accessible |
-| Captioning | Live captions available |
-| Remote work | No commute required |
-| Flexible work | Adaptable schedules |
-| Alternative communication | Non-verbal options available |
+| Filter                    | Description                            |
+| ------------------------- | -------------------------------------- |
+| Screen-reader friendly    | Application usable with assistive tech |
+| Keyboard navigation       | No mouse required                      |
+| Accessible interview      | Interview format is accessible         |
+| Captioning                | Live captions available                |
+| Remote work               | No commute required                    |
+| Flexible work             | Adaptable schedules                    |
+| Alternative communication | Non-verbal options available           |
 
 **Transparency indicators:**
 
-| Badge | Meaning |
-|---|---|
-| 🟢 Verified | Independently confirmed |
+| Badge                | Meaning                   |
+| -------------------- | ------------------------- |
+| 🟢 Verified          | Independently confirmed   |
 | 🟡 Employer Provided | Self-declared by employer |
-| ⚪ Not Specified | No data available |
+| ⚪ Not Specified     | No data available         |
 
 > AccessPath never assumes accessibility when information is absent.
 
@@ -250,7 +256,7 @@ Every match score comes with a plain-English explanation.
 ⚠️  Automated testing is a potential skill gap
 ```
 
-No black boxes. Candidates understand *why* a job was recommended and *what* they can do about gaps.
+No black boxes. Candidates understand _why_ a job was recommended and _what_ they can do about gaps.
 
 ---
 
@@ -291,6 +297,7 @@ Apply
 AccessPath does not require disclosure of sensitive identity information to search for jobs.
 
 **Always optional:**
+
 - Pronouns
 - Gender identity
 - Accessibility preferences
@@ -448,16 +455,16 @@ Dashboard shows: saved jobs · recommended jobs · applications · statuses · p
 
 ## 🤖 AI Capabilities
 
-| Capability | Purpose |
-|---|---|
-| 🧠 Job Matching | Identify professional fit across skills, experience, and preferences |
-| 💬 Match Explanation | Explain recommendations in plain language |
-| 📄 Resume Analysis | Compare resume against job requirements |
-| 🎯 Skill Gap Detection | Identify what's missing |
-| ✍️ Resume Suggestions | Actionable improvement advice |
-| 🎙️ Voice Understanding | Convert natural speech into structured filters |
-| 🧭 Career Guidance | Explore career paths from your background |
-| 🎤 Interview Preparation | Practice and improve responses |
+| Capability               | Purpose                                                              |
+| ------------------------ | -------------------------------------------------------------------- |
+| 🧠 Job Matching          | Identify professional fit across skills, experience, and preferences |
+| 💬 Match Explanation     | Explain recommendations in plain language                            |
+| 📄 Resume Analysis       | Compare resume against job requirements                              |
+| 🎯 Skill Gap Detection   | Identify what's missing                                              |
+| ✍️ Resume Suggestions    | Actionable improvement advice                                        |
+| 🎙️ Voice Understanding   | Convert natural speech into structured filters                       |
+| 🧭 Career Guidance       | Explore career paths from your background                            |
+| 🎤 Interview Preparation | Practice and improve responses                                       |
 
 ---
 
@@ -467,13 +474,14 @@ AccessPath is built to follow **WCAG 2.2 AA** principles.
 
 ### Keyboard Navigation
 
-| Key | Action |
-|---|---|
+| Key                 | Action                            |
+| ------------------- | --------------------------------- |
 | `Tab` / `Shift+Tab` | Move between interactive elements |
-| `Enter` / `Space` | Activate buttons and links |
-| `Escape` | Close dialogs and menus |
+| `Enter` / `Space`   | Activate buttons and links        |
+| `Escape`            | Close dialogs and menus           |
 
 ### Screen Readers
+
 - Semantic heading hierarchy
 - Descriptive `aria-label` attributes
 - Labelled form controls
@@ -481,12 +489,14 @@ AccessPath is built to follow **WCAG 2.2 AA** principles.
 - Logical focus order
 
 ### Visual Accessibility
+
 - High contrast mode
 - Font scaling (does not break layout)
 - Visible focus indicators on all interactive elements
 - No colour-only information indicators
 
 ### Voice
+
 ```
 Voice Input  →  Natural Language  →  Search Intent  →  Filters  →  Results
 ```
@@ -556,14 +566,14 @@ They must never be used to screen out or deprioritise candidates.
 
 ## 🛠️ Technology Stack
 
-| Layer | Technology |
-|---|---|
-| **Frontend** | React 19, TypeScript, Vite 7 |
-| **Styling** | Tailwind CSS 3, Framer Motion |
-| **AI / LLM** | OpenRouter (LLM-powered matching, resume analysis, career guidance) |
-| **Backend / Data** | Convex / PostgreSQL |
-| **Accessibility** | Web Speech API, Text-to-Speech, ARIA, Semantic HTML |
-| **Standards** | WCAG 2.2 AA |
+| Layer              | Technology                                                          |
+| ------------------ | ------------------------------------------------------------------- |
+| **Frontend**       | React 19, TypeScript, Vite 7                                        |
+| **Styling**        | Tailwind CSS 3, Framer Motion                                       |
+| **AI / LLM**       | OpenRouter (LLM-powered matching, resume analysis, career guidance) |
+| **Backend / Data** | Convex / PostgreSQL                                                 |
+| **Accessibility**  | Web Speech API, Text-to-Speech, ARIA, Semantic HTML                 |
+| **Standards**      | WCAG 2.2 AA                                                         |
 
 ---
 
@@ -617,13 +627,14 @@ accesspath/
 
 ### Prerequisites
 
-| Tool | Version |
-|---|---|
-| Node.js | 18+ |
-| npm | 9+ |
-| Git | any recent version |
+| Tool    | Version            |
+| ------- | ------------------ |
+| Node.js | 18+                |
+| npm     | 9+                 |
+| Git     | any recent version |
 
 Verify:
+
 ```bash
 node --version
 npm --version
@@ -691,12 +702,12 @@ An `.env.example` with placeholder values is safe to commit.
 
 ## 🔧 Scripts
 
-| Command | Description |
-|---|---|
-| `npm run dev` | Start development server |
-| `npm run build` | Build for production |
+| Command           | Description                      |
+| ----------------- | -------------------------------- |
+| `npm run dev`     | Start development server         |
+| `npm run build`   | Build for production             |
 | `npm run preview` | Preview production build locally |
-| `npm run lint` | Run ESLint |
+| `npm run lint`    | Run ESLint                       |
 
 ---
 
@@ -704,41 +715,52 @@ An `.env.example` with placeholder values is safe to commit.
 
 Use this flow for hackathon demonstrations.
 
-### Step 1 — Voice Search *(30 seconds)*
+### Step 1 — Voice Search _(30 seconds)_
+
 Activate voice search and say:
-> *"Find remote frontend developer jobs in Chennai with accessible interviews."*
+
+> _"Find remote frontend developer jobs in Chennai with accessible interviews."_
 
 Show filters auto-populating from speech.
 
-### Step 2 — Accessibility Filters *(45 seconds)*
+### Step 2 — Accessibility Filters _(45 seconds)_
+
 Demonstrate the accessibility filter panel:
+
 ```
 ✅ Remote work
 ✅ Accessible interview
 ✅ Screen-reader support
 ✅ Keyboard navigation
 ```
+
 Show the 🟢 / 🟡 / ⚪ transparency badges on job cards.
 
-### Step 3 — AI Match Score *(60 seconds)*
+### Step 3 — AI Match Score _(60 seconds)_
+
 Open a job with a high match score. Show:
+
 ```
 94% MATCH — 8 of 9 requirements met
 ```
+
 Then open the **"Why this job?"** panel and walk through the skills breakdown and gap explanation.
 
-### Step 4 — Resume Analysis *(60 seconds)*
+### Step 4 — Resume Analysis _(60 seconds)_
+
 Paste or upload a resume. Show the matched skills, skill gaps, and AI-generated improvement suggestions side-by-side with the job description.
 
-### Step 5 — Accessible Application *(45 seconds)*
+### Step 5 — Accessible Application _(45 seconds)_
+
 Walk through the application flow including the optional interview preferences panel (captioning, alternative communication, flexible timing).
 
-### Step 6 — Application Tracker *(30 seconds)*
+### Step 6 — Application Tracker _(30 seconds)_
+
 Show the dashboard: saved jobs, active applications, and the status pipeline.
 
 ### 🎤 Closing line
 
-> *"Traditional job platforms help people find opportunities. AccessPath helps them understand whether they can actually access those opportunities."*
+> _"Traditional job platforms help people find opportunities. AccessPath helps them understand whether they can actually access those opportunities."_
 
 ---
 
@@ -746,12 +768,12 @@ Show the dashboard: saved jobs, active applications, and the status pipeline.
 
 ### For Job Seekers
 
-| Before AccessPath | With AccessPath |
-|---|---|
-| Discover accessibility only after applying | Know before you apply |
-| Opaque match scores | Transparent, explainable AI |
-| Identity disclosure required | Full candidate control |
-| Generic job board UX | Designed for accessibility |
+| Before AccessPath                          | With AccessPath             |
+| ------------------------------------------ | --------------------------- |
+| Discover accessibility only after applying | Know before you apply       |
+| Opaque match scores                        | Transparent, explainable AI |
+| Identity disclosure required               | Full candidate control      |
+| Generic job board UX                       | Designed for accessibility  |
 
 ### For Employers
 
@@ -790,13 +812,13 @@ Greater Employment Access
 
 ## 🗺️ Roadmap
 
-| Phase | Status | Focus |
-|---|---|---|
-| **Phase 1** — Accessible Job Discovery | ✅ Implemented | Job search, voice, filters, accessibility controls |
-| **Phase 2** — AI Matching & Application | ✅ Implemented | Explainable AI, resume analysis, application tracker |
-| **Phase 3** — Accessibility & Inclusive Hiring | 🚧 In Development | Accessibility Fit, employer profiles, advanced privacy |
-| **Phase 4** — Career Intelligence | 🔮 Planned | Career discovery, mock interviews, resume builder |
-| **Phase 5** — Inclusive Employer Ecosystem | 🔮 Planned | Two-sided marketplace, employer analytics, certification |
+| Phase                                          | Status            | Focus                                                    |
+| ---------------------------------------------- | ----------------- | -------------------------------------------------------- |
+| **Phase 1** — Accessible Job Discovery         | ✅ Implemented    | Job search, voice, filters, accessibility controls       |
+| **Phase 2** — AI Matching & Application        | ✅ Implemented    | Explainable AI, resume analysis, application tracker     |
+| **Phase 3** — Accessibility & Inclusive Hiring | 🚧 In Development | Accessibility Fit, employer profiles, advanced privacy   |
+| **Phase 4** — Career Intelligence              | 🔮 Planned        | Career discovery, mock interviews, resume builder        |
+| **Phase 5** — Inclusive Employer Ecosystem     | 🔮 Planned        | Two-sided marketplace, employer analytics, certification |
 
 ---
 
@@ -804,25 +826,25 @@ Greater Employment Access
 
 > Add screenshots to `docs/screenshots/` and update the paths below.
 
-| Screen | Preview |
-|---|---|
-| 🏠 Landing Page | `![Home](docs/screenshots/home.png)` |
-| 🔎 Job Search | `![Jobs](docs/screenshots/jobs.png)` |
-| 🧠 AI Match | `![Match](docs/screenshots/ai-match.png)` |
+| Screen                    | Preview                                                |
+| ------------------------- | ------------------------------------------------------ |
+| 🏠 Landing Page           | `![Home](docs/screenshots/home.png)`                   |
+| 🔎 Job Search             | `![Jobs](docs/screenshots/jobs.png)`                   |
+| 🧠 AI Match               | `![Match](docs/screenshots/ai-match.png)`              |
 | ♿ Accessibility Controls | `![Accessibility](docs/screenshots/accessibility.png)` |
-| 📄 Resume Analysis | `![Resume](docs/screenshots/resume-analysis.png)` |
-| 📊 Application Tracker | `![Tracker](docs/screenshots/applications.png)` |
+| 📄 Resume Analysis        | `![Resume](docs/screenshots/resume-analysis.png)`      |
+| 📊 Application Tracker    | `![Tracker](docs/screenshots/applications.png)`        |
 
 ---
 
 ## 🔗 Links
 
-| Resource | Link |
-|---|---|
-| 💻 GitHub | [Repoforge-Win](https://github.com/atharvachaudhari1/Repoforge-Win) |
-| 🎥 Demo Video | *Add YouTube link* |
-| 📊 Presentation | *Add Slides link* |
-| 🌐 Live Demo | *Add deployed URL* |
+| Resource        | Link                                                                |
+| --------------- | ------------------------------------------------------------------- |
+| 💻 GitHub       | [Repoforge-Win](https://github.com/atharvachaudhari1/Repoforge-Win) |
+| 🎥 Demo Video   | _Add YouTube link_                                                  |
+| 📊 Presentation | _Add Slides link_                                                   |
+| 🌐 Live Demo    | _Add deployed URL_                                                  |
 
 ---
 
@@ -854,6 +876,7 @@ git push origin feature/your-feature-name
 ## 🔒 Security
 
 Do not commit:
+
 - API keys or tokens
 - Passwords or secrets
 - Personal candidate data
@@ -871,16 +894,16 @@ This project is licensed under the **MIT License**. See the [LICENSE](./LICENSE)
 
 ## 👥 Team
 
-| Member | Role |
-|---|---|
-| *Add team members* | *Add roles* |
+| Member             | Role        |
+| ------------------ | ----------- |
+| _Add team members_ | _Add roles_ |
 
 ---
 
 ## 🏆 Hackathon
 
 > **International Hackathon 2026**
-> Theme: *Inclusive Technology / Employment Accessibility*
+> Theme: _Inclusive Technology / Employment Accessibility_
 
 ---
 
@@ -890,8 +913,8 @@ This project is licensed under the **MIT License**. See the [LICENSE](./LICENSE)
 
 **♿ ACCESSPATH**
 
-*"We are not building another job board.*
-*We are building the access layer between people and opportunity."*
+_"We are not building another job board._
+_We are building the access layer between people and opportunity."_
 
 <br/>
 

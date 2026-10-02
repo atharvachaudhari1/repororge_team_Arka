@@ -31,7 +31,11 @@ export function SiteHeader() {
       </a>
       <header className="border-b border-border bg-background/90 backdrop-blur-md sticky top-0 z-40 transition-colors">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
-          <Link to="/" className="flex items-center gap-2.5 group" aria-label="Ableo home: Where Ability Meets Opportunity">
+          <Link
+            to="/"
+            className="flex items-center gap-2.5 group"
+            aria-label="Ableo home: Where Ability Meets Opportunity"
+          >
             <span className="flex size-9 items-center justify-center rounded-full border border-foreground/80 bg-foreground text-background text-sm font-serif font-bold transition-transform group-hover:scale-105">
               Ab
             </span>
@@ -84,15 +88,23 @@ export function SiteHeader() {
               Post a job
             </Link>
 
-            {!isLoading && (user ? (
-              <button type="button" onClick={logout} className="rounded-full border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-secondary hover:text-foreground">
-                Sign out
-              </button>
-            ) : (
-              <Link to="/login" className="rounded-full border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-secondary hover:text-foreground">
-                Sign in
-              </Link>
-            ))}
+            {!isLoading &&
+              (user ? (
+                <button
+                  type="button"
+                  onClick={logout}
+                  className="rounded-full border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-secondary hover:text-foreground"
+                >
+                  Sign out
+                </button>
+              ) : (
+                <Link
+                  to="/login"
+                  className="rounded-full border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-secondary hover:text-foreground"
+                >
+                  Sign in
+                </Link>
+              ))}
 
             <Link
               to="/privacy"
@@ -132,12 +144,14 @@ export function SiteFooter() {
             <div className="flex items-center gap-2">
               <Accessibility className="size-4 text-brand" />
               <span className="font-display text-base font-bold text-foreground">Ableo</span>
-              <span className="text-xs text-muted-foreground">— The Disability-First Job Platform</span>
+              <span className="text-xs text-muted-foreground">
+                — The Disability-First Job Platform
+              </span>
             </div>
             <p className="mt-1 text-xs text-muted-foreground max-w-xl">
-              Built for People with Disabilities (PwD). XIE – CSI Student Chapter • Repo Forge • 
-              Team Arka! (Atharva Chaudhari, Allan Fernandes, Saanvi Chamoli, Bhakti Nimaj).
-              Problem Statement #3: Accessible Job Application Assistant.
+              Built for People with Disabilities (PwD). XIE – CSI Student Chapter • Repo Forge •
+              Team Arka! (Atharva Chaudhari, Allan Fernandes, Saanvi Chamoli, Bhakti Nimaj). Problem
+              Statement #3: Accessible Job Application Assistant.
             </p>
           </div>
           <div className="text-xs text-muted-foreground flex flex-wrap gap-x-4 gap-y-1">
@@ -148,9 +162,10 @@ export function SiteFooter() {
           </div>
         </div>
         <p className="mt-4 border-t border-border/50 pt-4 text-xs">
-          Ableo is designed for blind users, Deaf users, wheelchair users, neurodivergent people, and anyone with a disability.
-          Accommodation details are employer-provided or verified. We never infer disability, never add accommodation claims 
-          without consent, and all disability information stays private by default.
+          Ableo is designed for blind users, Deaf users, wheelchair users, neurodivergent people,
+          and anyone with a disability. Accommodation details are employer-provided or verified. We
+          never infer disability, never add accommodation claims without consent, and all disability
+          information stays private by default.
         </p>
       </div>
     </footer>

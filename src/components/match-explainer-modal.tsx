@@ -12,7 +12,13 @@ import {
   ShieldCheck,
   TrendingUp,
 } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -173,7 +179,7 @@ export function MatchExplainerModal({ open, onOpenChange, match, accessibilityFi
                     className="h-7 px-2 text-xs gap-1"
                     onClick={() =>
                       readAloud(
-                        `You match ${match.requirementsMet} of ${match.requirementsTotal} requirements. Strongest: ${match.strongest.join(", ")}.`
+                        `You match ${match.requirementsMet} of ${match.requirementsTotal} requirements. Strongest: ${match.strongest.join(", ")}.`,
                       )
                     }
                   >
@@ -183,14 +189,20 @@ export function MatchExplainerModal({ open, onOpenChange, match, accessibilityFi
                 )}
               </div>
               <p className="text-muted-foreground text-xs leading-relaxed">
-                You match <strong>{match.requirementsMet}</strong> of <strong>{match.requirementsTotal}</strong> listed requirements. Your strongest skills are {match.strongest.join(", ") || "established experience"}.
-                {match.missingRequired.length > 0 && ` A minor gap is ${match.missingRequired[0]}, which you can highlight projects for.`}
+                You match <strong>{match.requirementsMet}</strong> of{" "}
+                <strong>{match.requirementsTotal}</strong> listed requirements. Your strongest
+                skills are {match.strongest.join(", ") || "established experience"}.
+                {match.missingRequired.length > 0 &&
+                  ` A minor gap is ${match.missingRequired[0]}, which you can highlight projects for.`}
               </p>
             </div>
           )}
 
           {history.map((item, idx) => (
-            <div key={idx} className="space-y-3 rounded-xl border border-border bg-secondary/30 p-4 text-sm">
+            <div
+              key={idx}
+              className="space-y-3 rounded-xl border border-border bg-secondary/30 p-4 text-sm"
+            >
               <div className="flex items-center justify-between border-b border-border/60 pb-2">
                 <span className="font-semibold text-xs text-brand uppercase tracking-wide">
                   Q: {item.q}
@@ -268,10 +280,17 @@ export function MatchExplainerModal({ open, onOpenChange, match, accessibilityFi
               onClick={voice.listening ? voice.stop : voice.start}
               aria-label={voice.listening ? "Stop voice listening" : "Ask by voice"}
             >
-              <Mic className={`size-4 ${voice.listening ? "animate-pulse text-destructive" : ""}`} />
+              <Mic
+                className={`size-4 ${voice.listening ? "animate-pulse text-destructive" : ""}`}
+              />
             </Button>
           )}
-          <Button type="submit" size="icon" disabled={loading || !question.trim()} className="shrink-0">
+          <Button
+            type="submit"
+            size="icon"
+            disabled={loading || !question.trim()}
+            className="shrink-0"
+          >
             <Send className="size-4" />
           </Button>
         </form>

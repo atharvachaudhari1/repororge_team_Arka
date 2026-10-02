@@ -18,7 +18,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { MatchPill } from "@/components/match-insights";
 import { AccessibilityFeedbackDialog } from "@/components/accessibility-feedback";
-import { APPLICATION_STATUSES, useAppState, type ApplicationStatus, type Application } from "@/lib/app-state";
+import {
+  APPLICATION_STATUSES,
+  useAppState,
+  type ApplicationStatus,
+  type Application,
+} from "@/lib/app-state";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/applications")({
@@ -31,7 +36,11 @@ export const Route = createFileRoute("/applications")({
           "Track your job applications on Ableo: accommodation requests, interview accessibility, status updates, and calendar exports — all designed for People with Disabilities.",
       },
       { property: "og:title", content: "My Applications — Ableo" },
-      { property: "og:description", content: "Track applications, accommodation requests, and interview accessibility. Disability-first job tracking." },
+      {
+        property: "og:description",
+        content:
+          "Track applications, accommodation requests, and interview accessibility. Disability-first job tracking.",
+      },
     ],
   }),
   component: ApplicationsPage,
@@ -88,7 +97,8 @@ function ApplicationsPage() {
         <div>
           <h1 className="text-3xl font-bold">My Applications</h1>
           <p className="mt-1 text-muted-foreground" aria-live="polite">
-            {applications.length} {applications.length === 1 ? "application" : "applications"} tracked on Ableo.
+            {applications.length} {applications.length === 1 ? "application" : "applications"}{" "}
+            tracked on Ableo.
           </p>
         </div>
         <Button asChild variant="outline" size="sm">
@@ -98,7 +108,11 @@ function ApplicationsPage() {
         </Button>
       </div>
 
-      <div role="group" aria-label="Filter applications by status" className="mt-6 flex flex-wrap gap-2">
+      <div
+        role="group"
+        aria-label="Filter applications by status"
+        className="mt-6 flex flex-wrap gap-2"
+      >
         {(["All", ...APPLICATION_STATUSES] as const).map((s) => (
           <Button
             key={s}
@@ -121,7 +135,9 @@ function ApplicationsPage() {
               : "Apply to a job using Ableo's Accessible Application Assistant and it will appear here."}
           </p>
           <Button asChild className="mt-4">
-            <Link to="/jobs" search={{ q: "" }}>Find jobs</Link>
+            <Link to="/jobs" search={{ q: "" }}>
+              Find jobs
+            </Link>
           </Button>
         </div>
       ) : (
@@ -137,7 +153,11 @@ function ApplicationsPage() {
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
                     <h2 className="text-xl font-bold">
-                      <Link to="/jobs/$jobId" params={{ jobId: job.id }} className="hover:underline">
+                      <Link
+                        to="/jobs/$jobId"
+                        params={{ jobId: job.id }}
+                        className="hover:underline"
+                      >
                         {job.title}
                       </Link>
                     </h2>
@@ -146,7 +166,10 @@ function ApplicationsPage() {
                     </p>
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
-                    <Badge variant={TONE[a.status] as "default" | "secondary" | "outline"} className="font-semibold px-2.5 py-1">
+                    <Badge
+                      variant={TONE[a.status] as "default" | "secondary" | "outline"}
+                      className="font-semibold px-2.5 py-1"
+                    >
                       {a.status}
                     </Badge>
                     {a.matchScore ? <MatchPill score={a.matchScore} /> : null}
@@ -156,17 +179,38 @@ function ApplicationsPage() {
                 {/* Progress Tracker Stepper */}
                 <div className="mt-4 rounded-lg bg-secondary/40 p-3 border border-border/60">
                   <div className="flex items-center justify-between text-xs font-medium text-muted-foreground">
-                    <span className={a.status === "Applied" ? "font-bold text-brand" : "text-foreground"}>1. Applied</span>
-                    <span>→</span>
-                    <span className={a.status === "Under Review" ? "font-bold text-brand" : ""}>2. Under Review</span>
-                    <span>→</span>
-                    <span className={a.status === "Shortlisted" ? "font-bold text-brand" : ""}>3. Shortlisted</span>
-                    <span>→</span>
-                    <span className={a.status === "Interview" ? "font-bold text-success flex items-center gap-1" : ""}>
-                      {a.status === "Interview" ? <CheckCircle2 className="size-3 text-success" /> : null} 4. Interview
+                    <span
+                      className={
+                        a.status === "Applied" ? "font-bold text-brand" : "text-foreground"
+                      }
+                    >
+                      1. Applied
                     </span>
                     <span>→</span>
-                    <span className={a.status === "Offer" ? "font-bold text-success" : ""}>5. Offer</span>
+                    <span className={a.status === "Under Review" ? "font-bold text-brand" : ""}>
+                      2. Under Review
+                    </span>
+                    <span>→</span>
+                    <span className={a.status === "Shortlisted" ? "font-bold text-brand" : ""}>
+                      3. Shortlisted
+                    </span>
+                    <span>→</span>
+                    <span
+                      className={
+                        a.status === "Interview"
+                          ? "font-bold text-success flex items-center gap-1"
+                          : ""
+                      }
+                    >
+                      {a.status === "Interview" ? (
+                        <CheckCircle2 className="size-3 text-success" />
+                      ) : null}{" "}
+                      4. Interview
+                    </span>
+                    <span>→</span>
+                    <span className={a.status === "Offer" ? "font-bold text-success" : ""}>
+                      5. Offer
+                    </span>
                   </div>
                   <p className="mt-2 text-xs text-foreground font-medium flex items-center gap-1.5">
                     <Clock className="size-3.5 text-brand" />
@@ -226,7 +270,9 @@ function ApplicationsPage() {
                       <Button
                         size="sm"
                         className="gap-1.5 h-8 text-xs font-medium"
-                        onClick={() => downloadIcs(job.title, job.company, a.interviewDate || "2026-10-08")}
+                        onClick={() =>
+                          downloadIcs(job.title, job.company, a.interviewDate || "2026-10-08")
+                        }
                       >
                         <CalendarPlus className="size-3.5" />
                         Add to Calendar (.ics)
@@ -269,18 +315,17 @@ function ApplicationsPage() {
                     aria-expanded={open}
                   >
                     <span>{open ? "Hide application details" : "View application details"}</span>
-                    {open ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
+                    {open ? (
+                      <ChevronUp className="size-3.5" />
+                    ) : (
+                      <ChevronDown className="size-3.5" />
+                    )}
                   </button>
 
                   <div className="flex items-center gap-2">
-                    <AccessibilityFeedbackDialog
-                      jobId={a.jobId}
-                      company={job.company}
-                    />
+                    <AccessibilityFeedbackDialog jobId={a.jobId} company={job.company} />
                     <Button asChild size="sm" variant="outline" className="h-8 text-xs">
-                      <Link to="/career-gps">
-                        Interview Coach
-                      </Link>
+                      <Link to="/career-gps">Interview Coach</Link>
                     </Button>
                   </div>
                 </div>
@@ -292,13 +337,19 @@ function ApplicationsPage() {
                       {a.accommodations.length ? (
                         <div className="mt-1 flex flex-wrap gap-1.5">
                           {a.accommodations.map((acc) => (
-                            <Badge key={acc} variant="secondary" className="text-[11px] font-normal">
+                            <Badge
+                              key={acc}
+                              variant="secondary"
+                              className="text-[11px] font-normal"
+                            >
                               ✓ {acc}
                             </Badge>
                           ))}
                         </div>
                       ) : (
-                        <p className="mt-1 text-muted-foreground">Standard application without custom accommodations.</p>
+                        <p className="mt-1 text-muted-foreground">
+                          Standard application without custom accommodations.
+                        </p>
                       )}
                     </div>
                     {a.accommodationNote ? (
@@ -347,16 +398,27 @@ function ApplicationsPage() {
 
             <div className="mt-4 space-y-2 text-xs">
               <div className="rounded-md bg-secondary/50 p-2.5 space-y-1">
-                <p><strong>From: </strong> hiring@technova-india.com via Ableo</p>
-                <p><strong>To: </strong> {emailModalApp.resumeName ? "candidate@example.com" : "you@example.com"}</p>
-                <p><strong>Subject: </strong> {emailModalApp.emailSubject || "Update on your application"}</p>
-                <p><strong>Date: </strong> Today, 10:30 AM</p>
+                <p>
+                  <strong>From: </strong> hiring@technova-india.com via Ableo
+                </p>
+                <p>
+                  <strong>To: </strong>{" "}
+                  {emailModalApp.resumeName ? "candidate@example.com" : "you@example.com"}
+                </p>
+                <p>
+                  <strong>Subject: </strong>{" "}
+                  {emailModalApp.emailSubject || "Update on your application"}
+                </p>
+                <p>
+                  <strong>Date: </strong> Today, 10:30 AM
+                </p>
               </div>
 
               <div className="rounded-md border border-border bg-background p-4 text-sm leading-relaxed space-y-3">
                 <p>Dear Candidate,</p>
                 <p>
-                  Thank you for applying through <strong>Ableo</strong>. We are pleased to invite you for an interview!
+                  Thank you for applying through <strong>Ableo</strong>. We are pleased to invite
+                  you for an interview!
                 </p>
                 <div className="rounded-md bg-success/10 border border-success/30 p-2.5 text-xs text-success-foreground">
                   <p className="font-bold">✓ Confirmed Accommodations:</p>
@@ -367,9 +429,14 @@ function ApplicationsPage() {
                   </ul>
                 </div>
                 <p>
-                  Meeting Link: <strong>https://meet.google.com/abc-ableo-xyz</strong> (Live Captions &amp; Screen Reader compatible).
+                  Meeting Link: <strong>https://meet.google.com/abc-ableo-xyz</strong> (Live
+                  Captions &amp; Screen Reader compatible).
                 </p>
-                <p>Best regards,<br />Talent Acquisition Team</p>
+                <p>
+                  Best regards,
+                  <br />
+                  Talent Acquisition Team
+                </p>
               </div>
             </div>
 

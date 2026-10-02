@@ -40,9 +40,17 @@ export const DEMO_RESUMES: {
       experienceBand: "0-2 years",
       skills: ["React", "JavaScript", "TypeScript", "HTML", "CSS", "WAI-ARIA", "Jest", "Git"],
       careerInterests: "Frontend development, web accessibility engineering, inclusive design",
-      certifications: "IAAP Web Accessibility Specialist (WAS) Foundation, Meta Frontend Specialization",
+      certifications:
+        "IAAP Web Accessibility Specialist (WAS) Foundation, Meta Frontend Specialization",
+      preferredLocation: "Mumbai, India",
       workPreference: "Remote",
-      suggestedAccommodations: ["screen_reader", "keyboard_friendly", "remote_work", "accessible_interview", "assistive_tech"],
+      suggestedAccommodations: [
+        "screen_reader",
+        "keyboard_friendly",
+        "remote_work",
+        "accessible_interview",
+        "assistive_tech",
+      ],
       rawText: `Atharva Chaudhari
 Frontend Engineer | Web Accessibility Advocate
 Email: atharva.dev@example.com | Mumbai, India
@@ -80,11 +88,26 @@ Screen reader friendly code assessments, remote interview or accessible venue, a
       experience:
         "Junior Data Analyst at MetricFlow (1.5 yrs): Designed automated SQL ETL queries and PowerBI / Tableau dashboards. Analyzed user engagement metrics for inclusive products.",
       experienceBand: "0-2 years",
-      skills: ["Python", "SQL", "Tableau", "PowerBI", "Excel", "PostgreSQL", "Pandas", "Statistics"],
+      skills: [
+        "Python",
+        "SQL",
+        "Tableau",
+        "PowerBI",
+        "Excel",
+        "PostgreSQL",
+        "Pandas",
+        "Statistics",
+      ],
       careerInterests: "Business intelligence, healthcare data analytics, predictive modeling",
       certifications: "Google Data Analytics Professional Certificate",
+      preferredLocation: "Mumbai, India",
       workPreference: "Hybrid",
-      suggestedAccommodations: ["flexible_work", "accessible_workplace", "assistive_tech", "remote_work"],
+      suggestedAccommodations: [
+        "flexible_work",
+        "accessible_workplace",
+        "assistive_tech",
+        "remote_work",
+      ],
       rawText: `Saanvi Chamoli
 Data Analyst | SQL & Business Intelligence
 Email: saanvi.data@example.com | Mumbai, India
@@ -122,11 +145,25 @@ Wheelchair accessible building and elevators for on-site days; flexible scheduli
       experience:
         "Content Specialist at MediaSprint (2 yrs): Authored 120+ published articles, SEO-optimized guides, and accessible product documentation with closed captions and transcripts.",
       experienceBand: "0-2 years",
-      skills: ["Content Writing", "Copywriting", "SEO", "Technical Writing", "Research", "Editing", "WordPress"],
+      skills: [
+        "Content Writing",
+        "Copywriting",
+        "SEO",
+        "Technical Writing",
+        "Research",
+        "Editing",
+        "WordPress",
+      ],
       careerInterests: "Technical writing, accessible documentation, digital marketing",
       certifications: "HubSpot Content Marketing Certified, Google Digital Garage",
+      preferredLocation: "Remote / Mumbai, India",
       workPreference: "Remote",
-      suggestedAccommodations: ["captioned_meetings", "flexible_work", "remote_work", "accessible_interview"],
+      suggestedAccommodations: [
+        "captioned_meetings",
+        "flexible_work",
+        "remote_work",
+        "accessible_interview",
+      ],
       rawText: `Bhakti Nimaj
 Technical Content Writer & Communication Specialist
 Email: bhakti.writes@example.com
@@ -159,18 +196,25 @@ Remote or hybrid with written communication preference; real-time captions for v
  */
 export function parseResumeText(rawText: string, fileName?: string): ParsedResume {
   const text = rawText.trim();
-  const lines = text.split("\n").map((l) => l.trim()).filter(Boolean);
+  const lines = text
+    .split("\n")
+    .map((l) => l.trim())
+    .filter(Boolean);
 
   // Extract a real name near the contact header, never a filename, title, or section heading.
   const isName = (line: string) => {
     const value = line.trim();
-    const blocked = /\b(cv|resume|ats|curriculum|portfolio|linkedin|github|summary|objective|experience|education|skills|projects?|certifications?)\b/i;
-    return value.length <= 60
-      && !blocked.test(value)
-      && /^[A-Za-z][A-Za-z.'-]+(?:\s+[A-Za-z][A-Za-z.'-]+){1,3}$/.test(value);
+    const blocked =
+      /\b(cv|resume|ats|curriculum|portfolio|linkedin|github|summary|objective|experience|education|skills|projects?|certifications?)\b/i;
+    return (
+      value.length <= 60 &&
+      !blocked.test(value) &&
+      /^[A-Za-z][A-Za-z.'-]+(?:\s+[A-Za-z][A-Za-z.'-]+){1,3}$/.test(value)
+    );
   };
   const emailLine = lines.findIndex((line) => line.includes("@"));
-  const headerLines = emailLine >= 0 ? lines.slice(Math.max(0, emailLine - 4), emailLine + 1) : lines.slice(0, 8);
+  const headerLines =
+    emailLine >= 0 ? lines.slice(Math.max(0, emailLine - 4), emailLine + 1) : lines.slice(0, 8);
   const name = headerLines.find(isName) ?? lines.find(isName) ?? "";
 
   // Extract email
@@ -179,20 +223,74 @@ export function parseResumeText(rawText: string, fileName?: string): ParsedResum
 
   // Extract Headline
   const nameIndex = name ? lines.indexOf(name) : -1;
-  const headline = lines
-    .slice(Math.max(0, nameIndex + 1), Math.max(0, nameIndex + 5))
-    .find((line) => line.length <= 120 && !line.includes("@") && !isName(line) && !/^(phone|mobile|email|location)\b/i.test(line)) ?? "";
+  const headline =
+    lines
+      .slice(Math.max(0, nameIndex + 1), Math.max(0, nameIndex + 5))
+      .find(
+        (line) =>
+          line.length <= 120 &&
+          !line.includes("@") &&
+          !isName(line) &&
+          !/^(phone|mobile|email|location)\b/i.test(line),
+      ) ?? "";
 
   // Detect skills from comprehensive tech & soft skills dictionary
   const KNOWN_SKILLS = [
-    "React", "JavaScript", "TypeScript", "HTML", "CSS", "WAI-ARIA", "Jest", "Git",
-    "Python", "SQL", "PostgreSQL", "MySQL", "MongoDB", "Node.js", "Express",
-    "Docker", "AWS", "Azure", "GCP", "Kubernetes", "Linux", "Figma", "UI/UX",
-    "Tailwind CSS", "Next.js", "Vue", "Angular", "Django", "FastAPI", "Java",
-    "Spring Boot", "C++", "C#", ".NET", "Tableau", "PowerBI", "Excel", "Pandas",
-    "NumPy", "Machine Learning", "Data Analysis", "Content Writing", "Technical Writing",
-    "SEO", "Copywriting", "Project Management", "Agile", "Scrum", "Communication",
-    "Accessibility", "WCAG", "Unit Testing", "REST API", "GraphQL", "CI/CD"
+    "React",
+    "JavaScript",
+    "TypeScript",
+    "HTML",
+    "CSS",
+    "WAI-ARIA",
+    "Jest",
+    "Git",
+    "Python",
+    "SQL",
+    "PostgreSQL",
+    "MySQL",
+    "MongoDB",
+    "Node.js",
+    "Express",
+    "Docker",
+    "AWS",
+    "Azure",
+    "GCP",
+    "Kubernetes",
+    "Linux",
+    "Figma",
+    "UI/UX",
+    "Tailwind CSS",
+    "Next.js",
+    "Vue",
+    "Angular",
+    "Django",
+    "FastAPI",
+    "Java",
+    "Spring Boot",
+    "C++",
+    "C#",
+    ".NET",
+    "Tableau",
+    "PowerBI",
+    "Excel",
+    "Pandas",
+    "NumPy",
+    "Machine Learning",
+    "Data Analysis",
+    "Content Writing",
+    "Technical Writing",
+    "SEO",
+    "Copywriting",
+    "Project Management",
+    "Agile",
+    "Scrum",
+    "Communication",
+    "Accessibility",
+    "WCAG",
+    "Unit Testing",
+    "REST API",
+    "GraphQL",
+    "CI/CD",
   ];
 
   const matchedSkills: string[] = [];
@@ -206,28 +304,45 @@ export function parseResumeText(rawText: string, fileName?: string): ParsedResum
 
   // Extract Education block
   let education = "";
-  const eduMatch = text.match(/(?:education|academic|qualifications)[\s\S]*?(?=(?:experience|employment|projects|skills|certifications|$))/i);
+  const eduMatch = text.match(
+    /(?:education|academic|qualifications)[\s\S]*?(?=(?:experience|employment|projects|skills|certifications|$))/i,
+  );
   if (eduMatch) {
-    education = eduMatch[0].replace(/^(?:education|academic|qualifications)[:\s-]*/i, "").trim().slice(0, 300);
+    education = eduMatch[0]
+      .replace(/^(?:education|academic|qualifications)[:\s-]*/i, "")
+      .trim()
+      .slice(0, 300);
   } else {
     // Look for degree mentions
-    const degreeLines = lines.filter((l) => /\b(B\.Tech|B\.E|B\.Sc|M\.Tech|M\.Sc|BCA|MCA|B\.A|MBA|Bachelor|Master|Diploma)\b/i.test(l));
+    const degreeLines = lines.filter((l) =>
+      /\b(B\.Tech|B\.E|B\.Sc|M\.Tech|M\.Sc|BCA|MCA|B\.A|MBA|Bachelor|Master|Diploma)\b/i.test(l),
+    );
     if (degreeLines.length > 0) education = degreeLines.slice(0, 2).join(". ");
   }
 
   // Extract Experience block
   let experience = "";
-  const expMatch = text.match(/(?:experience|employment|work history)[\s\S]*?(?=(?:education|projects|skills|certifications|accommodations|$))/i);
+  const expMatch = text.match(
+    /(?:experience|employment|work history)[\s\S]*?(?=(?:education|projects|skills|certifications|accommodations|$))/i,
+  );
   if (expMatch) {
-    experience = expMatch[0].replace(/^(?:experience|employment|work history)[:\s-]*/i, "").trim().slice(0, 400);
+    experience = expMatch[0]
+      .replace(/^(?:experience|employment|work history)[:\s-]*/i, "")
+      .trim()
+      .slice(0, 400);
   }
 
   // Extract certifications and location only when the resume explicitly provides them.
-  const certificationMatch = text.match(/(?:certifications?|licenses?)[\s\S]*?(?=(?:education|experience|employment|projects|skills|accommodations|$))/i);
+  const certificationMatch = text.match(
+    /(?:certifications?|licenses?)[\s\S]*?(?=(?:education|experience|employment|projects|skills|accommodations|$))/i,
+  );
   const certifications = certificationMatch
-    ? certificationMatch[0].replace(/^(?:certifications?|licenses?)[:\s-]*/i, "").trim().slice(0, 300)
+    ? certificationMatch[0]
+        .replace(/^(?:certifications?|licenses?)[:\s-]*/i, "")
+        .trim()
+        .slice(0, 300)
     : "";
-  const locationMatch = text.match(/(?:location|address|based in)\s*[:\-]?\s*([^\n|]+)/i);
+  const locationMatch = text.match(/(?:location|address|based in)\s*[:-]?\s*([^\n|]+)/i);
   const preferredLocation = locationMatch?.[1]?.trim() ?? "";
 
   // Determine experience band
@@ -254,17 +369,38 @@ export function parseResumeText(rawText: string, fileName?: string): ParsedResum
   const suggestedAccommodations: AccessFeature[] = [];
   const lower = text.toLowerCase();
 
-  if (lower.includes("screen reader") || lower.includes("nvda") || lower.includes("jaws") || lower.includes("voiceover")) {
+  if (
+    lower.includes("screen reader") ||
+    lower.includes("nvda") ||
+    lower.includes("jaws") ||
+    lower.includes("voiceover")
+  ) {
     suggestedAccommodations.push("screen_reader", "keyboard_friendly", "assistive_tech");
   }
-  if (lower.includes("keyboard") || lower.includes("motor") || lower.includes("ergonomic") || lower.includes("mobility")) {
-    if (!suggestedAccommodations.includes("keyboard_friendly")) suggestedAccommodations.push("keyboard_friendly");
+  if (
+    lower.includes("keyboard") ||
+    lower.includes("motor") ||
+    lower.includes("ergonomic") ||
+    lower.includes("mobility")
+  ) {
+    if (!suggestedAccommodations.includes("keyboard_friendly"))
+      suggestedAccommodations.push("keyboard_friendly");
     suggestedAccommodations.push("assistive_tech");
   }
-  if (lower.includes("caption") || lower.includes("deaf") || lower.includes("hearing") || lower.includes("sign language")) {
+  if (
+    lower.includes("caption") ||
+    lower.includes("deaf") ||
+    lower.includes("hearing") ||
+    lower.includes("sign language")
+  ) {
     suggestedAccommodations.push("captioned_meetings");
   }
-  if (lower.includes("wheelchair") || lower.includes("accessible workplace") || lower.includes("ramp") || lower.includes("elevator")) {
+  if (
+    lower.includes("wheelchair") ||
+    lower.includes("accessible workplace") ||
+    lower.includes("ramp") ||
+    lower.includes("elevator")
+  ) {
     suggestedAccommodations.push("accessible_workplace");
   }
   if (lower.includes("remote") || lower.includes("work from home")) {
@@ -273,7 +409,10 @@ export function parseResumeText(rawText: string, fileName?: string): ParsedResum
   if (lower.includes("flexible")) {
     suggestedAccommodations.push("flexible_work");
   }
-  if (suggestedAccommodations.length > 0 && !suggestedAccommodations.includes("accessible_interview")) {
+  if (
+    suggestedAccommodations.length > 0 &&
+    !suggestedAccommodations.includes("accessible_interview")
+  ) {
     suggestedAccommodations.push("accessible_interview");
   }
 

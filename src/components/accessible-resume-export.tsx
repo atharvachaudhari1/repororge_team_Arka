@@ -31,7 +31,7 @@ interface Props {
 export function AccessibleResumeExportModal({ open, onOpenChange }: Props) {
   const { profile } = useAppState();
   const [includeAccommodations, setIncludeAccommodations] = useState(
-    profile.shareAccommodationsByDefault || profile.shareAccessibilityWithEmployers
+    profile.shareAccommodationsByDefault || profile.shareAccessibilityWithEmployers,
   );
   const [copied, setCopied] = useState(false);
 
@@ -65,7 +65,7 @@ export function AccessibleResumeExportModal({ open, onOpenChange }: Props) {
       lines.push(
         "",
         "--- WORKPLACE ACCOMMODATIONS & ACCESS NEEDS ---",
-        accommodationsList.join(", ")
+        accommodationsList.join(", "),
       );
     }
 
@@ -195,7 +195,8 @@ export function AccessibleResumeExportModal({ open, onOpenChange }: Props) {
             </Badge>
           </div>
           <DialogDescription>
-            Download or print an accessible, ATS-friendly semantic resume structured for screen readers and inclusive employers.
+            Download or print an accessible, ATS-friendly semantic resume structured for screen
+            readers and inclusive employers.
           </DialogDescription>
         </DialogHeader>
 
@@ -203,11 +204,15 @@ export function AccessibleResumeExportModal({ open, onOpenChange }: Props) {
         <div className="rounded-lg border border-border bg-secondary/40 p-3.5 space-y-2">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <label htmlFor="include-acc-switch" className="text-xs font-semibold cursor-pointer block">
+              <label
+                htmlFor="include-acc-switch"
+                className="text-xs font-semibold cursor-pointer block"
+              >
                 Include Workplace Accommodations Addendum
               </label>
               <p className="text-[11px] text-muted-foreground">
-                Adds a professional reasonable accommodation statement for interviewers (default: candidate choice).
+                Adds a professional reasonable accommodation statement for interviewers (default:
+                candidate choice).
               </p>
             </div>
             <Switch

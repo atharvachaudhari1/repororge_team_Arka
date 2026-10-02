@@ -17,6 +17,7 @@ import {
   getCoordinatesForJob,
   getOffsetCoordinates,
   DEFAULT_MAP_CENTER,
+  type Coordinates,
 } from "@/lib/locations";
 import { ACCESS_FEATURES, type Job, type AccessFeature } from "@/lib/jobs-data";
 import { useAppState } from "@/lib/app-state";
@@ -49,9 +50,10 @@ export function JobMapExplorer({ jobs, height = "560px", className = "" }: JobMa
     const list: MapMarkerItem[] = [];
 
     // Filter by accessibility feature if selected
-    const filtered = selectedAccessFilter === "all"
-      ? jobs
-      : jobs.filter((j) => j.access.includes(selectedAccessFilter as AccessFeature));
+    const filtered =
+      selectedAccessFilter === "all"
+        ? jobs
+        : jobs.filter((j) => j.access.includes(selectedAccessFilter as AccessFeature));
 
     // Group jobs by geographic coordinate key to only micro-offset jobs at the exact same location
     const locationBuckets: Record<string, { baseCoords: Coordinates; jobs: Job[] }> = {};
@@ -74,8 +76,8 @@ export function JobMapExplorer({ jobs, height = "560px", className = "" }: JobMa
           fit && fit.hasPreferences && fit.score > 0
             ? `${fit.score}%`
             : job.workMode === "Remote"
-            ? "Remote"
-            : undefined;
+              ? "Remote"
+              : undefined;
 
         list.push({
           id: job.id,
@@ -140,12 +142,23 @@ export function JobMapExplorer({ jobs, height = "560px", className = "" }: JobMa
         {/* City Hub Quick Navigation */}
         <div className="flex items-center gap-1.5 overflow-x-auto pt-1 border-t border-border/60 text-xs">
           <span className="text-[11px] text-stone-500 font-serif shrink-0">Jump to Hub:</span>
-          {["Bengaluru", "Mumbai", "Delhi", "Hyderabad", "Pune", "Chennai", "Kolkata", "Remote (India)"].map((city) => (
+          {[
+            "Bengaluru",
+            "Mumbai",
+            "Delhi",
+            "Hyderabad",
+            "Pune",
+            "Chennai",
+            "Kolkata",
+            "Remote (India)",
+          ].map((city) => (
             <button
               key={city}
               type="button"
               onClick={() => {
-                const targetJob = markers.find((m) => m.subtitle?.toLowerCase().includes(city.toLowerCase()));
+                const targetJob = markers.find((m) =>
+                  m.subtitle?.toLowerCase().includes(city.toLowerCase()),
+                );
                 if (targetJob) {
                   setSelectedJobId(targetJob.id);
                 }
@@ -165,8 +178,10 @@ export function JobMapExplorer({ jobs, height = "560px", className = "" }: JobMa
         onSelectMarker={(m) => setSelectedJobId(m?.id || null)}
         height={height}
         renderPopup={(marker) => {
-          const job = marker.data?.job as Job;
-          const fit = marker.data?.fit;
+          const data = marker.data as
+            { job?: Job; fit?: { score: number; hasPreferences: boolean } } | undefined;
+          const job = data?.job;
+          const fit = data?.fit;
           if (!job) return null;
 
           return (
@@ -189,10 +204,10 @@ export function JobMapExplorer({ jobs, height = "560px", className = "" }: JobMa
                     </span>
                   )}
                 </div>
-                {fit && (
+                {Boolean(fit && fit.hasPreferences && fit.score > 0) && (
                   <div className="flex flex-col items-end">
                     <span className="rounded-full bg-[#7BD3C2] text-[#141817] px-2 py-0.5 text-xs font-bold border border-[#191716]">
-                      {fit.score}%
+                      {fit?.score}%
                     </span>
                     <span className="text-[10px] text-stone-500 font-serif">Fit match</span>
                   </div>

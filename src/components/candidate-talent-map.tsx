@@ -23,10 +23,7 @@ type CandidateTalentMapProps = {
   className?: string;
 };
 
-export function CandidateTalentMap({
-  height = "520px",
-  className = "",
-}: CandidateTalentMapProps) {
+export function CandidateTalentMap({ height = "520px", className = "" }: CandidateTalentMapProps) {
   const { applications, employerJobs, profile } = useAppState();
   const [selectedClusterCity, setSelectedClusterCity] = useState<string | null>(null);
 
@@ -73,7 +70,8 @@ export function CandidateTalentMap({
             </h3>
           </div>
           <p className="text-xs text-stone-500 font-sans mt-0.5">
-            Explore active talent pools across India by location, work preferences, and accessibility needs.
+            Explore active talent pools across India by location, work preferences, and
+            accessibility needs.
           </p>
         </div>
 
@@ -140,7 +138,10 @@ export function CandidateTalentMap({
                 </span>
                 <div className="space-y-0.5">
                   {cluster.topAccommodations.map((acc) => (
-                    <div key={acc} className="flex items-center gap-1.5 text-[11px] text-stone-700 dark:text-stone-300">
+                    <div
+                      key={acc}
+                      className="flex items-center gap-1.5 text-[11px] text-stone-700 dark:text-stone-300"
+                    >
                       <CheckCircle2 className="size-3 text-[#3D8B6E] shrink-0" />
                       <span>{acc}</span>
                     </div>
@@ -170,7 +171,9 @@ export function CandidateTalentMap({
       <div className="flex items-center gap-2 rounded-xl border border-border/80 bg-secondary/50 p-3 text-xs text-stone-600 dark:text-stone-400">
         <ShieldCheck className="size-4 shrink-0 text-[#3D8B6E]" />
         <span>
-          <strong>Candidate Privacy Shield:</strong> Locations are presented at the metropolitan hub level to protect candidate confidentiality. Personal addresses, contact details, and private disability notes are never displayed publicly on maps.
+          <strong>Candidate Privacy Shield:</strong> Locations are presented at the metropolitan hub
+          level to protect candidate confidentiality. Personal addresses, contact details, and
+          private disability notes are never displayed publicly on maps.
         </span>
       </div>
     </div>

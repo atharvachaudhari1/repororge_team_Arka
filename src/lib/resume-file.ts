@@ -32,5 +32,7 @@ export async function extractResumeText(file: File): Promise<string> {
     return result.value;
   }
 
-  throw new Error("This file type cannot be read in the browser yet. Upload a PDF, DOCX, or TXT resume.");
+  throw new Error(
+    "This file type cannot be read in the browser yet. Upload a PDF, DOCX, or TXT resume.",
+  );
 }

@@ -12,8 +12,14 @@ export function jobSpeechSections(job: Job): SpokenSection[] {
     { heading: "Job title", text: job.title },
     { heading: "Company", text: job.company },
     { heading: "Location", text: `${job.city}, ${job.workMode} work` },
-    { heading: "Salary", text: job.salary ? job.salary.replace("₹", "rupees ") : "Not disclosed by the employer" },
-    { heading: "Work mode and type", text: `${job.workMode}, ${job.employment}, ${job.experience} experience` },
+    {
+      heading: "Salary",
+      text: job.salary ? job.salary.replace("₹", "rupees ") : "Not disclosed by the employer",
+    },
+    {
+      heading: "Work mode and type",
+      text: `${job.workMode}, ${job.employment}, ${job.experience} experience`,
+    },
     { heading: "About the role", text: job.about },
     { heading: "Responsibilities", text: job.responsibilities.join(". ") },
     { heading: "Required skills", text: job.requiredSkills.join(", ") },
@@ -28,8 +34,7 @@ export function jobSpeechSections(job: Job): SpokenSection[] {
     },
     {
       heading: "How to apply",
-      text:
-        "Use the Apply button on this page. You can optionally request interview preferences during the application, and you never need to disclose disability or gender identity.",
+      text: "Use the Apply button on this page. You can optionally request interview preferences during the application, and you never need to disclose disability or gender identity.",
     },
   ];
   return sections;

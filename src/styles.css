@@ -83,118 +83,118 @@
   --font-sans: "Plus Jakarta Sans", "Manrope", ui-sans-serif, system-ui, sans-serif;
 
   /* Warm natural ivory parchment paper palette from reference */
-  --background: #FAF7F2;
+  --background: #faf7f2;
   --foreground: #191716;
 
-  --card: #FFFFFF;
+  --card: #ffffff;
   --card-foreground: #191716;
 
-  --popover: #FFFFFF;
+  --popover: #ffffff;
   --popover-foreground: #191716;
 
   /* Seafoam mint teal from reference screenshot pill buttons */
-  --primary: #7BD3C2;
+  --primary: #7bd3c2;
   --primary-foreground: #141817;
 
-  --secondary: #F2ECE4;
+  --secondary: #f2ece4;
   --secondary-foreground: #191716;
 
-  --muted: #F2ECE4;
-  --muted-foreground: #78716C;
+  --muted: #f2ece4;
+  --muted-foreground: #78716c;
 
-  --accent: #EFE9E0;
+  --accent: #efe9e0;
   --accent-foreground: #191716;
 
-  --destructive: #CF4E3D;
-  --destructive-foreground: #FFFFFF;
+  --destructive: #cf4e3d;
+  --destructive-foreground: #ffffff;
 
-  --border: #E5DFD5;
-  --input: #E5DFD5;
+  --border: #e5dfd5;
+  --input: #e5dfd5;
   --ring: #191716;
 
-  --chart-1: #7BD3C2;
-  --chart-2: #E5B34C;
-  --chart-3: #CF4E3D;
-  --chart-4: #4E9A7E;
-  --chart-5: #6B7280;
+  --chart-1: #7bd3c2;
+  --chart-2: #e5b34c;
+  --chart-3: #cf4e3d;
+  --chart-4: #4e9a7e;
+  --chart-5: #6b7280;
 
-  --sidebar: #FAF7F2;
+  --sidebar: #faf7f2;
   --sidebar-foreground: #191716;
-  --sidebar-primary: #7BD3C2;
+  --sidebar-primary: #7bd3c2;
   --sidebar-primary-foreground: #141817;
-  --sidebar-accent: #F2ECE4;
+  --sidebar-accent: #f2ece4;
   --sidebar-accent-foreground: #191716;
-  --sidebar-border: #E5DFD5;
+  --sidebar-border: #e5dfd5;
   --sidebar-ring: #191716;
 
-  --brand: #7BD3C2;
+  --brand: #7bd3c2;
   --brand-foreground: #141817;
-  --brand-soft: #E8F7F4;
+  --brand-soft: #e8f7f4;
 
-  --success: #3D8B6E;
-  --success-foreground: #FFFFFF;
+  --success: #3d8b6e;
+  --success-foreground: #ffffff;
 
-  --warning: #DDA843;
+  --warning: #dda843;
   --warning-foreground: #141817;
 
-  --highlight: #E5B34C;
+  --highlight: #e5b34c;
 }
 
 .dark {
   --background: #171615;
-  --foreground: #F5F2EB;
+  --foreground: #f5f2eb;
 
-  --card: #201E1C;
-  --card-foreground: #F5F2EB;
+  --card: #201e1c;
+  --card-foreground: #f5f2eb;
 
-  --popover: #201E1C;
-  --popover-foreground: #F5F2EB;
+  --popover: #201e1c;
+  --popover-foreground: #f5f2eb;
 
-  --primary: #7BD3C2;
+  --primary: #7bd3c2;
   --primary-foreground: #141817;
 
-  --secondary: #2A2724;
-  --secondary-foreground: #F5F2EB;
+  --secondary: #2a2724;
+  --secondary-foreground: #f5f2eb;
 
   --muted: #272422;
-  --muted-foreground: #A8A29E;
+  --muted-foreground: #a8a29e;
 
-  --accent: #2E2B28;
-  --accent-foreground: #F5F2EB;
+  --accent: #2e2b28;
+  --accent-foreground: #f5f2eb;
 
-  --destructive: #CF4E3D;
-  --destructive-foreground: #FFFFFF;
+  --destructive: #cf4e3d;
+  --destructive-foreground: #ffffff;
 
   --border: #383430;
   --input: #383430;
-  --ring: #7BD3C2;
+  --ring: #7bd3c2;
 
-  --brand: #7BD3C2;
+  --brand: #7bd3c2;
   --brand-foreground: #141817;
-  --brand-soft: #7BD3C220;
+  --brand-soft: #7bd3c220;
 
-  --success: #4E9A7E;
+  --success: #4e9a7e;
   --success-foreground: #141817;
 
-  --warning: #E5B34C;
+  --warning: #e5b34c;
   --warning-foreground: #141817;
 
-  --highlight: #E5B34C;
+  --highlight: #e5b34c;
 
-  --chart-1: #7BD3C2;
-  --chart-2: #E5B34C;
-  --chart-3: #CF4E3D;
-  --chart-4: #4E9A7E;
-  --chart-5: #A8A29E;
+  --chart-1: #7bd3c2;
+  --chart-2: #e5b34c;
+  --chart-3: #cf4e3d;
+  --chart-4: #4e9a7e;
+  --chart-5: #a8a29e;
 
-  --sidebar: #1C1A18;
-  --sidebar-foreground: #F5F2EB;
-  --sidebar-primary: #7BD3C2;
+  --sidebar: #1c1a18;
+  --sidebar-foreground: #f5f2eb;
+  --sidebar-primary: #7bd3c2;
   --sidebar-primary-foreground: #141817;
-  --sidebar-accent: #2A2724;
-  --sidebar-accent-foreground: #F5F2EB;
+  --sidebar-accent: #2a2724;
+  --sidebar-accent-foreground: #f5f2eb;
   --sidebar-border: #383430;
-  --sidebar-ring: #7BD3C2;
+  --sidebar-ring: #7bd3c2;
 }
 
 @layer base {
@@ -315,7 +315,7 @@ html[data-dyslexia="true"] * {
 }
 
 @utility pill-mint {
-  background-color: #7BD3C2;
+  background-color: #7bd3c2;
   color: #141817;
   border: 1.5px solid #191716;
   border-radius: 9999px;
@@ -339,7 +339,7 @@ html[data-dyslexia="true"] * {
 
 @utility wax-stamp {
   border: 1.5px solid #191716;
-  background-color: #E5B34C;
+  background-color: #e5b34c;
   border-radius: 9999px;
   color: #191716;
 }

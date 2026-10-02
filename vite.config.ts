@@ -16,9 +16,7 @@ export default defineConfig({
       allowedHosts: ["repoforge-win.onrender.com"],
     },
     resolve: {
-      alias: [
-        { find: /^punycode\/$/, replacement: "punycode" },
-      ],
+      alias: [{ find: /^punycode\/$/, replacement: "punycode" }],
     },
   },
 
@@ -28,9 +26,11 @@ export default defineConfig({
     server: { entry: "server" },
   },
 
+  // Cast nitro options as Record<string, unknown> because Nitro requires
+  // punycode alias for Cloudflare SSR bundle, but Lovable config types omit alias.
   nitro: {
     alias: {
       "punycode/": "punycode",
     },
-  },
+  } as Record<string, unknown>,
 });

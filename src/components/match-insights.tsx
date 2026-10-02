@@ -7,7 +7,11 @@ import { MatchExplainerModal } from "@/components/match-explainer-modal";
 
 export function MatchPill({ score, label }: { score: number; label?: string }) {
   const tone =
-    score >= 85 ? "bg-success/15 text-success" : score >= 65 ? "bg-brand/15 text-brand" : "bg-secondary text-secondary-foreground";
+    score >= 85
+      ? "bg-success/15 text-success"
+      : score >= 65
+        ? "bg-brand/15 text-brand"
+        : "bg-secondary text-secondary-foreground";
   return (
     <span
       className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${tone}`}

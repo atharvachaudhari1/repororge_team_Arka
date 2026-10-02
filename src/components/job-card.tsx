@@ -32,11 +32,17 @@ import { EmployerAccessibilityAuditModal } from "@/components/employer-accessibi
 /** Map access feature keys to disability category icons */
 function getDisabilityIcons(access: string[]): { icon: typeof Eye; label: string }[] {
   const icons: { icon: typeof Eye; label: string }[] = [];
-  if (access.some((a) => ["screen_reader", "keyboard_friendly", "accessible_application"].includes(a)))
+  if (
+    access.some((a) => ["screen_reader", "keyboard_friendly", "accessible_application"].includes(a))
+  )
     icons.push({ icon: Eye, label: "Vision accessible" });
   if (access.some((a) => ["captioned_meetings", "assistive_tech"].includes(a)))
     icons.push({ icon: Ear, label: "Hearing accessible" });
-  if (access.some((a) => ["remote_work", "flexible_work", "accessible_workplace", "accessible_interview"].includes(a)))
+  if (
+    access.some((a) =>
+      ["remote_work", "flexible_work", "accessible_workplace", "accessible_interview"].includes(a),
+    )
+  )
     icons.push({ icon: Hand, label: "Mobility accessible" });
   return icons;
 }
@@ -57,7 +63,8 @@ export function JobCard({ job }: { job: Job }) {
     userSkillsLower.some((us) => us.includes(s.toLowerCase()) || s.toLowerCase().includes(us)),
   );
   const missingSkills = job.requiredSkills.filter(
-    (s) => !userSkillsLower.some((us) => us.includes(s.toLowerCase()) || s.toLowerCase().includes(us)),
+    (s) =>
+      !userSkillsLower.some((us) => us.includes(s.toLowerCase()) || s.toLowerCase().includes(us)),
   );
   const primaryGap = missingSkills[0] ?? (job.preferredSkills && job.preferredSkills[0]) ?? "";
 
@@ -88,7 +95,9 @@ export function JobCard({ job }: { job: Job }) {
               <MapPin aria-hidden="true" className="size-4 text-stone-500" />
               {job.city}
             </span>
-            <span className="rounded-full border border-stone-300 dark:border-stone-700 px-2.5 py-0.5 text-xs">{job.workMode}</span>
+            <span className="rounded-full border border-stone-300 dark:border-stone-700 px-2.5 py-0.5 text-xs">
+              {job.workMode}
+            </span>
             <span>{job.employment}</span>
             <span>{job.experience}</span>
             {job.salary ? (
@@ -107,7 +116,10 @@ export function JobCard({ job }: { job: Job }) {
           onClick={() => toggleSaved(job.id)}
         >
           {saved ? (
-            <BookmarkCheck aria-hidden="true" className="size-4 text-stone-900 dark:text-stone-100" />
+            <BookmarkCheck
+              aria-hidden="true"
+              className="size-4 text-stone-900 dark:text-stone-100"
+            />
           ) : (
             <Bookmark aria-hidden="true" className="size-4 text-stone-500" />
           )}
@@ -183,7 +195,9 @@ export function JobCard({ job }: { job: Job }) {
           {job.access.map((a) => (
             <li key={a}>
               <Badge variant="secondary" className="font-normal text-xs py-0.5">
-                <span aria-hidden="true" className="text-success mr-1">✓</span>
+                <span aria-hidden="true" className="text-success mr-1">
+                  ✓
+                </span>
                 {ACCESS_FEATURES[a]}
               </Badge>
             </li>
@@ -214,7 +228,9 @@ export function JobCard({ job }: { job: Job }) {
               <CheckCircle2 className="size-4 text-success shrink-0" />
               <span>
                 <strong>Skills matched: </strong>
-                {matchedSkills.length > 0 ? matchedSkills.join(", ") : "Profile foundation matches role requirements"}
+                {matchedSkills.length > 0
+                  ? matchedSkills.join(", ")
+                  : "Profile foundation matches role requirements"}
               </span>
             </div>
 
@@ -244,7 +260,9 @@ export function JobCard({ job }: { job: Job }) {
               <CheckCircle2 className="size-4 text-success shrink-0" />
               <span>
                 <strong>Work preference: </strong>
-                {workMatches ? `${job.workMode} setup aligns with your profile` : `${job.workMode} work arrangement`}
+                {workMatches
+                  ? `${job.workMode} setup aligns with your profile`
+                  : `${job.workMode} work arrangement`}
               </span>
             </div>
 
@@ -260,7 +278,8 @@ export function JobCard({ job }: { job: Job }) {
 
             <div className="mt-1 pt-1.5 border-t border-border/50 text-muted-foreground">
               <ShieldCheck className="size-3.5 inline mr-1 text-brand" />
-              Accommodation source: {job.accessSource}. Ableo never infers disability or adds accommodation claims.
+              Accommodation source: {job.accessSource}. Ableo never infers disability or adds
+              accommodation claims.
             </div>
           </div>
         ) : null}
@@ -302,11 +321,7 @@ export function JobCard({ job }: { job: Job }) {
         match={match}
         accessibilityFitScore={a11y.score}
       />
-      <EmployerAccessibilityAuditModal
-        open={auditOpen}
-        onOpenChange={setAuditOpen}
-        job={job}
-      />
+      <EmployerAccessibilityAuditModal open={auditOpen} onOpenChange={setAuditOpen} job={job} />
     </article>
   );
 }

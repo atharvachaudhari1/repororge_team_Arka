@@ -6,10 +6,17 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
-  FEEDBACK_BARRIERS, FEEDBACK_CATEGORIES, useAppState,
+  FEEDBACK_BARRIERS,
+  FEEDBACK_CATEGORIES,
+  useAppState,
   type FeedbackCategory,
 } from "@/lib/app-state";
 
@@ -17,8 +24,16 @@ const SCALE = [1, 2, 3, 4, 5];
 const WORDS = ["", "Not accessible", "Poor", "Workable", "Good", "Fully accessible"];
 
 function StarRating({
-  name, legend, value, onChange,
-}: { name: string; legend: string; value: number; onChange: (v: number) => void }) {
+  name,
+  legend,
+  value,
+  onChange,
+}: {
+  name: string;
+  legend: string;
+  value: number;
+  onChange: (v: number) => void;
+}) {
   return (
     <fieldset>
       <legend className="text-sm font-medium">{legend}</legend>
@@ -43,7 +58,9 @@ function StarRating({
               >
                 <Star
                   aria-hidden="true"
-                  className={active ? "size-6 fill-brand text-brand" : "size-6 text-muted-foreground"}
+                  className={
+                    active ? "size-6 fill-brand text-brand" : "size-6 text-muted-foreground"
+                  }
                 />
                 <span className="sr-only">
                   {v} out of 5 — {WORDS[v]}
@@ -65,8 +82,12 @@ function StarRating({
  * aggregated ratings ever appear on an employer profile.
  */
 export function AccessibilityFeedbackDialog({
-  jobId, company,
-}: { jobId: string; company: string }) {
+  jobId,
+  company,
+}: {
+  jobId: string;
+  company: string;
+}) {
   const { addFeedback, hasFeedback } = useAppState();
   const [open, setOpen] = useState(false);
   const [ratings, setRatings] = useState<Partial<Record<FeedbackCategory, number>>>({});
@@ -112,13 +133,17 @@ export function AccessibilityFeedbackDialog({
 
         {done ? (
           <div aria-live="polite" className="space-y-2">
-            <h3 className="text-lg font-semibold">Thank you for helping improve accessible hiring.</h3>
+            <h3 className="text-lg font-semibold">
+              Thank you for helping improve accessible hiring.
+            </h3>
             <p className="text-sm text-muted-foreground">
               {anonymous
                 ? "Your feedback has been recorded anonymously."
                 : "Your feedback has been recorded and linked to your application for follow-up."}
             </p>
-            <Button className="mt-2" onClick={() => setOpen(false)}>Close</Button>
+            <Button className="mt-2" onClick={() => setOpen(false)}>
+              Close
+            </Button>
           </div>
         ) : (
           <form
@@ -146,7 +171,9 @@ export function AccessibilityFeedbackDialog({
             </section>
 
             <fieldset>
-              <legend className="font-semibold">Did you experience any accessibility barriers?</legend>
+              <legend className="font-semibold">
+                Did you experience any accessibility barriers?
+              </legend>
               <p className="mt-1 text-sm text-muted-foreground">Select all that apply. Optional.</p>
               <ul className="mt-2 grid gap-2 sm:grid-cols-2">
                 {FEEDBACK_BARRIERS.map((b) => {
@@ -158,7 +185,9 @@ export function AccessibilityFeedbackDialog({
                         checked={barriers.includes(b)}
                         onCheckedChange={() => toggleBarrier(b)}
                       />
-                      <label htmlFor={id} className="text-sm">{b}</label>
+                      <label htmlFor={id} className="text-sm">
+                        {b}
+                      </label>
                     </li>
                   );
                 })}
@@ -211,7 +240,9 @@ export function StarsReadOnly({ value }: { value: number }) {
         {SCALE.map((v) => (
           <Star
             key={v}
-            className={rounded >= v ? "size-4 fill-brand text-brand" : "size-4 text-muted-foreground"}
+            className={
+              rounded >= v ? "size-4 fill-brand text-brand" : "size-4 text-muted-foreground"
+            }
           />
         ))}
       </span>

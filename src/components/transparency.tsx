@@ -1,15 +1,24 @@
 import { CircleDashed, ShieldCheck, Building2, Accessibility } from "lucide-react";
 import type { Job } from "@/lib/jobs-data";
 import {
-  TRANSPARENCY_HELP, TRANSPARENCY_LABEL, accessTransparency, accessibilityFit,
-  inclusionTransparency, transparencyCounts, type TransparencyRow,
+  TRANSPARENCY_HELP,
+  TRANSPARENCY_LABEL,
+  accessTransparency,
+  accessibilityFit,
+  inclusionTransparency,
+  transparencyCounts,
+  type TransparencyRow,
 } from "@/lib/accessibility";
 import { Progress } from "@/components/ui/progress";
 
 function LevelIcon({ level }: { level: TransparencyRow["level"] }) {
-  if (level === "verified") return <ShieldCheck aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-success" />;
-  if (level === "employer") return <Building2 aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-brand" />;
-  return <CircleDashed aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-muted-foreground" />;
+  if (level === "verified")
+    return <ShieldCheck aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-success" />;
+  if (level === "employer")
+    return <Building2 aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-brand" />;
+  return (
+    <CircleDashed aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+  );
 }
 
 function Rows({ rows }: { rows: TransparencyRow[] }) {
@@ -19,7 +28,9 @@ function Rows({ rows }: { rows: TransparencyRow[] }) {
         <li key={r.key} className="flex items-start gap-2">
           <LevelIcon level={r.level} />
           <span>
-            <span className={r.level === "unspecified" ? "text-muted-foreground" : "font-medium"}>{r.label}</span>
+            <span className={r.level === "unspecified" ? "text-muted-foreground" : "font-medium"}>
+              {r.label}
+            </span>
             <span className="text-muted-foreground"> — {TRANSPARENCY_LABEL[r.level]}</span>
           </span>
         </li>
@@ -48,14 +59,17 @@ export function AccessibilityTransparencyCard({ job }: { job: Job }) {
   const counts = transparencyCounts(job);
   return (
     <section aria-labelledby="transparency-heading" className="surface-card p-5">
-      <h2 id="transparency-heading" className="text-xl font-semibold">Accessibility &amp; Inclusion</h2>
+      <h2 id="transparency-heading" className="text-xl font-semibold">
+        Accessibility &amp; Inclusion
+      </h2>
       <p className="mt-1 text-sm text-muted-foreground">
         Shown exactly as the employer supplied it, or as verified by AccessPath. We never add
         accessibility claims on an employer's behalf.
       </p>
       <TransparencyLegend />
       <p className="mt-3 text-xs text-muted-foreground">
-        Verified: {counts.verified} • Employer provided: {counts.employer} • Not specified: {counts.unspecified}
+        Verified: {counts.verified} • Employer provided: {counts.employer} • Not specified:{" "}
+        {counts.unspecified}
       </p>
 
       <h3 className="mt-5 text-sm font-semibold">Hiring &amp; workplace accessibility</h3>
@@ -67,9 +81,7 @@ export function AccessibilityTransparencyCard({ job }: { job: Job }) {
   );
 }
 
-export function AccessibilityFitCard({
-  job, preferences,
-}: { job: Job; preferences: string[] }) {
+export function AccessibilityFitCard({ job, preferences }: { job: Job; preferences: string[] }) {
   const fit = accessibilityFit(preferences, job);
   return (
     <section aria-labelledby="fit-heading" className="surface-card p-5">
@@ -91,8 +103,12 @@ export function AccessibilityFitCard({
           <p className="mt-3 text-sm">{fit.summary}</p>
 
           <h3 className="mt-4 text-sm font-semibold">Your preferences this role provides</h3>
-          {fit.available.length ? <Rows rows={fit.available} /> : (
-            <p className="mt-2 text-sm text-muted-foreground">None of your preferences are listed for this role.</p>
+          {fit.available.length ? (
+            <Rows rows={fit.available} />
+          ) : (
+            <p className="mt-2 text-sm text-muted-foreground">
+              None of your preferences are listed for this role.
+            </p>
           )}
 
           {fit.missing.length ? (
@@ -111,7 +127,9 @@ export function AccessibilityFitCard({
       )}
 
       <h3 className="mt-5 text-sm font-semibold">This role provides</h3>
-      {fit.provided.length ? <Rows rows={fit.provided} /> : (
+      {fit.provided.length ? (
+        <Rows rows={fit.provided} />
+      ) : (
         <p className="mt-2 text-sm text-muted-foreground">No accessibility information provided.</p>
       )}
 

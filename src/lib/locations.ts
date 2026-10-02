@@ -16,57 +16,57 @@ export type LocationInfo = {
 };
 
 export const CITY_COORDINATES: Record<string, LocationInfo> = {
-  "Bengaluru": {
+  Bengaluru: {
     name: "Bengaluru",
     state: "Karnataka",
     coords: { lat: 12.9716, lng: 77.5946 },
   },
-  "Mumbai": {
+  Mumbai: {
     name: "Mumbai",
     state: "Maharashtra",
-    coords: { lat: 19.0760, lng: 72.8777 },
+    coords: { lat: 19.076, lng: 72.8777 },
   },
-  "Delhi": {
+  Delhi: {
     name: "Delhi",
     state: "Delhi NCR",
     coords: { lat: 28.7041, lng: 77.1025 },
   },
-  "Gurugram": {
+  Gurugram: {
     name: "Gurugram",
     state: "Haryana",
     coords: { lat: 28.4595, lng: 77.0266 },
   },
-  "Hyderabad": {
+  Hyderabad: {
     name: "Hyderabad",
     state: "Telangana",
-    coords: { lat: 17.3850, lng: 78.4867 },
+    coords: { lat: 17.385, lng: 78.4867 },
   },
-  "Pune": {
+  Pune: {
     name: "Pune",
     state: "Maharashtra",
     coords: { lat: 18.5204, lng: 73.8567 },
   },
-  "Chennai": {
+  Chennai: {
     name: "Chennai",
     state: "Tamil Nadu",
     coords: { lat: 13.0827, lng: 80.2707 },
   },
-  "Kolkata": {
+  Kolkata: {
     name: "Kolkata",
     state: "West Bengal",
     coords: { lat: 22.5726, lng: 88.3639 },
   },
-  "Ahmedabad": {
+  Ahmedabad: {
     name: "Ahmedabad",
     state: "Gujarat",
     coords: { lat: 23.0225, lng: 72.5714 },
   },
-  "Jaipur": {
+  Jaipur: {
     name: "Jaipur",
     state: "Rajasthan",
     coords: { lat: 26.9124, lng: 75.7873 },
   },
-  "Coimbatore": {
+  Coimbatore: {
     name: "Coimbatore",
     state: "Tamil Nadu",
     coords: { lat: 11.0168, lng: 76.9558 },
@@ -77,7 +77,7 @@ export const CITY_COORDINATES: Record<string, LocationInfo> = {
     coords: { lat: 20.5937, lng: 78.9629 }, // Center of India
     isRemote: true,
   },
-  "Remote": {
+  Remote: {
     name: "Remote (Pan-India)",
     state: "All India",
     coords: { lat: 20.5937, lng: 78.9629 },
@@ -105,9 +105,9 @@ export function getCoordinatesForCity(city: string): Coordinates {
   }
   // Check case-insensitive match
   const match = Object.keys(CITY_COORDINATES).find(
-    (k) => k.toLowerCase() === clean.toLowerCase() || clean.toLowerCase().includes(k.toLowerCase())
+    (k) => k.toLowerCase() === clean.toLowerCase() || clean.toLowerCase().includes(k.toLowerCase()),
   );
-  if (match) {
+  if (match && CITY_COORDINATES[match]) {
     return CITY_COORDINATES[match].coords;
   }
   return DEFAULT_MAP_CENTER;
@@ -117,39 +117,60 @@ export function getCoordinatesForCity(city: string): Coordinates {
  * Enhanced precision locator that pinpoints specific business districts within major metros like Mumbai.
  * Ensures every pin lands strictly on real land and commercial IT corridors, never in the water.
  */
-export function getCoordinatesForJob(job: { city: string; title: string; company: string }): Coordinates {
+export function getCoordinatesForJob(job: {
+  city: string;
+  title: string;
+  company: string;
+}): Coordinates {
   const text = `${job.city} ${job.company} ${job.title}`.toLowerCase();
-  
-  if (text.includes("mumbai") || text.includes("bkc") || text.includes("powai") || text.includes("andheri") || text.includes("parel") || text.includes("vikhroli") || text.includes("deccan")) {
+
+  if (
+    text.includes("mumbai") ||
+    text.includes("bkc") ||
+    text.includes("powai") ||
+    text.includes("andheri") ||
+    text.includes("parel") ||
+    text.includes("vikhroli") ||
+    text.includes("deccan")
+  ) {
     if (text.includes("bkc") || text.includes("bandra kurla")) {
       return { lat: 19.0665, lng: 72.8685 }; // Bandra Kurla Complex G Block
     }
     if (text.includes("powai") || text.includes("hiranandani")) {
-      return { lat: 19.1176, lng: 72.9060 }; // Hiranandani Business Park Powai
+      return { lat: 19.1176, lng: 72.906 }; // Hiranandani Business Park Powai
     }
     if (text.includes("lower parel") || text.includes("worli") || text.includes("builtin")) {
-      return { lat: 18.9950, lng: 72.8280 }; // One World Center / Kamala Mills Lower Parel
+      return { lat: 18.995, lng: 72.828 }; // One World Center / Kamala Mills Lower Parel
     }
-    if (text.includes("andheri east") || text.includes("seepz") || text.includes("global tech hub")) {
+    if (
+      text.includes("andheri east") ||
+      text.includes("seepz") ||
+      text.includes("global tech hub")
+    ) {
       return { lat: 19.1197, lng: 72.8697 }; // SEEPZ / MIDC Andheri East
     }
     if (text.includes("andheri") || text.includes("bluepeak") || text.includes("lokhandwala")) {
-      return { lat: 19.1360, lng: 72.8315 }; // Link Road, Andheri West
+      return { lat: 19.136, lng: 72.8315 }; // Link Road, Andheri West
     }
     if (text.includes("vikhroli") || text.includes("tata tele")) {
       return { lat: 19.1065, lng: 72.9285 }; // Godrej IT Park / Vikhroli
     }
-    if (text.includes("nariman") || text.includes("fort") || text.includes("deccan") || text.includes("financial")) {
-      return { lat: 18.9300, lng: 72.8330 }; // Fort / Nariman Point Financial District
+    if (
+      text.includes("nariman") ||
+      text.includes("fort") ||
+      text.includes("deccan") ||
+      text.includes("financial")
+    ) {
+      return { lat: 18.93, lng: 72.833 }; // Fort / Nariman Point Financial District
     }
     if (text.includes("navi mumbai") || text.includes("airoli") || text.includes("vashi")) {
-      return { lat: 19.1550, lng: 72.9980 }; // Airoli Mindspace
+      return { lat: 19.155, lng: 72.998 }; // Airoli Mindspace
     }
     if (text.includes("malad") || text.includes("goregaon")) {
-      return { lat: 19.1760, lng: 72.8360 }; // Mindspace Malad West
+      return { lat: 19.176, lng: 72.836 }; // Mindspace Malad West
     }
     // Default Mumbai central inland business area (Bandra-Kurla border)
-    return { lat: 19.0650, lng: 72.8550 };
+    return { lat: 19.065, lng: 72.855 };
   }
   return getCoordinatesForCity(job.city);
 }
@@ -196,7 +217,7 @@ export const MOCK_CANDIDATE_LOCATIONS: CandidateLocationCluster[] = [
   {
     city: "Mumbai",
     state: "Maharashtra",
-    coords: { lat: 19.0760, lng: 72.8777 },
+    coords: { lat: 19.076, lng: 72.8777 },
     candidateCount: 18,
     openForRemote: 16,
     topAccommodations: ["Flexible commute hours", "Quiet sensory room", "Captioned meetings"],
@@ -208,7 +229,11 @@ export const MOCK_CANDIDATE_LOCATIONS: CandidateLocationCluster[] = [
     coords: { lat: 28.7041, lng: 77.1025 },
     candidateCount: 15,
     openForRemote: 14,
-    topAccommodations: ["Accessible transit pickup", "Assistive keyboard tech", "Sign language support"],
+    topAccommodations: [
+      "Accessible transit pickup",
+      "Assistive keyboard tech",
+      "Sign language support",
+    ],
     sampleRoles: ["Full Stack Developer", "Customer Success Lead", "Financial Analyst"],
   },
   {
@@ -223,10 +248,14 @@ export const MOCK_CANDIDATE_LOCATIONS: CandidateLocationCluster[] = [
   {
     city: "Hyderabad",
     state: "Telangana",
-    coords: { lat: 17.3850, lng: 78.4867 },
+    coords: { lat: 17.385, lng: 78.4867 },
     candidateCount: 14,
     openForRemote: 12,
-    topAccommodations: ["Screen-magnifier software", "Elevator priority", "Sensory-friendly lighting"],
+    topAccommodations: [
+      "Screen-magnifier software",
+      "Elevator priority",
+      "Sensory-friendly lighting",
+    ],
     sampleRoles: ["Cloud Engineer", "Python Developer", "Data Scientist"],
   },
   {

@@ -9,10 +9,11 @@ let cachedClient: TinyFish | null = null;
 
 export function getTinyFishClient(): TinyFish | null {
   const apiKey =
-    (typeof process !== "undefined" && process.env?.TINYFISH_API_KEY) ||
+    (typeof process !== "undefined" && process.env?.["TINYFISH_API_KEY"]) ||
     (typeof import.meta !== "undefined" &&
-      (import.meta as unknown as { env?: { TINYFISH_API_KEY?: string } }).env
-        ?.TINYFISH_API_KEY) ||
+      (import.meta as unknown as { env?: { TINYFISH_API_KEY?: string } }).env?.[
+        "TINYFISH_API_KEY"
+      ]) ||
     null;
 
   if (!apiKey) return null;
@@ -32,7 +33,9 @@ export type TinyFishJobResult = {
 /**
  * Searches the live web for jobs in Mumbai matching accessibility and tech keywords.
  */
-export async function searchMumbaiJobsWithTinyFish(query = "accessible jobs hiring Mumbai"): Promise<TinyFishJobResult[]> {
+export async function searchMumbaiJobsWithTinyFish(
+  query = "accessible jobs hiring Mumbai",
+): Promise<TinyFishJobResult[]> {
   try {
     const client = getTinyFishClient();
     if (!client) {

@@ -36,7 +36,11 @@ export type MatchResult = {
 };
 
 export function normalise(s: string) {
-  return s.toLowerCase().replace(/[^a-z0-9+# ]/g, " ").replace(/\s+/g, " ").trim();
+  return s
+    .toLowerCase()
+    .replace(/[^a-z0-9+# ]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 function skillHit(candidate: string[], skill: string) {
@@ -70,11 +74,13 @@ export function scoreJob(profile: Profile, job: Job): MatchResult {
   const resumeSkills = normalise(profile.resumeText || "");
 
   const matchedRequired = job.requiredSkills.filter(
-    (s) => skillHit(candidateSkills, s) || (resumeSkills ? resumeSkills.includes(normalise(s)) : false),
+    (s) =>
+      skillHit(candidateSkills, s) || (resumeSkills ? resumeSkills.includes(normalise(s)) : false),
   );
   const missingRequired = job.requiredSkills.filter((s) => !matchedRequired.includes(s));
   const matchedPreferred = job.preferredSkills.filter(
-    (s) => skillHit(candidateSkills, s) || (resumeSkills ? resumeSkills.includes(normalise(s)) : false),
+    (s) =>
+      skillHit(candidateSkills, s) || (resumeSkills ? resumeSkills.includes(normalise(s)) : false),
   );
 
   const reqCount = job.requiredSkills.length || 1;
@@ -91,7 +97,8 @@ export function scoreJob(profile: Profile, job: Job): MatchResult {
   const tokens = careerTokens(profile);
   const target = normalise(`${job.title} ${job.category}`);
   const careerHits = tokens.filter((t) => target.includes(t)).length;
-  const career = tokens.length === 0 ? 60 : careerHits > 0 ? Math.min(100, 70 + careerHits * 15) : 45;
+  const career =
+    tokens.length === 0 ? 60 : careerHits > 0 ? Math.min(100, 70 + careerHits * 15) : 45;
 
   const modeMatch =
     !profile.workPreference || profile.workPreference === "No preference"
@@ -111,14 +118,14 @@ export function scoreJob(profile: Profile, job: Job): MatchResult {
         : 50;
   const workPreference = Math.round(modeMatch * 0.6 + locMatch * 0.4);
 
-  const eduBonus =
-    profile.education.trim() || profile.certifications.trim() ? 3 : 0;
+  const eduBonus = profile.education.trim() || profile.certifications.trim() ? 3 : 0;
 
   const total = Math.max(
     0,
     Math.min(
       100,
-      Math.round(skills * 0.45 + experience * 0.2 + career * 0.2 + workPreference * 0.15) + eduBonus,
+      Math.round(skills * 0.45 + experience * 0.2 + career * 0.2 + workPreference * 0.15) +
+        eduBonus,
     ),
   );
 
@@ -137,9 +144,15 @@ export function scoreJob(profile: Profile, job: Job): MatchResult {
     });
   if (job.experience === "Fresher") reasons.push({ kind: "match", text: "Fresher-friendly role" });
   else if (experience >= 92)
-    reasons.push({ kind: "match", text: `Your experience level fits the ${job.experience} requirement` });
+    reasons.push({
+      kind: "match",
+      text: `Your experience level fits the ${job.experience} requirement`,
+    });
   if (career >= 85)
-    reasons.push({ kind: "match", text: `Aligned with your stated career interest in ${job.category.toLowerCase()}` });
+    reasons.push({
+      kind: "match",
+      text: `Aligned with your stated career interest in ${job.category.toLowerCase()}`,
+    });
   if (job.access.includes("accessible_interview"))
     reasons.push({ kind: "match", text: "Accessible interview process offered by the employer" });
   if (missingRequired.length)
@@ -155,9 +168,17 @@ export function scoreJob(profile: Profile, job: Job): MatchResult {
   const fit = accessibilityFit(profile.accessibilityPreferences, job);
 
   return {
-    job, total, skills, experience, career, workPreference,
-    matchedRequired, missingRequired, matchedPreferred,
-    requirementsTotal, requirementsMet,
+    job,
+    total,
+    skills,
+    experience,
+    career,
+    workPreference,
+    matchedRequired,
+    missingRequired,
+    matchedPreferred,
+    requirementsTotal,
+    requirementsMet,
     strongest: matchedRequired.slice(0, 3),
     reasons,
     accessibilityFit: fit.available.map((r) => r.label),
@@ -170,8 +191,7 @@ export function matchSummary(m: MatchResult) {
     `You match ${m.requirementsMet} of the ${m.requirementsTotal} major requirements for this role.`,
   ];
   if (m.strongest.length) lines.push(`Your strongest matches are ${m.strongest.join(", ")}.`);
-  if (m.missingRequired.length)
-    lines.push(`Your main missing skill is ${m.missingRequired[0]}.`);
+  if (m.missingRequired.length) lines.push(`Your main missing skill is ${m.missingRequired[0]}.`);
   else lines.push("You cover every required skill listed by the employer.");
   return lines;
 }
@@ -202,13 +222,18 @@ export function analyseResume(resumeText: string, job: Job, profile: Profile) {
     (s) => `Your resume does not mention ${s}, but the job requires ${s.toLowerCase()}.`,
   );
   const bullets = [
-    ...missingRequired.slice(0, 3).map(
-      (s) =>
-        `Built and shipped work using ${s} — add one measurable outcome, e.g. "Used ${s} to deliver X, reducing Y by Z%".`,
-    ),
-    ...matched.slice(0, 2).map(
-      (s) => `Strengthen your existing ${s} bullet with scale and impact, e.g. "${s}: delivered N features used by M users".`,
-    ),
+    ...missingRequired
+      .slice(0, 3)
+      .map(
+        (s) =>
+          `Built and shipped work using ${s} — add one measurable outcome, e.g. "Used ${s} to deliver X, reducing Y by Z%".`,
+      ),
+    ...matched
+      .slice(0, 2)
+      .map(
+        (s) =>
+          `Strengthen your existing ${s} bullet with scale and impact, e.g. "${s}: delivered N features used by M users".`,
+      ),
     `Mirror the job's wording for ${job.title} in your summary line so screening tools match it.`,
   ];
   return { coverage, matched, missingRequired, missingPreferred, experience, notes, bullets };

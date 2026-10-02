@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/select";
 import { useAppState, type Profile } from "@/lib/app-state";
 import { ACCESS_PREFERENCE_OPTIONS, normalisePrefs } from "@/lib/accessibility";
+import type { AccessFeature } from "@/lib/jobs-data";
 import { parseResumeText, DEMO_RESUMES, type ParsedResume } from "@/lib/resume-parser";
 import { extractResumeText } from "@/lib/resume-file";
 import { AccessibleResumeExportModal } from "@/components/accessible-resume-export";
@@ -104,7 +105,9 @@ function ProfilePage() {
       certifications: parsed.certifications || previous.certifications,
       preferredLocation: parsed.preferredLocation || previous.preferredLocation,
       workPreference: parsed.workPreference || previous.workPreference,
-      resumeName: sourceFileName || (parsed.name ? `${parsed.name.replace(/\s+/g, "_")}_Resume.pdf` : previous.resumeName),
+      resumeName:
+        sourceFileName ||
+        (parsed.name ? `${parsed.name.replace(/\s+/g, "_")}_Resume.pdf` : previous.resumeName),
       resumeText: parsed.rawText || previous.resumeText,
       accessibilityPreferences: Array.from(
         new Set([...previous.accessibilityPreferences, ...parsed.suggestedAccommodations]),
@@ -135,7 +138,8 @@ function ProfilePage() {
         <div>
           <h1 className="text-3xl font-bold">Your Profile</h1>
           <p className="mt-1 text-muted-foreground">
-            Ableo: Where Ability Meets Opportunity. Your profile matches you to inclusive jobs without barriers.
+            Ableo: Where Ability Meets Opportunity. Your profile matches you to inclusive jobs
+            without barriers.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2 self-start sm:self-center">
@@ -149,7 +153,10 @@ function ProfilePage() {
             <FileCheck className="size-3.5" />
             Export Accessible Resume
           </Button>
-          <Badge variant="outline" className="gap-1.5 py-1 px-3 border-brand/40 bg-brand/5 text-brand">
+          <Badge
+            variant="outline"
+            className="gap-1.5 py-1 px-3 border-brand/40 bg-brand/5 text-brand"
+          >
             <ShieldCheck className="size-4" />
             <span>Private by default</span>
           </Badge>
@@ -170,12 +177,16 @@ function ProfilePage() {
           aria-label={`Profile ${profileCompletion} percent complete`}
         />
         <p className="mt-1.5 text-xs text-muted-foreground">
-          A complete profile unlocks 4-dimension job matching: Skills, Accessibility Needs, Work Preferences, and Gap Analysis.
+          A complete profile unlocks 4-dimension job matching: Skills, Accessibility Needs, Work
+          Preferences, and Gap Analysis.
         </p>
       </div>
 
       {/* FEATURE 2: Builds Your Profile from Your Resume (OCR & AI Extraction) */}
-      <section aria-labelledby="resume-ai-heading" className="surface-card mt-6 border-brand/30 bg-brand-soft/40 p-5">
+      <section
+        aria-labelledby="resume-ai-heading"
+        className="surface-card mt-6 border-brand/30 bg-brand-soft/40 p-5"
+      >
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-2">
             <span className="flex size-9 items-center justify-center rounded-lg bg-brand text-brand-foreground">
@@ -186,7 +197,8 @@ function ProfilePage() {
                 Auto-Build Profile from Resume (OCR &amp; AI)
               </h2>
               <p className="text-xs text-muted-foreground">
-                Upload a CV (PDF, DOCX, TXT) to automatically extract your skills, education, experience, and accessibility needs.
+                Upload a CV (PDF, DOCX, TXT) to automatically extract your skills, education,
+                experience, and accessibility needs.
               </p>
             </div>
           </div>
@@ -196,7 +208,10 @@ function ProfilePage() {
           {/* File Upload Trigger */}
           <div className="rounded-lg border-2 border-dashed border-border bg-background p-4 text-center transition-colors hover:border-brand">
             <Upload className="mx-auto size-7 text-muted-foreground" aria-hidden="true" />
-            <label htmlFor="ocr-upload" className="mt-2 block cursor-pointer text-sm font-medium text-brand hover:underline">
+            <label
+              htmlFor="ocr-upload"
+              className="mt-2 block cursor-pointer text-sm font-medium text-brand hover:underline"
+            >
               {isScanning ? (
                 <span className="flex items-center justify-center gap-2">
                   <Loader2 className="size-4 animate-spin" /> Scanning Resume…
@@ -216,7 +231,9 @@ function ProfilePage() {
                 if (f) handleFileUpload(f);
               }}
             />
-            <p className="mt-1 text-xs text-muted-foreground">Automatic skill &amp; accessibility extraction</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Automatic skill &amp; accessibility extraction
+            </p>
           </div>
 
           {/* Quick Demo Resumes */}
@@ -238,9 +255,13 @@ function ProfilePage() {
                 >
                   <div>
                     <span className="font-semibold block">{demo.role}</span>
-                    <span className="text-[11px] text-muted-foreground">{demo.disabilityFocus}</span>
+                    <span className="text-[11px] text-muted-foreground">
+                      {demo.disabilityFocus}
+                    </span>
                   </div>
-                  <Badge variant="secondary" className="text-[10px]">Load</Badge>
+                  <Badge variant="secondary" className="text-[10px]">
+                    Load
+                  </Badge>
                 </button>
               ))}
             </div>
@@ -253,7 +274,9 @@ function ProfilePage() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-success font-semibold">
                 <CheckCircle2 className="size-4" />
-                <span>Extracted: {extractedData.name} ({extractedData.confidence}% confidence)</span>
+                <span>
+                  Extracted: {extractedData.name} ({extractedData.confidence}% confidence)
+                </span>
               </div>
               <Button
                 type="button"
@@ -267,7 +290,9 @@ function ProfilePage() {
             </div>
             <div className="mt-2 flex flex-wrap gap-1.5">
               {extractedData.skills.map((s) => (
-                <Badge key={s} variant="secondary" className="text-xs">{s}</Badge>
+                <Badge key={s} variant="secondary" className="text-xs">
+                  {s}
+                </Badge>
               ))}
             </div>
             {extractedData.suggestedAccommodations.length > 0 ? (
@@ -341,7 +366,11 @@ function ProfilePage() {
               onChange={(e) => set("headline", e.target.value)}
             />
           </Field>
-          <Field label="Skills" id="skills" hint="Separate skills with commas (e.g. React, Python, SQL, WCAG)">
+          <Field
+            label="Skills"
+            id="skills"
+            hint="Separate skills with commas (e.g. React, Python, SQL, WCAG)"
+          >
             <Input
               id="skills"
               value={form.skills.join(", ")}
@@ -416,7 +445,11 @@ function ProfilePage() {
           <h2 id="prefs-heading" className="text-xl font-semibold">
             Work Preferences
           </h2>
-          <Field label="Preferred location" id="preferredLocation" hint="City name (e.g. Mumbai, Bengaluru) or “Remote”">
+          <Field
+            label="Preferred location"
+            id="preferredLocation"
+            hint="City name (e.g. Mumbai, Bengaluru) or “Remote”"
+          >
             <Input
               id="preferredLocation"
               value={form.preferredLocation}
@@ -443,7 +476,9 @@ function ProfilePage() {
           {form.resumeName ? (
             <div className="flex items-center gap-2 rounded-md border border-border bg-secondary/40 p-3 text-sm">
               <FileText className="size-4 text-brand" />
-              <span>Attached Resume: <strong>{form.resumeName}</strong></span>
+              <span>
+                Attached Resume: <strong>{form.resumeName}</strong>
+              </span>
             </div>
           ) : null}
         </section>
@@ -454,15 +489,21 @@ function ProfilePage() {
             <div>
               <h2 id="access-heading" className="text-xl font-semibold flex items-center gap-2">
                 <span>My Disability &amp; Access Needs</span>
-                <Badge variant="outline" className="font-normal text-xs">Optional &amp; Private</Badge>
+                <Badge variant="outline" className="font-normal text-xs">
+                  Optional &amp; Private
+                </Badge>
               </h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                Ableo is built for People with Disabilities (PwD). Tell us your access needs and we'll match you to jobs that
-                provide the right accommodations. We <strong>never</strong> calculate a "disability score", never use disability
-                data against you, and everything here stays <strong>private by default</strong>.
+                Ableo is built for People with Disabilities (PwD). Tell us your access needs and
+                we'll match you to jobs that provide the right accommodations. We{" "}
+                <strong>never</strong> calculate a "disability score", never use disability data
+                against you, and everything here stays <strong>private by default</strong>.
               </p>
             </div>
-            <Badge variant="outline" className="shrink-0 border-success/40 bg-success/5 text-success gap-1">
+            <Badge
+              variant="outline"
+              className="shrink-0 border-success/40 bg-success/5 text-success gap-1"
+            >
               <ShieldCheck className="size-3" />
               Consent-first
             </Badge>
@@ -475,8 +516,9 @@ function ProfilePage() {
               Voluntary Self-Identification (Optional)
             </legend>
             <p className="text-xs text-muted-foreground mb-3">
-              This is entirely voluntary. Sharing your disability type helps us better filter jobs that match your
-              accommodation needs. This is <strong>never shared with employers</strong> unless you explicitly choose to.
+              This is entirely voluntary. Sharing your disability type helps us better filter jobs
+              that match your accommodation needs. This is{" "}
+              <strong>never shared with employers</strong> unless you explicitly choose to.
             </p>
             <ul className="grid gap-2 sm:grid-cols-2">
               {[
@@ -492,7 +534,7 @@ function ProfilePage() {
                 { key: "prefer_not", label: "Prefer not to say", icon: "🔒" },
               ].map((opt) => {
                 const current = normalisePrefs(form.accessibilityPreferences);
-                const selfIdKey = `self_${opt.key}` as any;
+                const selfIdKey = `self_${opt.key}` as unknown as AccessFeature;
                 const checked = current.includes(selfIdKey);
                 const id = `selfid-${opt.key}`;
                 return (
@@ -509,7 +551,10 @@ function ProfilePage() {
                         )
                       }
                     />
-                    <label htmlFor={id} className="text-sm font-medium cursor-pointer flex items-center gap-1.5">
+                    <label
+                      htmlFor={id}
+                      className="text-sm font-medium cursor-pointer flex items-center gap-1.5"
+                    >
                       <span>{opt.icon}</span>
                       {opt.label}
                     </label>
@@ -525,7 +570,9 @@ function ProfilePage() {
               <Eye className="size-3.5" />
               Visual Access Needs
             </legend>
-            <p className="text-xs text-muted-foreground mb-2">For blind, low vision, and colour-blind users</p>
+            <p className="text-xs text-muted-foreground mb-2">
+              For blind, low vision, and colour-blind users
+            </p>
             <ul className="mt-1 grid gap-2.5 sm:grid-cols-2">
               {["screen_reader", "keyboard_friendly", "accessible_application"].map((key) => {
                 const pref = ACCESS_PREFERENCE_OPTIONS.find((p) => p.key === key);
@@ -560,7 +607,9 @@ function ProfilePage() {
               <Ear className="size-3.5" />
               Auditory &amp; Communication Access
             </legend>
-            <p className="text-xs text-muted-foreground mb-2">For Deaf, hard of hearing, and speech-disabled users</p>
+            <p className="text-xs text-muted-foreground mb-2">
+              For Deaf, hard of hearing, and speech-disabled users
+            </p>
             <ul className="mt-1 grid gap-2.5 sm:grid-cols-2">
               {["captioned_meetings", "assistive_tech"].map((key) => {
                 const pref = ACCESS_PREFERENCE_OPTIONS.find((p) => p.key === key);
@@ -595,7 +644,9 @@ function ProfilePage() {
               <Hand className="size-3.5" />
               Physical &amp; Mobility Access
             </legend>
-            <p className="text-xs text-muted-foreground mb-2">For wheelchair users, motor disabilities, and chronic pain conditions</p>
+            <p className="text-xs text-muted-foreground mb-2">
+              For wheelchair users, motor disabilities, and chronic pain conditions
+            </p>
             <ul className="mt-1 grid gap-2.5 sm:grid-cols-2">
               {["remote_work", "flexible_work", "accessible_workplace", "accessible_interview"].map(
                 (key) => {
@@ -634,7 +685,9 @@ function ProfilePage() {
               <Brain className="size-3.5" />
               Cognitive &amp; Neurodivergent Access
             </legend>
-            <p className="text-xs text-muted-foreground mb-2">For ADHD, autism, dyslexia, learning disabilities, and cognitive conditions</p>
+            <p className="text-xs text-muted-foreground mb-2">
+              For ADHD, autism, dyslexia, learning disabilities, and cognitive conditions
+            </p>
             <ul className="mt-1 grid gap-2.5 sm:grid-cols-2">
               {[
                 { key: "neuro_quiet_workspace", label: "Quiet / low-sensory workspace" },
@@ -674,7 +727,9 @@ function ProfilePage() {
               <span className="text-sm">💙</span>
               Chronic Health &amp; Mental Health
             </legend>
-            <p className="text-xs text-muted-foreground mb-2">For chronic illness, energy-limiting conditions, and mental health needs</p>
+            <p className="text-xs text-muted-foreground mb-2">
+              For chronic illness, energy-limiting conditions, and mental health needs
+            </p>
             <ul className="mt-1 grid gap-2.5 sm:grid-cols-2">
               {[
                 { key: "health_flexible_hours", label: "Flexible / reduced hours" },
@@ -714,15 +769,22 @@ function ProfilePage() {
               Additional accommodation needs (free text)
             </label>
             <p className="text-xs text-muted-foreground mb-2">
-              Describe any specific accommodations not listed above. This is never shared without your permission.
+              Describe any specific accommodations not listed above. This is never shared without
+              your permission.
             </p>
             <Textarea
               id="custom-accommodation"
               rows={3}
               placeholder="e.g. I need a sign language interpreter for meetings, or I require specific lighting conditions..."
-              value={form.accessibilityPreferences.find((p) => p.startsWith("custom:"))?.replace("custom:", "") || ""}
+              value={
+                form.accessibilityPreferences
+                  .find((p) => p.startsWith("custom:"))
+                  ?.replace("custom:", "") || ""
+              }
               onChange={(e) => {
-                const filtered = form.accessibilityPreferences.filter((p) => !p.startsWith("custom:"));
+                const filtered = form.accessibilityPreferences.filter(
+                  (p) => !p.startsWith("custom:"),
+                );
                 const val = e.target.value.trim();
                 set("accessibilityPreferences", val ? [...filtered, `custom:${val}`] : filtered);
               }}
@@ -736,9 +798,9 @@ function ProfilePage() {
               Disability Information Privacy
             </h3>
             <p className="text-xs text-muted-foreground">
-              Your disability and accommodation information is <strong>always private by default</strong>. 
-              You have full control over what is shared and when. Ableo will never infer, assume, or disclose 
-              your disability status.
+              Your disability and accommodation information is{" "}
+              <strong>always private by default</strong>. You have full control over what is shared
+              and when. Ableo will never infer, assume, or disclose your disability status.
             </p>
             <div className="flex items-start gap-3">
               <Switch
@@ -751,8 +813,9 @@ function ProfilePage() {
                   Share accommodation needs with employers when I apply
                 </label>
                 <p className="mt-0.5 text-xs text-muted-foreground">
-                  When ON, employers see which workplace accommodations you need (not your disability type). 
-                  You can override this per application. <strong>Default: OFF</strong>
+                  When ON, employers see which workplace accommodations you need (not your
+                  disability type). You can override this per application.{" "}
+                  <strong>Default: OFF</strong>
                 </p>
               </div>
             </div>
@@ -763,11 +826,15 @@ function ProfilePage() {
                 onCheckedChange={(v) => set("shareAccommodationsByDefault", v)}
               />
               <div>
-                <label htmlFor="share-accommodations-default" className="text-sm font-semibold cursor-pointer">
+                <label
+                  htmlFor="share-accommodations-default"
+                  className="text-sm font-semibold cursor-pointer"
+                >
                   Pre-fill accommodation requests in applications
                 </label>
                 <p className="mt-0.5 text-xs text-muted-foreground">
-                  Auto-populates your accommodation needs in every application form so you don't have to re-type them. <strong>Default: OFF</strong>
+                  Auto-populates your accommodation needs in every application form so you don't
+                  have to re-type them. <strong>Default: OFF</strong>
                 </p>
               </div>
             </div>
