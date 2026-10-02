@@ -10,8 +10,10 @@ let cachedClient: TinyFish | null = null;
 export function getTinyFishClient(): TinyFish | null {
   const apiKey =
     (typeof process !== "undefined" && process.env?.TINYFISH_API_KEY) ||
-    (typeof import.meta !== "undefined" && (import.meta as any).env?.TINYFISH_API_KEY) ||
-    "sk-tinyfish-JhA_SoXj6Rsj4WOwtlqJryMni72Sbv_-";
+    (typeof import.meta !== "undefined" &&
+      (import.meta as unknown as { env?: { TINYFISH_API_KEY?: string } }).env
+        ?.TINYFISH_API_KEY) ||
+    null;
 
   if (!apiKey) return null;
   if (!cachedClient) {

@@ -1,8 +1,14 @@
 import { useServerFn } from "@tanstack/react-start";
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import { loginAccount, logoutAccount, readSession, registerAccount, type AccountRole, type AuthUser } from "./auth.functions";
+import {
+  loginAccount,
+  logoutAccount,
+  readSession,
+  registerAccount,
+  type AccountRole,
+  type AuthUser,
+} from "./auth.functions";
 
-const SESSION_KEY = "ableo:session-token";
 type Credentials = { email: string; password: string; role: AccountRole };
 type Registration = Credentials & { fullName: string };
 
@@ -25,39 +31,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const token = window.localStorage.getItem(SESSION_KEY);
-    if (!token) {
-      setIsLoading(false);
-      return;
+    // Clear legacy localStorage session token from prior versions (prevent XSS exposure)
+    try {
+      window.localStorage.removeItem("ableo:session-token");
+    } catch (err) {
+      void err;
     }
-    sessionFn({ data: { token } })
+
+    // Read session directly via HttpOnly cookie
+    sessionFn({ data: {} })
       .then((result) => {
-        setUser(result.user);
-        if (!result.user) window.localStorage.removeItem(SESSION_KEY);
+        setUser(result?.user ?? null);
       })
-      .catch(() => window.localStorage.removeItem(SESSION_KEY))
+      .catch(() => setUser(null))
       .finally(() => setIsLoading(false));
   }, [sessionFn]);
 
-  const finish = (result: Awaited<ReturnType<typeof loginFn>>) => {
-    if (!result.ok) return { ok: false, error: result.error };
-    window.localStorage.setItem(SESSION_KEY, result.token);
-    setUser(result.user);
-    return { ok: true, user: result.user };
-  };
-
-  const value = useMemo<AuthState>(() => ({
-    user,
-    isLoading,
-    login: async (data) => finish(await loginFn({ data })),
-    register: async (data) => finish(await registerFn({ data })),
-    logout: () => {
-      const token = window.localStorage.getItem(SESSION_KEY);
-      window.localStorage.removeItem(SESSION_KEY);
-      setUser(null);
-      if (token) void logoutFn({ data: { token } });
-    },
-  }), [isLoading, loginFn, logoutFn, registerFn, user]);
+  const value = useMemo<AuthState>(
+    () => ({
+      user,
+      isLoading,
+      login: async (data) => {
+        const res = await loginFn({ data });
+        if (!res.ok || !res.user) return { ok: false, error: res.error };
+        setUser(res.user);
+        return { ok: true, user: res.user };
+      },
+      register: async (data) => {
+        const res = await registerFn({ data });
+        if (!res.ok || !res.user) return { ok: false, error: res.error };
+        setUser(res.user);
+        return { ok: true, user: res.user };
+      },
+      logout: () => {
+        setUser(null);
+        void logoutFn({ data: {} });
+      },
+    }),
+    [isLoading, loginFn, logoutFn, registerFn, user]
+  );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

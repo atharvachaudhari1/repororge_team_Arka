@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import type { SkillGapItem } from "./app-state";
+import { verifyAiAuthAndRateLimit } from "./auth.functions";
 
 /* ------------------------------------------------------------------ */
 /*  Shared AI helper                                                   */
@@ -30,14 +31,14 @@ async function callAI(system: string, user: string, maxTokens = 1200) {
     const res = await fetch(
       "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
       {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "x-goog-api-key": key },
-      body: JSON.stringify({
-        systemInstruction: { parts: [{ text: system }] },
-        contents: [{ role: "user", parts: [{ text: user }] }],
-        generationConfig: { maxOutputTokens: maxTokens },
-      }),
-      },
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-goog-api-key": key },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: system }] },
+          contents: [{ role: "user", parts: [{ text: user }] }],
+          generationConfig: { maxOutputTokens: maxTokens },
+        }),
+      }
     );
     if (!res.ok) {
       const status = res.status;
@@ -47,14 +48,15 @@ async function callAI(system: string, user: string, maxTokens = 1200) {
           status === 429
             ? "AI is busy right now. Please try again in a moment."
             : status === 401 || status === 403
-              ? "The Gemini API key is invalid or does not have access to this model."
+            ? "The Gemini API key is invalid or does not have access to this model."
             : "We couldn't reach the AI assistant right now.",
       };
     }
     const json = (await res.json()) as {
       candidates?: { content?: { parts?: { text?: string }[] } }[];
     };
-    const content = json.candidates?.[0]?.content?.parts?.map((part) => part.text ?? "").join("") ?? "";
+    const content =
+      json.candidates?.[0]?.content?.parts?.map((part) => part.text ?? "").join("") ?? "";
     return { ok: true as const, content };
   } catch {
     return { ok: false as const, error: "We couldn't reach the AI assistant." };
@@ -62,7 +64,7 @@ async function callAI(system: string, user: string, maxTokens = 1200) {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Before You Apply (original)                                         */
+/*  Before You Apply                                                  */
 /* ------------------------------------------------------------------ */
 
 const briefingInput = z.object({ brief: z.string().min(1).max(6000) });
@@ -70,11 +72,14 @@ const briefingInput = z.object({ brief: z.string().min(1).max(6000) });
 /**
  * Generates the plain-language part of the "Before you apply" panel.
  * The payload is job + skills information only — never identity, disability or
- * gender data — and the client falls back to deterministic advice on failure.
+ * gender data — and protected by session auth and rate limits.
  */
 export const generateApplyBriefing = createServerFn({ method: "POST" })
-  .inputValidator((data) => briefingInput.parse(data))
+  .validator((data) => briefingInput.parse(data))
   .handler(async ({ data }) => {
+    const auth = await verifyAiAuthAndRateLimit();
+    if (!auth.ok) return { ok: false as const, error: auth.error };
+
     const system = [
       "You advise job seekers in India on an accessibility-first job platform.",
       "Write in plain, respectful, empowering language. Never mention disability, gender identity or protected characteristics.",
@@ -125,11 +130,14 @@ const assessmentInput = z.object({
 
 /**
  * AI Career Discovery — recommends 3-5 career paths based on the user's profile.
- * Never uses disability, gender, pronouns, or identity data.
+ * Protected by session auth and per-user/IP rate limits.
  */
 export const generateCareerDiscoveries = createServerFn({ method: "POST" })
-  .inputValidator((data) => assessmentInput.parse(data))
+  .validator((data) => assessmentInput.parse(data))
   .handler(async ({ data }) => {
+    const auth = await verifyAiAuthAndRateLimit();
+    if (!auth.ok) return { ok: false as const, error: auth.error };
+
     const system = [
       "You are a career advisor on an accessibility-first job platform in India.",
       "Analyse the user's professional profile and recommend 3-5 career paths they could pursue.",
@@ -180,10 +188,14 @@ const skillGapInput = z.object({
 
 /**
  * AI Skill Gap Analysis — compares user skills against a target career.
+ * Protected by session auth and rate limits.
  */
 export const generateSkillGap = createServerFn({ method: "POST" })
-  .inputValidator((data) => skillGapInput.parse(data))
+  .validator((data) => skillGapInput.parse(data))
   .handler(async ({ data }) => {
+    const auth = await verifyAiAuthAndRateLimit();
+    if (!auth.ok) return { ok: false as const, error: auth.error };
+
     const system = [
       "You are a career skills analyst.",
       "Compare the user's existing skills against what a typical professional in the target career needs.",
@@ -225,10 +237,14 @@ const roadmapInput = z.object({
 
 /**
  * AI Career Roadmap — generates a 30-day personalised learning roadmap.
+ * Protected by session auth and rate limits.
  */
 export const generateRoadmap = createServerFn({ method: "POST" })
-  .inputValidator((data) => roadmapInput.parse(data))
+  .validator((data) => roadmapInput.parse(data))
   .handler(async ({ data }) => {
+    const auth = await verifyAiAuthAndRateLimit();
+    if (!auth.ok) return { ok: false as const, error: auth.error };
+
     const system = [
       "You are a career development coach creating a focused 30-day roadmap.",
       "Generate exactly 4 weekly milestones for the user to build skills for their target career.",
@@ -266,10 +282,14 @@ const portfolioInput = z.object({
 
 /**
  * AI Portfolio Project — recommends a practical project based on career and skills.
+ * Protected by session auth and rate limits.
  */
 export const generatePortfolioProject = createServerFn({ method: "POST" })
-  .inputValidator((data) => portfolioInput.parse(data))
+  .validator((data) => portfolioInput.parse(data))
   .handler(async ({ data }) => {
+    const auth = await verifyAiAuthAndRateLimit();
+    if (!auth.ok) return { ok: false as const, error: auth.error };
+
     const system = [
       "You are a career coach recommending a portfolio project.",
       "Suggest one practical project that helps the user build skills for their target career.",
@@ -305,10 +325,14 @@ const interviewInput = z.object({
 
 /**
  * AI Interview Coach — generates role-specific interview questions.
+ * Protected by session auth and rate limits.
  */
 export const generateInterviewQuestions = createServerFn({ method: "POST" })
-  .inputValidator((data) => interviewInput.parse(data))
+  .validator((data) => interviewInput.parse(data))
   .handler(async ({ data }) => {
+    const auth = await verifyAiAuthAndRateLimit();
+    if (!auth.ok) return { ok: false as const, error: auth.error };
+
     const system = [
       "You are an interview coach for Indian tech and professional jobs.",
       "Generate 5 interview questions for the target career. Include a mix of technical and behavioural questions.",
@@ -355,13 +379,14 @@ const accommodationInput = z.object({
 
 /**
  * AI Accommodation Request Assistant — drafts a concise professional
- * accommodation request from ONLY the options the candidate explicitly
- * selected. It must never invent medical information, diagnose a disability,
- * or disclose any protected identity.
+ * accommodation request. Protected by session auth and rate limits.
  */
 export const generateAccommodationRequest = createServerFn({ method: "POST" })
-  .inputValidator((data) => accommodationInput.parse(data))
+  .validator((data) => accommodationInput.parse(data))
   .handler(async ({ data }) => {
+    const auth = await verifyAiAuthAndRateLimit();
+    if (!auth.ok) return { ok: false as const, error: auth.error };
+
     const system = [
       "You draft short, professional accommodation requests for job candidates in India.",
       "Use ONLY the accommodation options the candidate selected plus their optional note.",
@@ -388,12 +413,14 @@ export const generateAccommodationRequest = createServerFn({ method: "POST" })
 
 /**
  * AI Inclusion Insight — summarises AGGREGATED accessibility feedback only.
- * The payload contains averages and counts; never an individual submission,
- * never a candidate name, and no protected-identity data of any kind.
+ * Protected by session auth and rate limits.
  */
 export const generateInclusionInsight = createServerFn({ method: "POST" })
-  .inputValidator((data) => insightInput.parse(data))
+  .validator((data) => insightInput.parse(data))
   .handler(async ({ data }) => {
+    const auth = await verifyAiAuthAndRateLimit();
+    if (!auth.ok) return { ok: false as const, error: auth.error };
+
     const system = [
       "You summarise aggregated, anonymous workplace-accessibility feedback for an employer on an Indian job platform.",
       "Use ONLY the numbers provided. Never invent statistics, quotes or feedback. Never identify or infer anything about individuals.",
@@ -405,7 +432,7 @@ export const generateInclusionInsight = createServerFn({ method: "POST" })
       `Company: ${data.company}`,
       `Total responses: ${data.responses}${data.demo ? " (clearly-labelled demo feedback)" : ""}`,
       ...data.categories.map(
-        (c) => `${c.label}: ${c.count} ratings, average ${c.average.toFixed(1)} of 5`,
+        (c) => `${c.label}: ${c.count} ratings, average ${c.average.toFixed(1)} of 5`
       ),
       data.commonBarriers.length
         ? `Most-reported barrier themes (aggregate counts): ${data.commonBarriers
@@ -433,10 +460,14 @@ export const generateInclusionInsight = createServerFn({ method: "POST" })
 
 /**
  * AI Interview Feedback — evaluates an answer and suggests improvements.
+ * Protected by session auth and rate limits.
  */
 export const generateInterviewFeedback = createServerFn({ method: "POST" })
-  .inputValidator((data) => feedbackInput.parse(data))
+  .validator((data) => feedbackInput.parse(data))
   .handler(async ({ data }) => {
+    const auth = await verifyAiAuthAndRateLimit();
+    if (!auth.ok) return { ok: false as const, error: auth.error };
+
     const system = [
       "You are an interview coach providing feedback on a candidate's answer.",
       "Evaluate the answer for technical relevance, completeness, and structure.",
@@ -485,10 +516,14 @@ const explainInput = z.object({
 /**
  * AI Match Explainer — gives plain language explanations of match scoring,
  * gaps, and actionable steps to raise candidate employability.
+ * Protected by session auth and rate limits.
  */
 export const explainJobMatch = createServerFn({ method: "POST" })
-  .inputValidator((data) => explainInput.parse(data))
+  .validator((data) => explainInput.parse(data))
   .handler(async ({ data }) => {
+    const auth = await verifyAiAuthAndRateLimit();
+    if (!auth.ok) return { ok: false as const, error: auth.error };
+
     const system = [
       "You are an explainable AI career advisor on Ableo, an accessibility-first employment platform in India.",
       "Explain in transparent, empowering, and concrete terms why this job matches the candidate, what skills or experience gaps exist, and how the candidate can bridge them.",
@@ -529,7 +564,7 @@ export const explainJobMatch = createServerFn({ method: "POST" })
       }
     }
 
-    // High quality deterministic fallback
+    // High quality deterministic fallback for authenticated users
     const answer = data.userQuestion
       ? `Based on your profile, you scored ${data.matchScore}% for ${data.jobTitle} at ${data.company}. Your strongest matches are in ${data.matchedSkills.slice(0, 3).join(", ") || "core domain knowledge"}. ${data.missingSkills.length ? `To maximize your score, prioritize gaining exposure to ${data.missingSkills.slice(0, 2).join(" and ")}.` : "You meet all technical skill requirements!"}`
       : `Your ${data.matchScore}% score is driven by strong alignment with ${data.matchedSkills.length} required skills (${data.matchedSkills.join(", ")}). Work mode and experience match expectations. ${data.missingSkills.length ? `A slight gap exists in ${data.missingSkills.join(", ")}, which accounts for the remaining score.` : "You cover every required skill."}`;
@@ -552,4 +587,3 @@ export const explainJobMatch = createServerFn({ method: "POST" })
       accommodationAdvice,
     };
   });
-
