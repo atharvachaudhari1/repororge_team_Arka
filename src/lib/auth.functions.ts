@@ -3,11 +3,12 @@ import { z } from "zod";
 
 export type AccountRole = "candidate" | "employer";
 export type AuthUser = {
-  id: number;
+  id: number | string;
   fullName: string;
   email: string;
   role: AccountRole;
   emailVerified?: boolean;
+  isAdmin?: boolean;
 };
 
 const credentials = z.object({

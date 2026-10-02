@@ -8,7 +8,7 @@ export function PortalGate({ role, children }: { role: AccountRole; children: Re
   const returnTo = useRouterState({ select: (state) => state.location.href });
 
   if (isLoading) return <div className="mx-auto max-w-5xl px-4 py-16 text-sm text-muted-foreground">Checking your session…</div>;
-  if (user?.role === role) return <>{children}</>;
+  if (user?.role === role || user?.isAdmin) return <>{children}</>;
 
   const portalName = role === "employer" ? "employer" : "candidate";
   return (
