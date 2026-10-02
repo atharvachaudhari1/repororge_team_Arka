@@ -12,6 +12,10 @@ import {
   getMongoDb,
   checkMongoConnection,
 } from "./mongodb.server";
+import {
+  sendPasswordResetEmail,
+  sendEmailVerificationCode,
+} from "./mailer.server";
 
 type UserRow = {
   id: number | string;
@@ -118,6 +122,31 @@ function publicUser(row: UserRow): AuthUser {
 
 async function passwordHash(password: string, salt: string) {
   return (await crypto()).scryptSync(password, salt, 64).toString("hex");
+}
+
+export function getAdminEmails(): string[] {
+  const envAdmins = process.env["ADMIN_EMAILS"] || "fernandesallan745@gmail.com";
+  return envAdmins
+    .split(",")
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+export function isUserAdmin(userDoc?: Record<string, unknown> | UserRow | null): boolean {
+  if (!userDoc) return false;
+  const doc = userDoc as Record<string, unknown>;
+  if (doc["isAdmin"] === true || doc["is_admin"] === 1 || doc["is_admin"] === true) {
+    return true;
+  }
+  if (doc["role"] === "admin") {
+    return true;
+  }
+  const email = String(doc["email"] || "").toLowerCase();
+  return getAdminEmails().includes(email);
+}
+
+export async function hashResetToken(token: string): Promise<string> {
+  return (await crypto()).createHash("sha256").update(token.trim()).digest("hex");
 }
 
 async function createSession(
@@ -250,6 +279,9 @@ export async function registerAccountHandler(data: {
   role: AccountRole;
   password: string;
 }) {
+  const safeRole: AccountRole = data.role === "employer" ? "employer" : "candidate";
+  const normalizedEmail = data.email.toLowerCase().trim();
+  const cleanName = data.fullName.trim();
   const salt = (await crypto()).randomBytes(16).toString("hex");
   const hashed = await passwordHash(data.password, salt);
 
@@ -257,16 +289,18 @@ export async function registerAccountHandler(data: {
     try {
       const mongo = await getMongoDb();
       const existing = await mongo.collection("users").findOne({
-        email: data.email.toLowerCase(),
+        email: normalizedEmail,
       });
       if (existing) {
         return { ok: false as const, error: "An account already exists for this email address." };
       }
       const insertResult = await mongo.collection("users").insertOne({
-        fullName: data.fullName,
-        full_name: data.fullName,
-        email: data.email.toLowerCase(),
-        role: data.role,
+        fullName: cleanName,
+        full_name: cleanName,
+        email: normalizedEmail,
+        role: safeRole,
+        isAdmin: false,
+        is_admin: 0,
         passwordHash: hashed,
         password_hash: hashed,
         passwordSalt: salt,
@@ -276,16 +310,17 @@ export async function registerAccountHandler(data: {
         createdAt: new Date(),
       });
       const userId = insertResult.insertedId.toString();
-      const token = await createSession("mongo", userId);
+      const token = await createSession("mongo", userId, safeRole);
       setSessionCookie(token);
       return {
         ok: true as const,
         user: {
           id: userId,
-          fullName: data.fullName,
-          email: data.email.toLowerCase(),
-          role: data.role,
+          fullName: cleanName,
+          email: normalizedEmail,
+          role: safeRole,
           emailVerified: false,
+          isAdmin: false,
         },
         token,
       };
@@ -296,7 +331,7 @@ export async function registerAccountHandler(data: {
 
   // SQLite implementation (active if MongoDB is unconfigured or unavailable)
   const db = await getDatabase();
-  const existing = db.prepare("SELECT id FROM users WHERE email = ?").get(data.email) as
+  const existing = db.prepare("SELECT id FROM users WHERE email = ?").get(normalizedEmail) as
     | { id: number }
     | undefined;
   if (existing) {
@@ -306,11 +341,11 @@ export async function registerAccountHandler(data: {
     .prepare(
       "INSERT INTO users (full_name, email, role, password_hash, password_salt, email_verified) VALUES (?, ?, ?, ?, ?, 0)"
     )
-    .run(data.fullName, data.email.toLowerCase(), data.role, hashed, salt);
+    .run(cleanName, normalizedEmail, safeRole, hashed, salt);
   const row = db.prepare("SELECT * FROM users WHERE id = ?").get(result.lastInsertRowid) as UserRow;
-  const token = await createSession(db, row.id);
+  const token = await createSession(db, row.id, safeRole);
   setSessionCookie(token);
-  return { ok: true as const, user: publicUser(row), token };
+  return { ok: true as const, user: { ...publicUser(row), isAdmin: false }, token };
 }
 
 export async function loginAccountHandler(data: {
@@ -350,12 +385,7 @@ export async function loginAccountHandler(data: {
         email: data.email.toLowerCase(),
       });
 
-      const isAdmin = Boolean(
-        userDoc?.["isAdmin"] ||
-        userDoc?.["is_admin"] ||
-        userDoc?.["role"] === "admin" ||
-        userDoc?.["email"] === "fernandesallan745@gmail.com"
-      );
+      const isAdmin = isUserAdmin(userDoc);
 
       let authFailed = false;
       if (!userDoc || (!isAdmin && userDoc["role"] !== data.role)) {
@@ -433,11 +463,7 @@ export async function loginAccountHandler(data: {
   }
 
   const row = db.prepare("SELECT * FROM users WHERE email = ?").get(data.email) as UserRow | undefined;
-  const isRowAdmin = Boolean(
-    (row as Record<string, unknown> | undefined)?.["is_admin"] ||
-    (row as Record<string, unknown> | undefined)?.["role"] === "admin" ||
-    row?.email.toLowerCase() === "fernandesallan745@gmail.com"
-  );
+  const isRowAdmin = isUserAdmin(row);
   let authFailed = false;
 
   if (!row || (!isRowAdmin && row.role !== data.role)) {
@@ -509,12 +535,7 @@ export async function readSessionHandler(data: { token?: string }) {
           });
         }
         if (userDoc) {
-          const isAdmin = Boolean(
-            userDoc["isAdmin"] ||
-            userDoc["is_admin"] ||
-            userDoc["role"] === "admin" ||
-            userDoc["email"] === "fernandesallan745@gmail.com"
-          );
+          const isAdmin = isUserAdmin(userDoc);
           const activeRole = (sessionDoc["role"] || userDoc["role"]) as AccountRole;
           return {
             user: {
@@ -546,7 +567,7 @@ export async function readSessionHandler(data: { token?: string }) {
     return { user: null };
   }
 
-  return { user: publicUser(row) };
+  return { user: { ...publicUser(row), isAdmin: isUserAdmin(row) } };
 }
 
 export async function logoutAccountHandler(data: { token?: string }) {
@@ -569,56 +590,51 @@ export async function logoutAccountHandler(data: { token?: string }) {
 }
 
 export async function requestPasswordResetHandler(data: { email: string }) {
-  const resetToken = (await crypto()).randomBytes(32).toString("hex");
-  const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
+  const normalizedEmail = data.email.toLowerCase().trim();
+  const rawResetToken = (await crypto()).randomBytes(32).toString("hex");
+  const hashedToken = await hashResetToken(rawResetToken);
+  const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
 
   if (isMongoConfigured()) {
     try {
       const mongo = await getMongoDb();
-      const user = await mongo.collection("users").findOne({ email: data.email.toLowerCase() });
-      if (!user) {
-        return {
-          ok: true as const,
-          message: "If an account exists with this email address, a password reset token has been generated.",
-        };
+      const user = await mongo.collection("users").findOne({ email: normalizedEmail });
+      if (user) {
+        await mongo.collection("password_resets").insertOne({
+          email: normalizedEmail,
+          token: hashedToken,
+          expiresAt,
+          usedAt: null,
+          createdAt: new Date(),
+        });
+        void sendPasswordResetEmail({ to: normalizedEmail, token: rawResetToken });
       }
-      await mongo.collection("password_resets").insertOne({
-        email: data.email.toLowerCase(),
-        token: resetToken,
-        expiresAt,
-        usedAt: null,
-        createdAt: new Date(),
-      });
       return {
         ok: true as const,
-        message: "Password reset instructions generated successfully.",
-        resetToken,
+        message: "If an account exists with this email address, password reset instructions have been sent to your inbox.",
       };
-    } catch (err) { void err; }
+    } catch (err) {
+      console.warn("MongoDB Atlas requestPasswordReset note:", err);
+    }
   }
 
   const db = await getDatabase();
-  const user = db.prepare("SELECT id, email FROM users WHERE email = ?").get(data.email.toLowerCase()) as
+  const user = db.prepare("SELECT id, email FROM users WHERE email = ?").get(normalizedEmail) as
     | { id: number; email: string }
     | undefined;
 
-  if (!user) {
-    return {
-      ok: true as const,
-      message: "If an account exists with this email address, a password reset token has been generated.",
-    };
+  if (user) {
+    db.prepare("INSERT INTO password_resets (email, token, expires_at) VALUES (?, ?, ?)").run(
+      normalizedEmail,
+      hashedToken,
+      expiresAt.toISOString()
+    );
+    void sendPasswordResetEmail({ to: normalizedEmail, token: rawResetToken });
   }
-
-  db.prepare("INSERT INTO password_resets (email, token, expires_at) VALUES (?, ?, ?)").run(
-    data.email.toLowerCase(),
-    resetToken,
-    expiresAt.toISOString()
-  );
 
   return {
     ok: true as const,
-    message: "Password reset instructions generated successfully.",
-    resetToken,
+    message: "If an account exists with this email address, password reset instructions have been sent to your inbox.",
   };
 }
 
@@ -626,6 +642,11 @@ export async function confirmPasswordResetHandler(data: {
   token: string;
   newPassword: string;
 }) {
+  const token = data.token.trim();
+  if (!token || token.length < 16) {
+    return { ok: false as const, error: "Invalid password reset token format." };
+  }
+  const hashedToken = await hashResetToken(token);
   const newSalt = (await crypto()).randomBytes(16).toString("hex");
   const newHash = await passwordHash(data.newPassword, newSalt);
 
@@ -633,7 +654,7 @@ export async function confirmPasswordResetHandler(data: {
     try {
       const mongo = await getMongoDb();
       const resetDoc = await mongo.collection("password_resets").findOne({
-        token: data.token,
+        token: { $in: [hashedToken, token] },
         expiresAt: { $gt: new Date() },
         usedAt: null,
       });
@@ -659,6 +680,7 @@ export async function confirmPasswordResetHandler(data: {
             password_hash: newHash,
             passwordSalt: newSalt,
             password_salt: newSalt,
+            updatedAt: new Date(),
           },
         }
       );
@@ -669,7 +691,9 @@ export async function confirmPasswordResetHandler(data: {
       await mongo.collection("sessions").deleteMany({ userId: userDoc["_id"].toString() });
       await mongo.collection("login_attempts").deleteMany({ key: `email:${email}` });
 
-      const sessionToken = await createSession("mongo", userDoc["_id"].toString());
+      const isAdmin = isUserAdmin(userDoc);
+      const role = userDoc["role"] as AccountRole;
+      const sessionToken = await createSession("mongo", userDoc["_id"].toString(), role);
       setSessionCookie(sessionToken);
       return {
         ok: true as const,
@@ -677,20 +701,23 @@ export async function confirmPasswordResetHandler(data: {
           id: userDoc["_id"].toString(),
           fullName: String(userDoc["fullName"] || userDoc["full_name"]),
           email: String(userDoc["email"]),
-          role: userDoc["role"] as AccountRole,
+          role,
           emailVerified: Boolean(userDoc["emailVerified"] ?? userDoc["email_verified"]),
+          isAdmin,
         },
         token: sessionToken,
       };
-    } catch (err) { void err; }
+    } catch (err) {
+      console.warn("MongoDB Atlas confirmPasswordReset note:", err);
+    }
   }
 
   const db = await getDatabase();
   const resetRow = db
     .prepare(
-      "SELECT * FROM password_resets WHERE token = ? AND expires_at > ? AND used_at IS NULL"
+      "SELECT * FROM password_resets WHERE (token = ? OR token = ?) AND expires_at > ? AND used_at IS NULL"
     )
-    .get(data.token, new Date().toISOString()) as { id: number; email: string } | undefined;
+    .get(hashedToken, token, new Date().toISOString()) as { id: number; email: string } | undefined;
 
   if (!resetRow) {
     return {
@@ -714,54 +741,64 @@ export async function confirmPasswordResetHandler(data: {
   db.prepare("DELETE FROM sessions WHERE user_id = ?").run(user.id);
   db.prepare("DELETE FROM login_attempts WHERE key LIKE ?").run(`email:${user.email.toLowerCase()}`);
 
-  const sessionToken = await createSession(db, user.id);
+  const isAdmin = isUserAdmin(user);
+  const sessionToken = await createSession(db, user.id, user.role);
   setSessionCookie(sessionToken);
-  return { ok: true as const, user: publicUser(user), token: sessionToken };
+  return { ok: true as const, user: { ...publicUser(user), isAdmin }, token: sessionToken };
 }
 
 export async function requestEmailVerificationHandler(data: { email: string }) {
+  const normalizedEmail = data.email.toLowerCase().trim();
   const code = Math.floor(100000 + Math.random() * 900000).toString();
   const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
 
   if (isMongoConfigured()) {
     try {
       const mongo = await getMongoDb();
+      await mongo.collection("email_verifications").deleteMany({ email: normalizedEmail });
       await mongo.collection("email_verifications").insertOne({
-        email: data.email.toLowerCase(),
+        email: normalizedEmail,
         code,
         expiresAt,
         createdAt: new Date(),
       });
-      return { ok: true as const, message: "Verification code generated.", code };
+      void sendEmailVerificationCode({ to: normalizedEmail, code });
+      return { ok: true as const, message: "A 6-digit verification code has been sent to your email." };
     } catch (err) { void err; }
   }
 
   const db = await getDatabase();
+  db.prepare("DELETE FROM email_verifications WHERE email = ?").run(normalizedEmail);
   db.prepare("INSERT INTO email_verifications (email, code, expires_at) VALUES (?, ?, ?)").run(
-    data.email.toLowerCase(),
+    normalizedEmail,
     code,
     expiresAt.toISOString()
   );
-  return { ok: true as const, message: "Verification code generated.", code };
+  void sendEmailVerificationCode({ to: normalizedEmail, code });
+  return { ok: true as const, message: "A 6-digit verification code has been sent to your email." };
 }
 
 export async function verifyEmailHandler(data: { email: string; code: string }) {
+  const normalizedEmail = data.email.toLowerCase().trim();
+  const code = data.code.trim();
+
   if (isMongoConfigured()) {
     try {
       const mongo = await getMongoDb();
       const row = await mongo.collection("email_verifications").findOne({
-        email: data.email.toLowerCase(),
-        code: data.code.trim(),
+        email: normalizedEmail,
+        code,
         expiresAt: { $gt: new Date() },
       });
       if (row) {
         await mongo.collection("users").updateOne(
-          { email: data.email.toLowerCase() },
+          { email: normalizedEmail },
           { $set: { emailVerified: true, email_verified: 1 } }
         );
         await mongo.collection("email_verifications").deleteOne({ _id: row["_id"] });
         return { ok: true as const, message: "Email successfully verified!" };
       }
+      return { ok: false as const, error: "Invalid or expired verification code." };
     } catch (err) { void err; }
   }
 
@@ -770,7 +807,7 @@ export async function verifyEmailHandler(data: { email: string; code: string }) 
     .prepare(
       "SELECT * FROM email_verifications WHERE email = ? AND code = ? AND expires_at > ?"
     )
-    .get(data.email.toLowerCase(), data.code.trim(), new Date().toISOString()) as
+    .get(normalizedEmail, code, new Date().toISOString()) as
     | { id: number }
     | undefined;
 
@@ -778,7 +815,7 @@ export async function verifyEmailHandler(data: { email: string; code: string }) 
     return { ok: false as const, error: "Invalid or expired verification code." };
   }
 
-  db.prepare("UPDATE users SET email_verified = 1 WHERE email = ?").run(data.email.toLowerCase());
+  db.prepare("UPDATE users SET email_verified = 1 WHERE email = ?").run(normalizedEmail);
   db.prepare("DELETE FROM email_verifications WHERE id = ?").run(row.id);
   return { ok: true as const, message: "Email successfully verified!" };
 }

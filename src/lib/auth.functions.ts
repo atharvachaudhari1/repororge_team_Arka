@@ -60,7 +60,7 @@ export const confirmPasswordReset = createServerFn({ method: "POST" })
   .validator((data) =>
     z
       .object({
-        token: z.string().length(64),
+        token: z.string().trim().min(16, "Enter your reset token").max(128),
         newPassword: z.string().min(8, "Password must be at least 8 characters").max(128),
       })
       .parse(data)

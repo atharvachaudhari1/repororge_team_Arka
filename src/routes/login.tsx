@@ -15,6 +15,8 @@ export const Route = createFileRoute("/login")({
   validateSearch: (search: Record<string, unknown>) => ({
     role: search.role === "employer" ? ("employer" as const) : ("candidate" as const),
     redirect: isSafeReturnTo(search.redirect) ? search.redirect : undefined,
+    token: typeof search.token === "string" ? search.token : undefined,
+    email: typeof search.email === "string" ? search.email : undefined,
   }),
   component: LoginPage,
 });
@@ -29,20 +31,22 @@ function isSafeReturnTo(value: unknown): value is string {
 }
 
 function LoginPage() {
-  const { role: initialRole, redirect } = Route.useSearch();
+  const { role: initialRole, redirect, token: searchToken, email: searchEmail } = Route.useSearch();
   const navigate = useNavigate();
   const { login, register } = useAuth();
   const requestResetFn = useServerFn(requestPasswordReset);
   const confirmResetFn = useServerFn(confirmPasswordReset);
 
   const [role, setRole] = useState<AccountRole>(initialRole);
-  const [mode, setMode] = useState<"login" | "register" | "forgot_password">("login");
+  const [mode, setMode] = useState<"login" | "register" | "forgot_password">(
+    searchToken ? "forgot_password" : "login"
+  );
   const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(searchEmail || "");
   const [password, setPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
-  const [resetToken, setResetToken] = useState("");
-  const [resetSent, setResetSent] = useState(false);
+  const [resetToken, setResetToken] = useState(searchToken || "");
+  const [resetSent, setResetSent] = useState(Boolean(searchToken));
   const [error, setError] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -82,9 +86,6 @@ function LoginPage() {
       const res = await requestResetFn({ data: { email } });
       if (res.ok) {
         setResetSent(true);
-        if (res.resetToken) {
-          setResetToken(res.resetToken);
-        }
         setSuccessMsg(res.message);
       }
     } catch {
@@ -279,7 +280,7 @@ function LoginPage() {
                 )}
 
                 <Button type="submit" className="w-full" disabled={isSubmitting}>
-                  {isSubmitting ? "Generating reset token…" : "Request Password Reset"}
+                  {isSubmitting ? "Sending reset link…" : "Send Reset Email"}
                 </Button>
               </form>
             ) : (
@@ -287,7 +288,10 @@ function LoginPage() {
                 {successMsg && (
                   <div className="flex items-start gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm text-emerald-800 dark:text-emerald-200">
                     <CheckCircle2 className="size-4 shrink-0 mt-0.5 text-emerald-600" />
-                    <span>{successMsg}</span>
+                    <div>
+                      <p className="font-semibold">Check your email</p>
+                      <p className="mt-0.5 text-xs leading-relaxed">{successMsg}</p>
+                    </div>
                   </div>
                 )}
 
