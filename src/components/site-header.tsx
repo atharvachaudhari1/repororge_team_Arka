@@ -1,20 +1,26 @@
 import { Link } from "@tanstack/react-router";
-import { Sun, Moon, Accessibility, Building2 } from "lucide-react";
+import { Sun, Moon, Accessibility, Building2, User, Menu, FileText, Sparkles } from "lucide-react";
 import { AccessibilitySheetTrigger } from "./accessibility-toolbar";
 import { useAppState } from "@/lib/app-state";
 import { useAuth } from "@/lib/auth-context";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+  SheetClose,
+} from "@/components/ui/sheet";
 
 const NAV = [
   { to: "/", label: "Home" },
   { to: "/jobs", label: "Jobs" },
+  { to: "/profile", label: "Profile" },
+  { to: "/resume-match", label: "Resume Match" },
+  { to: "/dashboard", label: "Dashboard" },
   { to: "/career-gps", label: "Career GPS" },
   { to: "/saved", label: "Saved jobs" },
-  { to: "/dashboard", label: "Dashboard" },
-  { to: "/applications", label: "My applications" },
-  { to: "/resume-match", label: "Resume match" },
-  { to: "/privacy", label: "My privacy" },
-  { to: "/employer", label: "For employers" },
-  { to: "/profile", label: "Profile" },
+  { to: "/applications", label: "Applications" },
 ] as const;
 
 export function SiteHeader() {
@@ -50,8 +56,8 @@ export function SiteHeader() {
           </Link>
           <div className="flex items-center gap-2.5">
             <nav aria-label="Main navigation">
-              <ul className="hidden md:flex items-center gap-1 text-sm font-medium">
-                {NAV.slice(0, 6).map((item) => (
+              <ul className="hidden lg:flex items-center gap-1 text-sm font-medium">
+                {NAV.map((item) => (
                   <li key={item.to}>
                     <Link
                       to={item.to}
@@ -74,15 +80,24 @@ export function SiteHeader() {
             <AccessibilitySheetTrigger />
 
             <Link
+              to="/profile"
+              className="inline-flex items-center gap-1.5 rounded-full border border-foreground/80 bg-secondary/80 px-3 py-1.5 text-xs font-semibold text-foreground transition-all hover:bg-secondary hover:-translate-y-0.5"
+              title="Your Profile & Resume"
+            >
+              <User className="size-3.5 text-brand" aria-hidden="true" />
+              <span>{user ? user.fullName.split(" ")[0] : "Profile"}</span>
+            </Link>
+
+            <Link
               to="/jobs"
-              className="inline-flex items-center gap-1.5 rounded-full border border-foreground/90 bg-[#7BD3C2] px-4 py-1.5 text-xs font-semibold text-[#141817] shadow-[1px_2px_0px_#141817] transition-all hover:bg-[#6ec2b1] hover:-translate-y-0.5"
+              className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-foreground/90 bg-[#7BD3C2] px-4 py-1.5 text-xs font-semibold text-[#141817] shadow-[1px_2px_0px_#141817] transition-all hover:bg-[#6ec2b1] hover:-translate-y-0.5"
             >
               Browse Roles →
             </Link>
 
             <Link
               to="/employer"
-              className="inline-flex items-center gap-1.5 rounded-full border border-foreground/90 bg-card px-4 py-1.5 text-xs font-semibold text-foreground shadow-[1px_2px_0px_rgba(20,24,23,0.35)] transition-all hover:bg-secondary hover:-translate-y-0.5"
+              className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-foreground/90 bg-card px-4 py-1.5 text-xs font-semibold text-foreground shadow-[1px_2px_0px_rgba(20,24,23,0.35)] transition-all hover:bg-secondary hover:-translate-y-0.5"
             >
               <Building2 className="size-3.5" aria-hidden="true" />
               Post a job
@@ -128,6 +143,82 @@ export function SiteHeader() {
                 <Moon className="size-3.5 text-foreground" />
               )}
             </button>
+
+            {/* Mobile Navigation Drawer */}
+            <div className="lg:hidden">
+              <Sheet>
+                <SheetTrigger asChild>
+                  <button
+                    type="button"
+                    className="flex size-8 items-center justify-center rounded-full border border-border text-foreground hover:bg-secondary"
+                    aria-label="Open Navigation Menu"
+                  >
+                    <Menu className="size-4" />
+                  </button>
+                </SheetTrigger>
+                <SheetContent side="right" className="w-72 p-5">
+                  <SheetHeader className="text-left border-b border-border pb-3">
+                    <SheetTitle className="font-serif text-lg font-bold flex items-center gap-2">
+                      <span className="flex size-7 items-center justify-center rounded-full bg-foreground text-background text-xs font-serif font-bold">
+                        Ab
+                      </span>
+                      Ableo Navigation
+                    </SheetTitle>
+                  </SheetHeader>
+                  <nav className="mt-4 flex flex-col gap-1.5" aria-label="Mobile Navigation">
+                    <SheetClose asChild>
+                      <Link
+                        to="/profile"
+                        className="flex items-center gap-2.5 rounded-xl border border-brand/40 bg-brand-soft/40 p-2.5 text-sm font-semibold text-foreground hover:bg-brand-soft transition-colors"
+                      >
+                        <User className="size-4 text-brand" />
+                        <div>
+                          <span className="block font-medium">Your Profile &amp; Resume</span>
+                          <span className="text-[11px] text-muted-foreground">
+                            Upload CV, skills, preferences
+                          </span>
+                        </div>
+                      </Link>
+                    </SheetClose>
+                    {NAV.map((item) => (
+                      <SheetClose asChild key={item.to}>
+                        <Link
+                          to={item.to}
+                          className="flex items-center justify-between rounded-lg px-3 py-2 text-sm text-foreground hover:bg-secondary transition-colors"
+                        >
+                          <span>{item.label}</span>
+                          {item.to === "/saved" && savedJobs.length > 0 && (
+                            <span className="rounded-full bg-foreground text-background px-1.5 py-0.2 text-[10px] font-bold">
+                              {savedJobs.length}
+                            </span>
+                          )}
+                        </Link>
+                      </SheetClose>
+                    ))}
+                    <div className="my-2 border-t border-border pt-2 flex flex-col gap-1.5">
+                      <SheetClose asChild>
+                        <Link
+                          to="/employer"
+                          className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-foreground hover:bg-secondary"
+                        >
+                          <Building2 className="size-4 text-muted-foreground" />
+                          For Employers / Post a job
+                        </Link>
+                      </SheetClose>
+                      <SheetClose asChild>
+                        <Link
+                          to="/privacy"
+                          className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-foreground hover:bg-secondary"
+                        >
+                          <FileText className="size-4 text-muted-foreground" />
+                          Accessibility &amp; Privacy Guide
+                        </Link>
+                      </SheetClose>
+                    </div>
+                  </nav>
+                </SheetContent>
+              </Sheet>
+            </div>
           </div>
         </div>
       </header>
