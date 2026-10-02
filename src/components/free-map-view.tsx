@@ -257,36 +257,10 @@ export function FreeMapView({
       className={`relative flex flex-col overflow-hidden rounded-3xl border border-[#191716]/15 dark:border-stone-800 bg-[#FAF7F2] dark:bg-[#1A1816] shadow-[0_2px_12px_rgba(0,0,0,0.03)] ${className}`}
       style={{ height }}
     >
-      {/* Top Banner Notice: 100% Free OpenStreetMap */}
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#191716]/10 dark:border-stone-800 bg-[#FAF7F2] dark:bg-[#1C1A18] px-4 py-2 text-xs text-[#141817] dark:text-stone-300">
-        <div className="flex items-center gap-2">
-          <span className="flex size-5 items-center justify-center rounded-full bg-[#7BD3C2] text-[#141817] font-bold text-[10px] shadow-[1px_1px_0px_#191716]">
-            FREE
-          </span>
-          <span className="font-serif">
-            100% Free Open-Source Map • Powered by OpenStreetMap
-          </span>
-        </div>
-        <div className="flex items-center gap-3">
-          <span className="hidden sm:inline text-[11px] text-muted-foreground">
-            No API keys • No billing • Zero watermark
-          </span>
-          <button
-            type="button"
-            onClick={() => setTileStyle(tileStyle === "osm" ? "esri" : "osm")}
-            className="inline-flex items-center gap-1 rounded-full border border-[#191716]/30 bg-card px-2.5 py-1 text-[11px] font-medium hover:bg-secondary transition-colors"
-            title="Toggle between OpenStreetMap and Minimal Gray tiles"
-          >
-            <Layers className="size-3 text-stone-600" />
-            {tileStyle === "osm" ? "OpenStreetMap Standard" : "Minimal Gray"}
-          </button>
-        </div>
-      </div>
-
       {/* Main Map Viewport */}
-      <div className="relative flex-1 w-full h-full min-h-[420px]">
+      <div className="relative flex-1 w-full h-full min-h-[460px]">
         {/* Leaflet DOM container */}
-        <div ref={mapContainerRef} className="w-full h-full z-0" style={{ minHeight: "420px" }} />
+        <div ref={mapContainerRef} className="w-full h-full z-0" style={{ minHeight: "460px" }} />
 
         {/* Custom Accessible Map Controls (Floating Top-Right) */}
         <div className="absolute top-3 right-3 z-[400] flex flex-col gap-1.5 bg-white/95 dark:bg-stone-900/95 backdrop-blur-sm p-1 rounded-xl border border-[#191716]/20 shadow-[2px_2px_0px_rgba(0,0,0,0.15)]">
@@ -315,6 +289,15 @@ export function FreeMapView({
             title="Fit all mapped points"
           >
             <Compass className="size-4" />
+          </button>
+          <button
+            type="button"
+            onClick={() => setTileStyle(tileStyle === "osm" ? "esri" : "osm")}
+            className="flex size-8 items-center justify-center rounded-lg hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-800 dark:text-stone-200 transition-colors"
+            aria-label="Toggle map layer style"
+            title={tileStyle === "osm" ? "Switch to Minimal Gray" : "Switch to OpenStreetMap"}
+          >
+            <Layers className="size-4" />
           </button>
         </div>
 
