@@ -633,8 +633,8 @@ git --version
 ### 1. Clone
 
 ```bash
-git clone https://github.com/Vijayalakshmi2608/access-path-jobs.git
-cd access-path-jobs
+git clone https://github.com/atharvachaudhari1/Repoforge-Win.git
+cd Repoforge-Win
 ```
 
 ### 2. Install dependencies
@@ -817,7 +817,7 @@ Greater Employment Access
 
 | Resource | Link |
 |---|---|
-| 💻 GitHub | [access-path-jobs](https://github.com/Vijayalakshmi2608/access-path-jobs) |
+| 💻 GitHub | [Repoforge-Win](https://github.com/atharvachaudhari1/Repoforge-Win) |
 | 🎥 Demo Video | *Add YouTube link* |
 | 📊 Presentation | *Add Slides link* |
 | 🌐 Live Demo | *Add deployed URL* |
@@ -871,7 +871,6 @@ This project is licensed under the **MIT License**. See the [LICENSE](./LICENSE)
 
 | Member | Role |
 |---|---|
-| **Vijayalakshmi S** | Product & Development |
 | *Add team members* | *Add roles* |
 
 ---
@@ -894,7 +893,7 @@ This project is licensed under the **MIT License**. See the [LICENSE](./LICENSE)
 
 <br/>
 
-[![GitHub Stars](https://img.shields.io/github/stars/Vijayalakshmi2608/access-path-jobs?style=social)](https://github.com/Vijayalakshmi2608/access-path-jobs)
-[![GitHub Forks](https://img.shields.io/github/forks/Vijayalakshmi2608/access-path-jobs?style=social)](https://github.com/Vijayalakshmi2608/access-path-jobs/fork)
+[![GitHub Stars](https://img.shields.io/github/stars/atharvachaudhari1/Repoforge-Win?style=social)](https://github.com/atharvachaudhari1/Repoforge-Win)
+[![GitHub Forks](https://img.shields.io/github/forks/atharvachaudhari1/Repoforge-Win?style=social)](https://github.com/atharvachaudhari1/Repoforge-Win/fork)
 
 </div>
