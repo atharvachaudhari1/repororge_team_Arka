@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Sparkles, HeartHandshake, Accessibility } from "lucide-react";
+import { Sparkles, HeartHandshake, Accessibility, Sun, Moon } from "lucide-react";
 import { AccessibilityToolbar } from "./accessibility-toolbar";
 import { useAppState } from "@/lib/app-state";
 
