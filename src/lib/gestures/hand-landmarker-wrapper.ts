@@ -60,7 +60,9 @@ export async function getHandLandmarker(): Promise<
     try {
       const vision: TasksVision = await import("@mediapipe/tasks-vision");
       const wasmFileset = await vision.FilesetResolver.forVisionTasks(
-        "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm",
+        // Pin WASM version to match installed @mediapipe/tasks-vision@0.10.21
+        // to prevent silent breakage from upstream @latest changes.
+        "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.21/wasm",
       );
 
       const modelAssetPath =

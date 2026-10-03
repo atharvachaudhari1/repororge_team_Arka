@@ -15,8 +15,8 @@ export type CandidateCommuteProfile = {
 };
 
 export const DEFAULT_COMMUTE_PROFILE: CandidateCommuteProfile = {
-  homeCity: "Bengaluru",
-  homeLocality: "Indiranagar",
+  homeCity: "",
+  homeLocality: "",
   needsStepFreeTransit: false,
   maxWalkDistanceMeters: 500,
   preferredTransitModes: ["metro", "cab"],

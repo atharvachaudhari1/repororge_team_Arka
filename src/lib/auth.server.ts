@@ -1167,10 +1167,14 @@ export async function getUserProfileHandler(data: {
 }) {
   const sessionResult = await readSessionHandler(data);
   const user = sessionResult.user;
-  const targetEmail = user?.email || data.email?.toLowerCase().trim();
+
+  // SECURITY: Only use the authenticated session's email.
+  // Never fall back to a client-supplied email — that would let
+  // any unauthenticated caller read arbitrary profiles.
+  const targetEmail = user?.email;
 
   if (!targetEmail) {
-    return { ok: false, error: "Authentication or email required to read profile" };
+    return { ok: false, error: "Authentication required to read profile" };
   }
 
   if (isMongoConfigured()) {
@@ -1214,15 +1218,16 @@ export async function saveUserProfileHandler(data: {
 }) {
   const sessionResult = await readSessionHandler(data);
   const user = sessionResult.user;
-  const targetEmail =
-    user?.email ||
-    data.email?.toLowerCase().trim() ||
-    (typeof data.profile["email"] === "string" ? data.profile["email"].toLowerCase().trim() : null);
+
+  // SECURITY: Only use the authenticated session's email.
+  // Never fall back to client-supplied email or profile.email — that would let
+  // any unauthenticated caller overwrite arbitrary profiles.
+  const targetEmail = user?.email;
 
   if (!targetEmail) {
     return {
       ok: false,
-      error: "Please sign in or provide an email to save your profile to the cloud database.",
+      error: "Please sign in to save your profile to the cloud database.",
     };
   }
 

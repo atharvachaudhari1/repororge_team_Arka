@@ -480,6 +480,9 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       setGestureConfig({
         ...DEFAULT_GESTURE_CONFIG,
         ...s.gestureConfig,
+        // SECURITY: Always force enabled=false on load. The camera must never
+        // auto-start from persisted settings — the user must opt-in each session.
+        enabled: false,
         mapping: {
           ...DEFAULT_GESTURE_CONFIG.mapping,
           ...(s.gestureConfig.mapping ?? {}),

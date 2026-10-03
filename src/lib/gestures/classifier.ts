@@ -180,7 +180,11 @@ export function classifySwipeGesture(
   const currentCenter = getPalmCenter(current);
   const oldestCenter = getPalmCenter(oldest.landmarks);
 
-  const dx = currentCenter.x - oldestCenter.x;
+  // MediaPipe front-camera coordinates: x=0 is the LEFT edge of the camera
+  // frame, which is the user's RIGHT side (mirrored). A physical right-swipe
+  // (user perspective) moves the palm from high-x to low-x in frame coords.
+  // We negate dx so that the gesture name matches the user's physical motion.
+  const dx = -(currentCenter.x - oldestCenter.x);
   const dy = currentCenter.y - oldestCenter.y;
   const absDx = Math.abs(dx);
   const absDy = Math.abs(dy);

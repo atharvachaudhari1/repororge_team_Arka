@@ -21,6 +21,19 @@ export type PrivacyRow = {
 
 export function privacyRows(profile: Profile): PrivacyRow[] {
   const prefs = prefLabels(profile.accessibilityPreferences);
+
+  // Summarise commute preferences for the privacy dashboard
+  const commutePrefs = profile.commutePreferences;
+  const commuteDetails: string[] = [];
+  if (commutePrefs) {
+    if (commutePrefs.needsStepFreeTransit) commuteDetails.push("Step-free transit");
+    if (commutePrefs.needsTactilePaving) commuteDetails.push("Tactile paving");
+    if (commutePrefs.needsReservedParking) commuteDetails.push("PwD parking");
+    if (commutePrefs.needsCompanyCabOrAllowance) commuteDetails.push("Company cab");
+    if (commutePrefs.avoidsPeakHourCrowds) commuteDetails.push("Avoid peak hours");
+  }
+  const commuteValue = commuteDetails.length ? commuteDetails.join(", ") : "Not configured";
+
   return [
     {
       key: "displayName",
@@ -60,6 +73,13 @@ export function privacyRows(profile: Profile): PrivacyRow[] {
       mode: "toggle",
       field: "shareAccessibilityWithEmployers",
       help: "Private by default. Used only to show you how well a workplace fits how you work.",
+    },
+    {
+      key: "commute",
+      label: "Commute & transit accessibility",
+      value: commuteValue,
+      mode: "never",
+      help: "Step-free transit needs, walking limits, PwD parking, and tactile paving preferences. Used only to compute your personal commute score. Never shared with employers.",
     },
     {
       key: "interview",

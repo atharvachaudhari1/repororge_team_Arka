@@ -133,7 +133,13 @@ function createPinchLandmarks(): Landmark[] {
 }
 
 /**
- * Creates a sequence of landmarks simulating horizontal or vertical swipe.
+ * Creates a sequence of landmarks simulating horizontal or vertical swipe
+ * from the USER's perspective on a front-facing camera.
+ *
+ * Front camera coordinate system: frame x=0 is left edge = user's RIGHT side.
+ * A physical right-swipe (user perspective) moves the palm from high-x to
+ * low-x in frame coords. The classifier negates dx internally to correct
+ * for the mirror.
  */
 function createSwipeHistory(
   direction: "left" | "right" | "up" | "down",
@@ -146,8 +152,11 @@ function createSwipeHistory(
   let endX = startX;
   let endY = startY;
 
-  if (direction === "right") endX = startX + 0.3;
-  if (direction === "left") endX = startX - 0.3;
+  // Frame-coordinate deltas (mirrored x-axis for front camera):
+  // User swipes right → hand moves LEFT in frame → endX decreases
+  // User swipes left  → hand moves RIGHT in frame → endX increases
+  if (direction === "right") endX = startX - 0.3;
+  if (direction === "left") endX = startX + 0.3;
   if (direction === "down") endY = startY + 0.3;
   if (direction === "up") endY = startY - 0.3;
 
