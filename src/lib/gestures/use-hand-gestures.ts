@@ -313,7 +313,11 @@ export function useHandGestures({
   const initCamera = useCallback(async () => {
     if (typeof window === "undefined" || !navigator.mediaDevices?.getUserMedia) {
       setStatus("unavailable");
-      setErrorMessage("Camera access is not supported by your browser or environment.");
+      setErrorMessage(
+        typeof window !== "undefined" && !window.isSecureContext
+          ? "Camera access requires a secure connection (HTTPS or localhost)."
+          : "Camera access is not supported by your browser or environment.",
+      );
       return;
     }
 
@@ -321,40 +325,137 @@ export function useHandGestures({
       setStatus("requesting_permission");
       stopCameraStream();
 
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          width: { ideal: 320, max: 480 },
-          height: { ideal: 240, max: 360 },
-          frameRate: { ideal: 24, max: 30 },
-          facingMode: "user",
+      // Multi-stage progressive constraint fallback:
+      // 1. Ideal front-facing 640x480 (standard aspect ratio)
+      // 2. Relaxed 640x480 without facingMode constraint (supports external USB webcams & Continuity Camera)
+      // 3. Permissive generic video fallback (supports all hardware)
+      const attempts: MediaStreamConstraints[] = [
+        {
+          video: {
+            width: { ideal: 640 },
+            height: { ideal: 480 },
+            facingMode: "user",
+          },
+          audio: false,
         },
-        audio: false,
-      });
+        {
+          video: {
+            width: { ideal: 640 },
+            height: { ideal: 480 },
+          },
+          audio: false,
+        },
+        {
+          video: true,
+          audio: false,
+        },
+      ];
+
+      let stream: MediaStream | null = null;
+      let lastError: unknown = null;
+
+      for (const constraints of attempts) {
+        try {
+          stream = await navigator.mediaDevices.getUserMedia(constraints);
+          if (stream) break;
+        } catch (err: unknown) {
+          lastError = err;
+          const error = err as Error;
+          // If permission is denied or blocked by security, fail immediately rather than cycling constraints
+          if (
+            error.name === "NotAllowedError" ||
+            error.name === "PermissionDeniedError" ||
+            error.name === "SecurityError"
+          ) {
+            throw err;
+          }
+          console.warn(
+            "Retrying camera with relaxed constraints due to:",
+            error.name,
+            error.message,
+          );
+        }
+      }
+
+      if (!stream) {
+        throw lastError ?? new Error("Could not acquire media stream.");
+      }
 
       streamRef.current = stream;
 
       if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        await videoRef.current.play();
+        const video = videoRef.current;
+        video.muted = true;
+        video.playsInline = true;
+        video.setAttribute("playsinline", "true");
+        video.setAttribute("muted", "true");
+        video.srcObject = stream;
+
+        // Ensure video metadata is loaded before attempting playback
+        await new Promise<void>((resolve) => {
+          if (video.readyState >= 1) {
+            resolve();
+          } else {
+            const onLoaded = () => {
+              video.removeEventListener("loadedmetadata", onLoaded);
+              resolve();
+            };
+            video.addEventListener("loadedmetadata", onLoaded);
+            setTimeout(() => {
+              video.removeEventListener("loadedmetadata", onLoaded);
+              resolve();
+            }, 1200);
+          }
+        });
+
+        try {
+          await video.play();
+        } catch (playErr) {
+          console.warn("Non-fatal video.play() warning:", playErr);
+        }
       }
 
       await startDetectionLoop();
     } catch (err: unknown) {
       const error = err as Error;
-      if (error.name === "NotAllowedError" || error.name === "PermissionDeniedError") {
+      console.error("Camera initialization failed:", {
+        name: error?.name,
+        message: error?.message,
+      });
+
+      if (error?.name === "NotAllowedError" || error?.name === "PermissionDeniedError") {
         setStatus("permission_denied");
         setErrorMessage(
-          "Camera access was denied. To enable hand gesture navigation, allow camera access in your browser settings.",
+          "Camera access was denied. Check the camera icon/lock in your browser address bar or macOS System Settings -> Privacy & Security -> Camera.",
         );
-      } else if (error.name === "NotFoundError" || error.name === "DevicesNotFoundError") {
+      } else if (error?.name === "NotFoundError" || error?.name === "DevicesNotFoundError") {
         setStatus("unavailable");
-        setErrorMessage("No webcam or camera device was found on this computer.");
-      } else if (error.name === "NotReadableError" || error.name === "TrackStartError") {
+        setErrorMessage(
+          "No webcam or camera device was found on this computer. Please connect a camera and try again.",
+        );
+      } else if (error?.name === "NotReadableError" || error?.name === "TrackStartError") {
         setStatus("unavailable");
-        setErrorMessage("Camera is currently being used by another application.");
+        setErrorMessage(
+          "Camera is currently in use by another app (e.g. FaceTime, Zoom, Google Meet) or blocked by system security.",
+        );
+      } else if (error?.name === "OverconstrainedError") {
+        setStatus("unavailable");
+        setErrorMessage(
+          "Camera resolution constraints could not be satisfied. Click 'Retry' to use default settings.",
+        );
+      } else if (error?.name === "SecurityError") {
+        setStatus("unavailable");
+        setErrorMessage("Camera access requires a secure connection (HTTPS or localhost).");
+      } else if (error?.name === "AbortError") {
+        setStatus("unavailable");
+        setErrorMessage(
+          "Camera initialization was interrupted. Click 'Retry Camera' to try again.",
+        );
       } else {
         setStatus("unavailable");
-        setErrorMessage("Unable to start camera stream. Please verify your camera settings.");
+        setErrorMessage(
+          `Unable to start camera stream: ${error?.message || "Check camera permissions and try again."}`,
+        );
       }
     }
   }, [startDetectionLoop, stopCameraStream]);

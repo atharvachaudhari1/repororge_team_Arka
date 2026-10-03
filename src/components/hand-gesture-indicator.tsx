@@ -37,6 +37,7 @@ export function HandGestureIndicator() {
     togglePause,
     videoRef,
     canvasRef,
+    restartGestures,
   } = useHandGestures({
     config: gestureConfig,
   });
@@ -53,8 +54,16 @@ export function HandGestureIndicator() {
       aria-label="Hand Gesture Navigation Status"
       className="fixed bottom-4 left-4 z-50 flex flex-col gap-2 rounded-2xl border border-[#191716]/20 bg-background/95 p-3.5 shadow-2xl backdrop-blur-md max-w-xs transition-all dark:border-stone-700"
     >
-      {/* Hidden processing video element */}
-      <video ref={videoRef} playsInline muted autoPlay className="hidden" aria-hidden="true" />
+      {/* Off-screen video element for continuous frame decoding (avoids display:none autoplay/decoding blocks) */}
+      <video
+        ref={videoRef}
+        playsInline
+        muted
+        autoPlay
+        className="fixed -top-[9999px] -left-[9999px] h-60 w-80 opacity-0 pointer-events-none"
+        aria-hidden="true"
+        tabIndex={-1}
+      />
 
       {/* Screen Reader ARIA Live Region */}
       <div aria-live="polite" aria-atomic="true" className="sr-only">
@@ -81,8 +90,27 @@ export function HandGestureIndicator() {
             />
           </span>
           <span className="text-xs font-semibold text-foreground flex items-center gap-1.5">
-            <Camera className="size-3.5 text-brand" />
-            Camera Active
+            {status === "detecting" && !isPaused ? (
+              <>
+                <Camera className="size-3.5 text-brand" />
+                Camera Active
+              </>
+            ) : status === "paused" ? (
+              <>
+                <VideoOff className="size-3.5 text-amber-500" />
+                Gestures Paused
+              </>
+            ) : status === "loading_model" || status === "requesting_permission" ? (
+              <>
+                <Camera className="size-3.5 text-brand animate-pulse" />
+                Connecting Camera...
+              </>
+            ) : (
+              <>
+                <CameraOff className="size-3.5 text-destructive" />
+                Camera Blocked / Offline
+              </>
+            )}
           </span>
         </div>
 
@@ -110,14 +138,32 @@ export function HandGestureIndicator() {
 
       {!collapsed && (
         <div className="space-y-2.5 pt-1">
-          {/* Permission / Status Errors */}
+          {/* Permission / Status Errors with Retry option */}
           {errorMessage && (
             <div
               role="alert"
-              className="rounded-lg border border-destructive/40 bg-destructive/10 p-2.5 text-xs text-destructive flex items-start gap-2"
+              className="rounded-lg border border-destructive/40 bg-destructive/10 p-2.5 text-xs text-destructive flex flex-col gap-2"
             >
-              <AlertCircle className="size-4 shrink-0 mt-0.5" />
-              <p className="leading-tight">{errorMessage}</p>
+              <div className="flex items-start gap-2">
+                <AlertCircle className="size-4 shrink-0 mt-0.5" />
+                <p className="leading-tight">{errorMessage}</p>
+              </div>
+              <div className="flex items-center gap-2 pt-1 border-t border-destructive/20">
+                <button
+                  type="button"
+                  onClick={restartGestures}
+                  className="rounded bg-destructive/20 px-2.5 py-1 text-[11px] font-semibold hover:bg-destructive hover:text-white transition-colors"
+                >
+                  Retry Camera
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setGestureEnabled(false)}
+                  className="rounded border border-destructive/30 px-2.5 py-1 text-[11px] hover:bg-destructive/10 transition-colors"
+                >
+                  Turn Off
+                </button>
+              </div>
             </div>
           )}
 

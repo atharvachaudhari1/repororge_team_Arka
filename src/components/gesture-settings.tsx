@@ -224,6 +224,32 @@ export function GestureSettingsSection() {
               })}
             </div>
           </div>
+
+          {/* Camera Permission & Troubleshooting Help */}
+          <div className="rounded-xl border border-border/60 bg-muted/30 p-3.5 text-xs space-y-1.5">
+            <div className="font-semibold text-foreground flex items-center gap-1.5">
+              <span>💡</span> Having trouble starting your webcam?
+            </div>
+            <ul className="list-disc pl-4 space-y-1 text-muted-foreground text-[11px] leading-relaxed">
+              <li>
+                <strong>Browser Permission:</strong> Click the tune/lock icon in your browser
+                address bar and verify <em>Camera</em> is set to <em>Allow</em>.
+              </li>
+              <li>
+                <strong>macOS System Permissions:</strong> Open{" "}
+                <em>System Settings &rarr; Privacy &amp; Security &rarr; Camera</em> and ensure your
+                browser has permission.
+              </li>
+              <li>
+                <strong>Camera in Use:</strong> Close other apps that might be holding the webcam
+                (Zoom, FaceTime, Google Meet, Teams).
+              </li>
+              <li>
+                <strong>Security:</strong> Camera access requires a secure origin (localhost or
+                HTTPS).
+              </li>
+            </ul>
+          </div>
         </div>
       )}
 
