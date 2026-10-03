@@ -182,25 +182,20 @@ export function drawHandSkeleton(
   ctx.save();
   ctx.clearRect(0, 0, canvasWidth, canvasHeight);
 
-  // 1. Draw live camera video feed if available
-  if (video && video.readyState >= 2) {
+  // If video is provided and not already being rendered natively in the DOM, draw it as fallback
+  if (video && video.readyState >= 2 && !video.isConnected) {
     ctx.save();
     if (isMirrored) {
       ctx.translate(canvasWidth, 0);
       ctx.scale(-1, 1);
     }
     ctx.drawImage(video, 0, 0, canvasWidth, canvasHeight);
-
-    // Subtle dark tint so the bright skeleton lines pop clearly over any background
     ctx.fillStyle = "rgba(15, 23, 42, 0.4)";
     ctx.fillRect(0, 0, canvasWidth, canvasHeight);
     ctx.restore();
-  } else {
-    ctx.fillStyle = "#1c1917";
-    ctx.fillRect(0, 0, canvasWidth, canvasHeight);
   }
 
-  if (!landmarks || landmarks.length < 21) {
+  if (!landmarks || landmarks.length < 21 || opacity <= 0) {
     ctx.restore();
     return;
   }

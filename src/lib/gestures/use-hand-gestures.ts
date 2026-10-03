@@ -66,6 +66,18 @@ export function useHandGestures({
   const smoothedLandmarksRef = useRef<Landmark[] | null>(null);
   const lastDetectionTimeRef = useRef(0);
 
+  const configRef = useRef(config);
+  configRef.current = config;
+
+  const isPausedRef = useRef(isPaused);
+  isPausedRef.current = isPaused;
+
+  const statusRef = useRef(status);
+  statusRef.current = status;
+
+  const onActionRef = useRef(onAction);
+  onActionRef.current = onAction;
+
   // Update holdTracker settings when config changes
   useEffect(() => {
     const sens = SENSITIVITY_SETTINGS[config.sensitivity];
@@ -111,113 +123,108 @@ export function useHandGestures({
     setHoldProgress(0);
   }, []);
 
-  const triggerAction = useCallback(
-    (action: GestureAction, gesture: HandGesture) => {
-      const gestureName = GESTURE_LABELS[gesture]?.name ?? gesture;
-      const actionName = ACTION_LABELS[action]?.label ?? action;
+  const triggerAction = useCallback((action: GestureAction, gesture: HandGesture) => {
+    const gestureName = GESTURE_LABELS[gesture]?.name ?? gesture;
+    const actionName = ACTION_LABELS[action]?.label ?? action;
 
-      // Handle default browser behaviors
-      const prefersReducedMotion =
-        typeof window !== "undefined" &&
-        window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    // Handle default browser behaviors
+    const prefersReducedMotion =
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-      if (action === "pause_gestures") {
-        setIsPaused((p) => {
-          const next = !p;
-          setAnnouncement(
-            next ? "Hand gestures paused. Show fist again to resume." : "Hand gestures resumed.",
-          );
-          return next;
-        });
-        return;
-      }
-
-      if (action === "scroll_down") {
-        window.scrollBy({
-          top: 350,
-          behavior: prefersReducedMotion ? "instant" : "smooth",
-        });
-      } else if (action === "scroll_up") {
-        window.scrollBy({
-          top: -350,
-          behavior: prefersReducedMotion ? "instant" : "smooth",
-        });
-      } else if (action === "back") {
-        window.history.back();
-      } else if (action === "next_job" || action === "previous_job") {
-        if (typeof document !== "undefined") {
-          const cards = Array.from(
-            document.querySelectorAll<HTMLElement>("[data-job-card='true']"),
-          );
-          if (cards.length > 0) {
-            const currentIndex = cards.findIndex(
-              (c) =>
-                c.getAttribute("data-active-card") === "true" || c.contains(document.activeElement),
-            );
-            let nextIndex = 0;
-            if (currentIndex !== -1) {
-              nextIndex =
-                action === "next_job"
-                  ? (currentIndex + 1) % cards.length
-                  : (currentIndex - 1 + cards.length) % cards.length;
-            }
-            cards.forEach((c, idx) => {
-              if (idx === nextIndex) {
-                c.setAttribute("data-active-card", "true");
-                c.scrollIntoView({
-                  behavior: prefersReducedMotion ? "instant" : "smooth",
-                  block: "center",
-                });
-                const link = c.querySelector<HTMLElement>("a, button");
-                link?.focus();
-              } else {
-                c.removeAttribute("data-active-card");
-              }
-            });
-          }
-        }
-      } else if (action === "select") {
-        if (typeof document !== "undefined") {
-          const activeCard = document.querySelector<HTMLElement>(
-            "[data-job-card='true'][data-active-card='true']",
-          );
-          if (activeCard) {
-            const link = activeCard.querySelector<HTMLAnchorElement>("a[href*='/jobs/']");
-            link?.click();
-          }
-        }
-      } else if (action === "save_job") {
-        if (typeof document !== "undefined") {
-          const activeCard = document.querySelector<HTMLElement>(
-            "[data-job-card='true'][data-active-card='true']",
-          );
-          if (activeCard) {
-            const saveBtn = activeCard.querySelector<HTMLButtonElement>(
-              "button[aria-label*='bookmark' i], button[aria-label*='save' i], button:has(svg.lucide-bookmark)",
-            );
-            saveBtn?.click();
-          }
-        }
-      }
-
-      // Dispatch global DOM event for components like Job Listings or Wizards to consume
-      if (typeof window !== "undefined") {
-        window.dispatchEvent(
-          new CustomEvent("ableo:gesture-action", {
-            detail: { action, gesture },
-          }),
+    if (action === "pause_gestures") {
+      setIsPaused((p) => {
+        const next = !p;
+        setAnnouncement(
+          next ? "Hand gestures paused. Show fist again to resume." : "Hand gestures resumed.",
         );
+        return next;
+      });
+      return;
+    }
+
+    if (action === "scroll_down") {
+      window.scrollBy({
+        top: 350,
+        behavior: prefersReducedMotion ? "instant" : "smooth",
+      });
+    } else if (action === "scroll_up") {
+      window.scrollBy({
+        top: -350,
+        behavior: prefersReducedMotion ? "instant" : "smooth",
+      });
+    } else if (action === "back") {
+      window.history.back();
+    } else if (action === "next_job" || action === "previous_job") {
+      if (typeof document !== "undefined") {
+        const cards = Array.from(document.querySelectorAll<HTMLElement>("[data-job-card='true']"));
+        if (cards.length > 0) {
+          const currentIndex = cards.findIndex(
+            (c) =>
+              c.getAttribute("data-active-card") === "true" || c.contains(document.activeElement),
+          );
+          let nextIndex = 0;
+          if (currentIndex !== -1) {
+            nextIndex =
+              action === "next_job"
+                ? (currentIndex + 1) % cards.length
+                : (currentIndex - 1 + cards.length) % cards.length;
+          }
+          cards.forEach((c, idx) => {
+            if (idx === nextIndex) {
+              c.setAttribute("data-active-card", "true");
+              c.scrollIntoView({
+                behavior: prefersReducedMotion ? "instant" : "smooth",
+                block: "center",
+              });
+              const link = c.querySelector<HTMLElement>("a, button");
+              link?.focus();
+            } else {
+              c.removeAttribute("data-active-card");
+            }
+          });
+        }
       }
+    } else if (action === "select") {
+      if (typeof document !== "undefined") {
+        const activeCard = document.querySelector<HTMLElement>(
+          "[data-job-card='true'][data-active-card='true']",
+        );
+        if (activeCard) {
+          const link = activeCard.querySelector<HTMLAnchorElement>("a[href*='/jobs/']");
+          link?.click();
+        }
+      }
+    } else if (action === "save_job") {
+      if (typeof document !== "undefined") {
+        const activeCard = document.querySelector<HTMLElement>(
+          "[data-job-card='true'][data-active-card='true']",
+        );
+        if (activeCard) {
+          const saveBtn = activeCard.querySelector<HTMLButtonElement>(
+            "button[aria-label*='bookmark' i], button[aria-label*='save' i], button:has(svg.lucide-bookmark)",
+          );
+          saveBtn?.click();
+        }
+      }
+    }
 
-      // Call consumer callback
-      onAction?.(action, gesture);
+    // Dispatch global DOM event for components like Job Listings or Wizards to consume
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(
+        new CustomEvent("ableo:gesture-action", {
+          detail: { action, gesture },
+        }),
+      );
+    }
 
-      setLastTriggeredGesture(gesture);
-      setLastTriggeredAction(action);
-      setAnnouncement(`Gesture recognized: ${gestureName} — ${actionName}`);
-    },
-    [onAction],
-  );
+    // Call consumer callback
+    onActionRef.current?.(action, gesture);
+
+    setLastTriggeredGesture(gesture);
+    setLastTriggeredAction(action);
+    setAnnouncement(`Gesture recognized: ${gestureName} — ${actionName}`);
+  }, []);
 
   const startDetectionLoop = useCallback(async () => {
     if (typeof window === "undefined" || !videoRef.current) return;
@@ -226,16 +233,8 @@ export function useHandGestures({
       setStatus("loading_model");
       const landmarker = await getHandLandmarker();
 
-      setStatus(isPaused ? "paused" : "detecting");
+      setStatus(isPausedRef.current ? "paused" : "detecting");
       setErrorMessage(null);
-
-      // Lazily create 320x240 processing canvas for downscaled inference
-      if (!offscreenCanvasRef.current && typeof document !== "undefined") {
-        const c = document.createElement("canvas");
-        c.width = 320;
-        c.height = 240;
-        offscreenCanvasRef.current = c;
-      }
 
       const loop = () => {
         const video = videoRef.current;
@@ -246,30 +245,26 @@ export function useHandGestures({
 
         const now = performance.now();
 
-        // 1. Heavy AI Inference: Throttled to ~20 FPS (every 50ms) to conserve CPU
-        if (now - lastInferenceTimeRef.current >= 50 && video.readyState >= 2) {
+        // 1. Direct GPU Neural Inference: Throttled to ~20 FPS (every 45-50ms) on new video frames
+        if (
+          video.readyState >= 2 &&
+          video.currentTime > 0 &&
+          video.currentTime !== lastVideoTime.current &&
+          now - lastInferenceTimeRef.current >= 45
+        ) {
+          lastVideoTime.current = video.currentTime;
           lastInferenceTimeRef.current = now;
           const startTimestamp = performance.now();
 
           try {
-            // Downscaled Inference: Downsample video frame to 320x240 before passing to MediaPipe
-            let targetSource: CanvasImageSource = video;
-            if (offscreenCanvasRef.current) {
-              const procCanvas = offscreenCanvasRef.current;
-              const procCtx = procCanvas.getContext("2d", { willReadFrequently: true });
-              if (procCtx) {
-                procCtx.drawImage(video, 0, 0, 320, 240);
-                targetSource = procCanvas;
-              }
-            }
-
-            const results = landmarker.detectForVideo(targetSource, now);
+            // Direct hardware texture inference — avoids software 2D canvas readback lag
+            const results = landmarker.detectForVideo(video, now);
             const duration = performance.now() - startTimestamp;
 
             // Monitor performance
             if (duration > 90) {
               slowFramesCount.current++;
-              if (slowFramesCount.current > 8 && status !== "low_performance") {
+              if (slowFramesCount.current > 12 && statusRef.current !== "low_performance") {
                 setStatus("low_performance");
               }
             } else {
@@ -281,8 +276,8 @@ export function useHandGestures({
             if (handLandmarks && handLandmarks.length >= 21) {
               lastDetectionTimeRef.current = now;
 
-              // Smooth landmarks across frames to eliminate micro-jitter and fluttering
-              const smoothed = smoothLandmarks(handLandmarks, smoothedLandmarksRef.current, 0.65);
+              // Smooth landmarks across frames to eliminate micro-jitter and fluttering (alpha = 0.35)
+              const smoothed = smoothLandmarks(handLandmarks, smoothedLandmarksRef.current, 0.35);
               smoothedLandmarksRef.current = smoothed;
 
               // Update history for dynamic gesture tracking
@@ -292,7 +287,7 @@ export function useHandGestures({
                 history.shift();
               }
 
-              const sens = SENSITIVITY_SETTINGS[config.sensitivity];
+              const sens = SENSITIVITY_SETTINGS[configRef.current.sensitivity];
               const detected = classifyGesture(smoothed, history, {
                 pinchDistance: sens.pinchDistance,
                 swipeThreshold: sens.swipeThreshold,
@@ -319,16 +314,16 @@ export function useHandGestures({
                 setHoldProgress(roundedProgress);
               }
 
-              if (holdState.triggeredGesture && !isPaused) {
-                const mappedAction = config.mapping[holdState.triggeredGesture];
+              if (holdState.triggeredGesture && !isPausedRef.current) {
+                const mappedAction = configRef.current.mapping[holdState.triggeredGesture];
                 if (mappedAction && mappedAction !== "none") {
                   triggerAction(mappedAction, holdState.triggeredGesture);
                 }
               }
             } else {
               // No hand detected in this inference frame
-              // Grace window: retain skeleton for 220ms to prevent single-frame fluttering
-              if (now - lastDetectionTimeRef.current > 220) {
+              // Grace window: retain skeleton for 400ms to prevent single-frame fluttering
+              if (now - lastDetectionTimeRef.current > 400) {
                 smoothedLandmarksRef.current = null;
                 holdTrackerRef.current.update(null, now);
 
@@ -350,21 +345,26 @@ export function useHandGestures({
 
         // 2. High-Framerate Canvas Preview: Renders at display rate (30-60 FPS)
         // Decoupled from AI inference to keep camera feed and skeleton silky smooth and flutter-free
-        if (canvasRef.current && config.showPreview && video.readyState >= 2) {
+        if (canvasRef.current && configRef.current.showPreview) {
           const canvas = canvasRef.current;
           const ctx = canvas.getContext("2d");
           if (ctx) {
             const timeSinceDetection = now - lastDetectionTimeRef.current;
-            const isVisible = timeSinceDetection < 250 && smoothedLandmarksRef.current !== null;
-            const opacity = isVisible ? Math.max(0.2, 1 - (timeSinceDetection / 250) * 0.8) : 0;
+            let opacity = 0;
+            if (smoothedLandmarksRef.current) {
+              if (timeSinceDetection < 300) {
+                opacity = 1.0; // Solid unwavering visibility while tracked
+              } else if (timeSinceDetection < 500) {
+                opacity = Math.max(0, 1.0 - (timeSinceDetection - 300) / 200); // Smooth gentle fade-out
+              }
+            }
 
             drawHandSkeleton(
               ctx,
-              isVisible ? smoothedLandmarksRef.current : null,
+              opacity > 0 ? smoothedLandmarksRef.current : null,
               canvas.width,
               canvas.height,
               {
-                video,
                 isMirrored: true,
                 opacity,
               },
@@ -383,7 +383,7 @@ export function useHandGestures({
         "Could not load gesture detection model. Please check your internet connection.",
       );
     }
-  }, [config.sensitivity, config.showPreview, config.mapping, isPaused, status, triggerAction]);
+  }, [triggerAction]);
 
   const initCamera = useCallback(async () => {
     if (typeof window === "undefined" || !navigator.mediaDevices?.getUserMedia) {

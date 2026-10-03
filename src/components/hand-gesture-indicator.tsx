@@ -48,23 +48,16 @@ export function HandGestureIndicator() {
 
   const activeLabel = activeGesture ? GESTURE_LABELS[activeGesture] : null;
   const lastActionLabel = lastTriggeredAction ? ACTION_LABELS[lastTriggeredAction]?.label : null;
+  const showPreviewBox =
+    gestureConfig.showPreview &&
+    !collapsed &&
+    (status === "detecting" || status === "low_performance" || status === "paused");
 
   return (
     <aside
       aria-label="Hand Gesture Navigation Status"
       className="fixed bottom-4 left-4 z-50 flex flex-col gap-2 rounded-2xl border border-[#191716]/20 bg-background/95 p-3.5 shadow-2xl backdrop-blur-md max-w-xs transition-all dark:border-stone-700"
     >
-      {/* Off-screen video element for continuous frame decoding (avoids display:none autoplay/decoding blocks) */}
-      <video
-        ref={videoRef}
-        playsInline
-        muted
-        autoPlay
-        className="fixed -top-[9999px] -left-[9999px] h-60 w-80 opacity-0 pointer-events-none"
-        aria-hidden="true"
-        tabIndex={-1}
-      />
-
       {/* Screen Reader ARIA Live Region */}
       <div aria-live="polite" aria-atomic="true" className="sr-only">
         {announcement}
@@ -136,6 +129,43 @@ export function HandGestureIndicator() {
         </div>
       </div>
 
+      {/* Camera Video Stream & Skeleton Canvas Container - Kept permanently mounted to prevent stream restarts */}
+      <div
+        className={
+          showPreviewBox
+            ? "relative mx-auto h-[120px] w-40 overflow-hidden rounded-lg border border-border/80 bg-stone-950 shadow-inner mt-1"
+            : "fixed -top-[9999px] -left-[9999px] size-1 opacity-0 pointer-events-none overflow-hidden"
+        }
+      >
+        <video
+          ref={videoRef}
+          playsInline
+          muted
+          autoPlay
+          className={
+            showPreviewBox
+              ? "absolute inset-0 h-full w-full object-cover -scale-x-100"
+              : "size-1 pointer-events-none"
+          }
+          aria-hidden="true"
+          tabIndex={-1}
+        />
+        {showPreviewBox && (
+          <>
+            <canvas
+              ref={canvasRef}
+              width={320}
+              height={240}
+              className="absolute inset-0 h-full w-full object-cover pointer-events-none"
+              aria-label="Hand skeleton live preview"
+            />
+            <div className="absolute bottom-1 right-1 rounded bg-black/60 px-1 text-[9px] font-mono text-white/80 pointer-events-none">
+              100% on-device
+            </div>
+          </>
+        )}
+      </div>
+
       {!collapsed && (
         <div className="space-y-2.5 pt-1">
           {/* Permission / Status Errors with Retry option */}
@@ -179,22 +209,6 @@ export function HandGestureIndicator() {
           {status === "low_performance" && (
             <div className="rounded bg-amber-500/10 border border-amber-500/30 p-2 text-[11px] text-amber-900 dark:text-amber-200">
               Low device framerate. Gestures will continue with reduced resolution.
-            </div>
-          )}
-
-          {/* Camera preview with hand skeleton canvas */}
-          {gestureConfig.showPreview && status === "detecting" && (
-            <div className="relative mx-auto h-28 w-40 overflow-hidden rounded-lg border border-border/80 bg-stone-900 shadow-inner">
-              <canvas
-                ref={canvasRef}
-                width={320}
-                height={224}
-                className="h-full w-full object-cover"
-                aria-label="Hand skeleton live preview"
-              />
-              <div className="absolute bottom-1 right-1 rounded bg-black/60 px-1 text-[9px] font-mono text-white/80">
-                100% on-device
-              </div>
             </div>
           )}
 
