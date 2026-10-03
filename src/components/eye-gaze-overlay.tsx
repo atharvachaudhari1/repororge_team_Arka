@@ -36,6 +36,7 @@ export function EyeGazeOverlay() {
     dwellElementLabel,
     isPaused,
     isCalibrated,
+    calibrationMetrics,
     togglePause,
     restartEyeTracking,
     recalibrate,
@@ -356,9 +357,16 @@ export function EyeGazeOverlay() {
 
                 {/* Calibration status badge */}
                 {isCalibrated && (
-                  <div className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 pt-0.5">
-                    <span className="size-1.5 rounded-full bg-emerald-500" />
-                    Calibrated — tracking accuracy improved
+                  <div className="flex items-center justify-between text-xs text-emerald-600 dark:text-emerald-400 pt-0.5">
+                    <div className="flex items-center gap-1.5">
+                      <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                      <span>Calibrated ({calibrationMetrics?.qualityScore ?? 95}%)</span>
+                    </div>
+                    {calibrationMetrics && (
+                      <span className="text-[10px] text-muted-foreground font-mono">
+                        ±{calibrationMetrics.rmse}px ({calibrationMetrics.mode})
+                      </span>
+                    )}
                   </div>
                 )}
 
@@ -383,6 +391,7 @@ export function EyeGazeOverlay() {
       {isCalibrating && status === "tracking" && (
         <EyeTrackingCalibration
           gazePoint={gazePoint}
+          initialMode={eyeTrackingConfig.calibrationMode ?? "9-point"}
           onComplete={applyCalibration}
           onCancel={cancelCalibration}
         />

@@ -18,6 +18,22 @@ export type EyeTrackingStatus =
   | "paused"
   | "error";
 
+export type CalibrationMode = "5-point" | "9-point";
+
+export type CalibrationSample = {
+  targetX: number;
+  targetY: number;
+  measuredX: number;
+  measuredY: number;
+};
+
+export type CalibrationMetrics = {
+  rmse: number; // Root Mean Square Error in pixels
+  qualityScore: number; // 0 to 100%
+  mode: CalibrationMode;
+  timestamp: number;
+};
+
 export type EyeTrackingConfig = {
   enabled: boolean;
   dwellTimeMs: number;
@@ -28,6 +44,7 @@ export type EyeTrackingConfig = {
   edgeScrollEnabled: boolean;
   clickMode: EyeTrackingClickMode;
   smoothingFactor: number; // 0.1 to 0.5 (lower = smoother, higher = snappier)
+  calibrationMode: CalibrationMode;
 };
 
 export const DEFAULT_EYE_TRACKING_CONFIG: EyeTrackingConfig = {
@@ -40,6 +57,7 @@ export const DEFAULT_EYE_TRACKING_CONFIG: EyeTrackingConfig = {
   edgeScrollEnabled: true,
   clickMode: "both",
   smoothingFactor: 0.25,
+  calibrationMode: "9-point",
 };
 
 export const SENSITIVITY_SCALES: Record<GazeSensitivity, { multiplierX: number; multiplierY: number }> = {
@@ -66,3 +84,4 @@ export type DwellTarget = {
   x: number;
   y: number;
 };
+

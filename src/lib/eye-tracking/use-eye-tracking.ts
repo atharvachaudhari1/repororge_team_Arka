@@ -3,6 +3,9 @@ import type {
   EyeTrackingConfig,
   EyeTrackingStatus,
   GazePoint,
+  CalibrationMode,
+  CalibrationSample,
+  CalibrationMetrics,
 } from "./types";
 import {
   getFaceLandmarker,
@@ -10,16 +13,11 @@ import {
 } from "./face-landmarker-wrapper";
 import { GazeEngine } from "./gaze-engine";
 
+export type { CalibrationSample, CalibrationMetrics, CalibrationMode };
+
 export type UseEyeTrackingOptions = {
   config: EyeTrackingConfig;
   onGazeClick?: (element: HTMLElement, x: number, y: number) => void;
-};
-
-export type CalibrationSample = {
-  targetX: number;
-  targetY: number;
-  measuredX: number;
-  measuredY: number;
 };
 
 export type UseEyeTrackingReturn = {
@@ -31,12 +29,13 @@ export type UseEyeTrackingReturn = {
   lastClickTime: number;
   isPaused: boolean;
   isCalibrated: boolean;
+  calibrationMetrics: CalibrationMetrics | null;
   togglePause: () => void;
   restartEyeTracking: () => void;
   recalibrate: () => void;
   resetCalibration: () => void;
   startCalibration: () => void;
-  applyCalibration: (samples: CalibrationSample[]) => void;
+  applyCalibration: (samples: CalibrationSample[], mode?: CalibrationMode) => void;
   cancelCalibration: () => void;
   isCalibrating: boolean;
   videoRef: React.RefObject<HTMLVideoElement | null>;
@@ -80,13 +79,16 @@ export function useEyeTracking({
   const [isPaused, setIsPaused] = useState(false);
   const [restartCounter, setRestartCounter] = useState(0);
   const [isCalibrating, setIsCalibrating] = useState(false);
-  const [isCalibrated, setIsCalibrated] = useState(false);
+  const gazeEngineRef = useRef<GazeEngine>(new GazeEngine(config.smoothingFactor, config.sensitivity));
+  const [isCalibrated, setIsCalibrated] = useState(() => gazeEngineRef.current.isCalibrated);
+  const [calibrationMetrics, setCalibrationMetrics] = useState<CalibrationMetrics | null>(
+    () => gazeEngineRef.current.metrics,
+  );
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const animFrameRef = useRef<number | null>(null);
-  const gazeEngineRef = useRef<GazeEngine>(new GazeEngine(config.smoothingFactor, config.sensitivity));
 
   // Stabilize callbacks and configs with refs to prevent camera teardown on re-renders
   const onGazeClickRef = useRef(onGazeClick);
@@ -159,20 +161,26 @@ export function useEyeTracking({
   const resetCalibration = useCallback(() => {
     gazeEngineRef.current.resetCalibration();
     setIsCalibrated(false);
+    setCalibrationMetrics(null);
   }, []);
 
   const startCalibration = useCallback(() => {
     // Clear existing correction so we collect raw (uncorrected) samples
     gazeEngineRef.current.clearCalibrationCorrection();
     setIsCalibrated(false);
+    setCalibrationMetrics(null);
     setIsCalibrating(true);
   }, []);
 
-  const applyCalibration = useCallback((samples: CalibrationSample[]) => {
-    gazeEngineRef.current.applyCalibrationData(samples);
-    setIsCalibrated(gazeEngineRef.current.isCalibrated);
-    setIsCalibrating(false);
-  }, []);
+  const applyCalibration = useCallback(
+    (samples: CalibrationSample[], mode: CalibrationMode = "9-point") => {
+      const metrics = gazeEngineRef.current.applyCalibrationData(samples, mode);
+      setIsCalibrated(gazeEngineRef.current.isCalibrated);
+      setCalibrationMetrics(metrics);
+      setIsCalibrating(false);
+    },
+    [],
+  );
 
   const cancelCalibration = useCallback(() => {
     setIsCalibrating(false);
@@ -516,6 +524,7 @@ export function useEyeTracking({
     lastClickTime,
     isPaused,
     isCalibrated,
+    calibrationMetrics,
     togglePause,
     restartEyeTracking,
     recalibrate,

@@ -1,4 +1,4 @@
-import { Eye, EyeOff, Sliders, ShieldCheck, Crosshair, ArrowUpDown } from "lucide-react";
+import { Eye, EyeOff, Sliders, ShieldCheck, Crosshair, ArrowUpDown, Target, Sparkles } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import {
@@ -9,7 +9,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useAppState } from "@/lib/app-state";
-import type { GazeSensitivity, EyeTrackingClickMode } from "@/lib/eye-tracking";
+import type { GazeSensitivity, EyeTrackingClickMode, CalibrationMode } from "@/lib/eye-tracking";
 
 export function EyeTrackingSettingsSection() {
   const { eyeTrackingConfig, setEyeTrackingConfig, setEyeTrackingEnabled } = useAppState();
@@ -119,6 +119,28 @@ export function EyeTrackingSettingsSection() {
                   <SelectItem value="low">Low (Stable, larger eye movement)</SelectItem>
                   <SelectItem value="medium">Medium (Balanced)</SelectItem>
                   <SelectItem value="high">High (Minimal eye movement needed)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Calibration Mode */}
+            <div className="space-y-1.5">
+              <Label htmlFor="eye-calib-mode" className="text-xs font-medium text-foreground flex items-center gap-1">
+                <Target className="size-3 text-brand" />
+                Default Calibration Grid
+              </Label>
+              <Select
+                value={eyeTrackingConfig.calibrationMode ?? "9-point"}
+                onValueChange={(val: CalibrationMode) =>
+                  setEyeTrackingConfig((p) => ({ ...p, calibrationMode: val }))
+                }
+              >
+                <SelectTrigger id="eye-calib-mode" className="h-8 text-xs bg-background">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="9-point">9-Point Precision (3×3 Grid - Recommended)</SelectItem>
+                  <SelectItem value="5-point">5-Point Quick (Cross Pattern)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
