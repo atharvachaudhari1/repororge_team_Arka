@@ -10,6 +10,8 @@ import {
   ShieldCheck,
   CheckCircle2,
   SlidersHorizontal,
+  Train,
+  Car,
 } from "lucide-react";
 import { FreeMapView, type MapMarkerItem } from "./free-map-view";
 import {
@@ -22,6 +24,7 @@ import {
 import { ACCESS_FEATURES, type Job, type AccessFeature } from "@/lib/jobs-data";
 import { useAppState } from "@/lib/app-state";
 import { accessibilityFit } from "@/lib/accessibility";
+import { calculateCommuteAccessibility } from "@/lib/commute";
 
 type JobMapExplorerProps = {
   jobs: Job[];
@@ -49,11 +52,22 @@ export function JobMapExplorer({ jobs, height = "560px", className = "" }: JobMa
   const markers: MapMarkerItem[] = useMemo(() => {
     const list: MapMarkerItem[] = [];
 
-    // Filter by accessibility feature if selected
-    const filtered =
-      selectedAccessFilter === "all"
-        ? jobs
-        : jobs.filter((j) => j.access.includes(selectedAccessFilter as AccessFeature));
+    // Filter by accessibility or commute feature if selected
+    const filtered = jobs.filter((j) => {
+      if (selectedAccessFilter === "all") return true;
+      if (selectedAccessFilter === "commute_high") {
+        const c = calculateCommuteAccessibility(j, profile.commutePreferences);
+        return c.overallScore >= 80;
+      }
+      if (selectedAccessFilter === "commute_cab") {
+        const c = calculateCommuteAccessibility(j, profile.commutePreferences);
+        return (
+          c.workplace.commuteBenefits.companyCabService ||
+          (c.workplace.commuteBenefits.cabSubsidyMonthlyInr ?? 0) > 0
+        );
+      }
+      return j.access.includes(selectedAccessFilter as AccessFeature);
+    });
 
     // Group jobs by geographic coordinate key to only micro-offset jobs at the exact same location
     const locationBuckets: Record<string, { baseCoords: Coordinates; jobs: Job[] }> = {};
@@ -70,6 +84,7 @@ export function JobMapExplorer({ jobs, height = "560px", className = "" }: JobMa
       samePlaceJobs.forEach((job, index) => {
         const position = getOffsetCoordinates(baseCoords, index, samePlaceJobs.length);
         const fit = accessibilityFit(profile.accessibilityPreferences, job);
+        const commute = calculateCommuteAccessibility(job, profile.commutePreferences);
 
         // Only show badge when candidate has meaningful preferences, or indicate remote
         const badge =
@@ -77,7 +92,7 @@ export function JobMapExplorer({ jobs, height = "560px", className = "" }: JobMa
             ? `${fit.score}%`
             : job.workMode === "Remote"
               ? "Remote"
-              : undefined;
+              : `${commute.overallScore}% Commute`;
 
         list.push({
           id: job.id,
@@ -86,13 +101,13 @@ export function JobMapExplorer({ jobs, height = "560px", className = "" }: JobMa
           position,
           type: "job",
           badge,
-          data: { job, fit },
+          data: { job, fit, commute },
         });
       });
     });
 
     return list;
-  }, [jobs, selectedAccessFilter, profile.accessibilityPreferences]);
+  }, [jobs, selectedAccessFilter, profile.accessibilityPreferences, profile.commutePreferences]);
 
   const activeJob = useMemo(() => {
     return jobs.find((j) => j.id === selectedJobId) || null;
@@ -118,6 +133,8 @@ export function JobMapExplorer({ jobs, height = "560px", className = "" }: JobMa
             <span className="text-xs text-stone-500 font-serif shrink-0">Filter:</span>
             {[
               { id: "all", label: "All Accommodations" },
+              { id: "commute_high", label: "🚆 80%+ Commute Score" },
+              { id: "commute_cab", label: "🚗 Company Cab" },
               { id: "accessible_workplace", label: "Step-free" },
               { id: "screen_reader", label: "Screen-Reader" },
               { id: "captioned_meetings", label: "Captioned" },
@@ -179,9 +196,15 @@ export function JobMapExplorer({ jobs, height = "560px", className = "" }: JobMa
         height={height}
         renderPopup={(marker) => {
           const data = marker.data as
-            { job?: Job; fit?: { score: number; hasPreferences: boolean } } | undefined;
+            | {
+                job?: Job;
+                fit?: { score: number; hasPreferences: boolean };
+                commute?: ReturnType<typeof calculateCommuteAccessibility>;
+              }
+            | undefined;
           const job = data?.job;
           const fit = data?.fit;
+          const commute = data?.commute;
           if (!job) return null;
 
           return (
@@ -213,6 +236,21 @@ export function JobMapExplorer({ jobs, height = "560px", className = "" }: JobMa
                   </div>
                 )}
               </div>
+
+              {/* Commute Accessibility Highlight */}
+              {commute && (
+                <div className="flex items-center justify-between rounded-lg bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 text-xs">
+                  <span className="font-semibold text-emerald-800 dark:text-emerald-300 flex items-center gap-1">
+                    <Train className="size-3 text-emerald-600 dark:text-emerald-400" />
+                    {commute.isRemoteRole
+                      ? "100% Remote Commute"
+                      : `${commute.overallScore}% Commute Score`}
+                  </span>
+                  <span className="text-[10px] text-muted-foreground truncate max-w-[130px]">
+                    {commute.workplace.businessPark}
+                  </span>
+                </div>
+              )}
 
               {/* Accessibility highlights */}
               <div className="space-y-1.5">

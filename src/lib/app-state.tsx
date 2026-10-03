@@ -16,6 +16,7 @@ import {
   DEFAULT_GESTURE_CONFIG,
   SENSITIVITY_SETTINGS,
 } from "./gestures";
+import { type CandidateCommuteProfile, DEFAULT_COMMUTE_PROFILE } from "./commute";
 
 export type FontSize = "small" | "medium" | "large" | "x-large";
 export type MotionPref = "normal" | "reduced";
@@ -44,6 +45,8 @@ export type Profile = {
   resumeName: string;
   /** Pasted or extracted resume text, used for resume→job matching. */
   resumeText: string;
+  /** Optional candidate transit and commute accessibility preferences. */
+  commutePreferences?: CandidateCommuteProfile;
   /** Optional, private by default. Never shown publicly unless shared. */
   accessibilityPreferences: string[];
   shareAccessibilityWithEmployers: boolean;
@@ -73,6 +76,7 @@ export const EMPTY_PROFILE: Profile = {
   workPreference: "",
   resumeName: "",
   resumeText: "",
+  commutePreferences: DEFAULT_COMMUTE_PROFILE,
   accessibilityPreferences: [],
   shareAccessibilityWithEmployers: false,
   sharePronouns: false,

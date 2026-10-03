@@ -24,6 +24,7 @@ import { WorkplaceCompass } from "@/components/workplace-compass";
 import { ConfidenceCheck } from "@/components/confidence-check";
 import { EmployerAccessibilityAuditModal } from "@/components/employer-accessibility-audit";
 import { MatchExplainerModal } from "@/components/match-explainer-modal";
+import { CommuteAccessibilityCard } from "@/components/commute-accessibility-card";
 
 export const Route = createFileRoute("/jobs/$jobId")({
   loader: ({ params }) => {
@@ -231,6 +232,7 @@ function JobDetails() {
           <MatchScoreCard match={match} />
           <WhyThisJob match={match} />
           <AccessibilityFitCard job={job} preferences={profile.accessibilityPreferences} />
+          <CommuteAccessibilityCard job={job} profile={profile} />
           <AccessibilityTransparencyCard job={job} />
           <WorkplaceCompass job={job} />
           <ConfidenceCheck job={job} profile={profile} />

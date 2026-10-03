@@ -19,6 +19,7 @@ import {
   Hand,
   Brain,
   Heart,
+  Train,
 } from "lucide-react";
 import { ACCESS_FEATURES, type Job } from "@/lib/jobs-data";
 import { useAppState } from "@/lib/app-state";
@@ -26,6 +27,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { scoreJob } from "@/lib/matching";
 import { accessibilityFit } from "@/lib/accessibility";
+import { calculateCommuteAccessibility } from "@/lib/commute";
 import { MatchExplainerModal } from "@/components/match-explainer-modal";
 import { EmployerAccessibilityAuditModal } from "@/components/employer-accessibility-audit";
 
@@ -55,6 +57,7 @@ export function JobCard({ job }: { job: Job }) {
   const saved = isSaved(job.id);
   const match = scoreJob(profile, job);
   const a11y = accessibilityFit(profile.accessibilityPreferences, job);
+  const commute = calculateCommuteAccessibility(job, profile.commutePreferences);
   const disabilityIcons = getDisabilityIcons(job.access);
 
   // Compute skills match & gaps
@@ -167,6 +170,39 @@ export function JobCard({ job }: { job: Job }) {
             Live Web • TinyFish
           </span>
         )}
+
+        {/* Commute Accessibility Pill */}
+        <span
+          className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold border ${
+            commute.overallScore >= 85
+              ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/30"
+              : commute.overallScore >= 70
+                ? "bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-500/30"
+                : "bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/30"
+          }`}
+          title={
+            commute.isRemoteRole
+              ? "100% Remote - Zero physical commute stress"
+              : `${commute.workplace.businessPark}: ${
+                  commute.workplace.nearestMetro
+                    ? `${commute.workplace.nearestMetro.name} (${commute.workplace.nearestMetro.distanceMeters}m)`
+                    : "Accessible transit feeder"
+                }`
+          }
+        >
+          {commute.isRemoteRole ? (
+            <>
+              <CheckCircle2 className="size-3 text-emerald-600 dark:text-emerald-400" />
+              100% Remote Commute
+            </>
+          ) : (
+            <>
+              <Train className="size-3 text-blue-600 dark:text-blue-400" />
+              {commute.overallScore}% Commute
+              {commute.workplace.commuteBenefits.companyCabService ? " • Cab" : ""}
+            </>
+          )}
+        </span>
 
         {/* Disability category icons */}
         {disabilityIcons.map(({ icon: Icon, label }) => (

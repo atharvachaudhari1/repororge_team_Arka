@@ -19,7 +19,13 @@ import {
   Database,
   Save,
   RefreshCw,
+  Train,
+  Car,
+  Footprints,
+  MapPin,
+  Navigation,
 } from "lucide-react";
+import { DEFAULT_COMMUTE_PROFILE, type CandidateCommuteProfile } from "@/lib/commute";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -939,6 +945,170 @@ function ProfilePage() {
                 </p>
               </div>
             </div>
+          </div>
+        </section>
+
+        {/* Commute & Transit Accessibility Preferences */}
+        <section
+          aria-labelledby="commute-prefs-heading"
+          className="surface-card p-6 space-y-5 rounded-2xl border border-border"
+        >
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-border/60 pb-3">
+            <div>
+              <h2 id="commute-prefs-heading" className="text-lg font-bold flex items-center gap-2">
+                <Train className="size-5 text-brand" />
+                Commute & Transit Accessibility Preferences
+              </h2>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Calculate real travel feasibility, step-free metro access, and last-mile
+                barrier-free pathways for every job.
+              </p>
+            </div>
+            <span className="inline-flex items-center gap-1 rounded-full bg-brand/10 text-brand px-2.5 py-1 text-xs font-semibold">
+              <Navigation className="size-3" />
+              Smart Matching
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="commute-locality" className="text-xs font-semibold block mb-1">
+                Your Home Locality / Transit Hub
+              </label>
+              <Input
+                id="commute-locality"
+                placeholder="e.g. Bandra West, Indiranagar, Rohini"
+                value={form.commutePreferences?.homeLocality || ""}
+                onChange={(e) =>
+                  set("commutePreferences", {
+                    ...(form.commutePreferences || DEFAULT_COMMUTE_PROFILE),
+                    homeLocality: e.target.value,
+                  })
+                }
+              />
+              <p className="text-[11px] text-muted-foreground mt-1">
+                Used to compute departure routes and metro line connections.
+              </p>
+            </div>
+
+            <div>
+              <label htmlFor="commute-max-walk" className="text-xs font-semibold block mb-1">
+                Maximum Comfortable Walking/Wheeling Distance
+              </label>
+              <div className="grid grid-cols-4 gap-2">
+                {[250, 500, 1000, 2000].map((meters) => {
+                  const current = form.commutePreferences?.maxWalkDistanceMeters || 500;
+                  return (
+                    <button
+                      key={meters}
+                      type="button"
+                      onClick={() =>
+                        set("commutePreferences", {
+                          ...(form.commutePreferences || DEFAULT_COMMUTE_PROFILE),
+                          maxWalkDistanceMeters: meters,
+                        })
+                      }
+                      className={`rounded-lg border py-2 text-center text-xs font-medium transition-colors ${
+                        current === meters
+                          ? "border-brand bg-brand text-brand-foreground font-semibold"
+                          : "border-border bg-secondary/40 hover:bg-secondary text-muted-foreground"
+                      }`}
+                    >
+                      {meters < 1000 ? `${meters}m` : `${meters / 1000}km`}
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="text-[11px] text-muted-foreground mt-1">
+                Alerts you if the station or bus stop is further than your limit.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-border/40 text-xs">
+            <label className="flex items-start gap-2.5 p-3 rounded-xl border border-border/60 bg-muted/20 cursor-pointer hover:bg-muted/40 transition-colors">
+              <Switch
+                id="pref-step-free"
+                checked={form.commutePreferences?.needsStepFreeTransit || false}
+                onCheckedChange={(checked) =>
+                  set("commutePreferences", {
+                    ...(form.commutePreferences || DEFAULT_COMMUTE_PROFILE),
+                    needsStepFreeTransit: checked,
+                  })
+                }
+              />
+              <div>
+                <span className="font-semibold text-foreground block">
+                  Step-free public transit required
+                </span>
+                <span className="text-[11px] text-muted-foreground block mt-0.5">
+                  Must have elevator access between platform and street level.
+                </span>
+              </div>
+            </label>
+
+            <label className="flex items-start gap-2.5 p-3 rounded-xl border border-border/60 bg-muted/20 cursor-pointer hover:bg-muted/40 transition-colors">
+              <Switch
+                id="pref-cab"
+                checked={form.commutePreferences?.needsCompanyCabOrAllowance || false}
+                onCheckedChange={(checked) =>
+                  set("commutePreferences", {
+                    ...(form.commutePreferences || DEFAULT_COMMUTE_PROFILE),
+                    needsCompanyCabOrAllowance: checked,
+                  })
+                }
+              />
+              <div>
+                <span className="font-semibold text-foreground block">
+                  Company cab or accessible travel allowance
+                </span>
+                <span className="text-[11px] text-muted-foreground block mt-0.5">
+                  Prioritize roles offering door-to-door cab or transit allowance.
+                </span>
+              </div>
+            </label>
+
+            <label className="flex items-start gap-2.5 p-3 rounded-xl border border-border/60 bg-muted/20 cursor-pointer hover:bg-muted/40 transition-colors">
+              <Switch
+                id="pref-parking"
+                checked={form.commutePreferences?.needsReservedParking || false}
+                onCheckedChange={(checked) =>
+                  set("commutePreferences", {
+                    ...(form.commutePreferences || DEFAULT_COMMUTE_PROFILE),
+                    needsReservedParking: checked,
+                  })
+                }
+              />
+              <div>
+                <span className="font-semibold text-foreground block">
+                  Reserved PwD accessible parking bay
+                </span>
+                <span className="text-[11px] text-muted-foreground block mt-0.5">
+                  Dedicated wide parking space with barrier-free elevator lobby access.
+                </span>
+              </div>
+            </label>
+
+            <label className="flex items-start gap-2.5 p-3 rounded-xl border border-border/60 bg-muted/20 cursor-pointer hover:bg-muted/40 transition-colors">
+              <Switch
+                id="pref-crowds"
+                checked={form.commutePreferences?.avoidsPeakHourCrowds || false}
+                onCheckedChange={(checked) =>
+                  set("commutePreferences", {
+                    ...(form.commutePreferences || DEFAULT_COMMUTE_PROFILE),
+                    avoidsPeakHourCrowds: checked,
+                  })
+                }
+              />
+              <div>
+                <span className="font-semibold text-foreground block">
+                  Avoid peak rush-hour crowds
+                </span>
+                <span className="text-[11px] text-muted-foreground block mt-0.5">
+                  Match with flexible timings to travel comfortably outside rush hours.
+                </span>
+              </div>
+            </label>
           </div>
         </section>
 
