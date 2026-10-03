@@ -75,9 +75,9 @@ export async function getHandLandmarker(): Promise<
           },
           runningMode: "VIDEO",
           numHands: 1,
-          minHandDetectionConfidence: 0.5,
-          minHandPresenceConfidence: 0.5,
-          minTrackingConfidence: 0.5,
+          minHandDetectionConfidence: 0.6,
+          minHandPresenceConfidence: 0.6,
+          minTrackingConfidence: 0.6,
         });
       } catch (gpuError) {
         console.warn("GPU delegate initialization failed, falling back to CPU:", gpuError);
@@ -89,9 +89,9 @@ export async function getHandLandmarker(): Promise<
           },
           runningMode: "VIDEO",
           numHands: 1,
-          minHandDetectionConfidence: 0.5,
-          minHandPresenceConfidence: 0.5,
-          minTrackingConfidence: 0.5,
+          minHandDetectionConfidence: 0.6,
+          minHandPresenceConfidence: 0.6,
+          minTrackingConfidence: 0.6,
         });
       }
 

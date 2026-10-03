@@ -58,6 +58,11 @@ export function useHandGestures({
 
   const slowFramesCount = useRef(0);
   const lastVideoTime = useRef(-1);
+  const offscreenCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const lastInferenceTimeRef = useRef(0);
+  const lastActiveGestureRef = useRef<HandGesture | null>(null);
+  const lastProgressRef = useRef(0);
+  const lastProgressUpdateRef = useRef(0);
 
   // Update holdTracker settings when config changes
   useEffect(() => {
@@ -95,6 +100,9 @@ export function useHandGestures({
       ctx?.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
     }
 
+    lastActiveGestureRef.current = null;
+    lastProgressRef.current = 0;
+    lastInferenceTimeRef.current = 0;
     setActiveGesture(null);
     setHoldProgress(0);
   }, []);
@@ -217,6 +225,14 @@ export function useHandGestures({
       setStatus(isPaused ? "paused" : "detecting");
       setErrorMessage(null);
 
+      // Lazily create 320x240 processing canvas for downscaled inference
+      if (!offscreenCanvasRef.current && typeof document !== "undefined") {
+        const c = document.createElement("canvas");
+        c.width = 320;
+        c.height = 240;
+        offscreenCanvasRef.current = c;
+      }
+
       const loop = () => {
         const video = videoRef.current;
         if (!video || video.paused || video.ended || !streamRef.current) {
@@ -225,17 +241,37 @@ export function useHandGestures({
         }
 
         const now = performance.now();
-        const startTimestamp = performance.now();
 
-        if (video.currentTime !== lastVideoTime.current && video.readyState >= 2) {
-          lastVideoTime.current = video.currentTime;
+        // 1. FPS Throttling: Cap neural network inference at ~18-20 FPS (~55ms interval)
+        // Hand gestures take 300-700ms, so 20 FPS provides instant responsiveness
+        // while cutting CPU/GPU load by ~70%, preventing UI lag and stutter.
+        if (now - lastInferenceTimeRef.current < 55) {
+          animFrameRef.current = requestAnimationFrame(loop);
+          return;
+        }
+
+        if (video.readyState >= 2) {
+          lastInferenceTimeRef.current = now;
+          const startTimestamp = performance.now();
 
           try {
-            const results = landmarker.detectForVideo(video, now);
+            // 2. Downscaled Inference: Downsample video frame to 320x240 before passing to MediaPipe
+            // This reduces pixel volume by ~96% if webcam is 1080p, drastically speeding up WASM/GPU
+            let targetSource: CanvasImageSource = video;
+            if (offscreenCanvasRef.current) {
+              const procCanvas = offscreenCanvasRef.current;
+              const procCtx = procCanvas.getContext("2d", { willReadFrequently: true });
+              if (procCtx) {
+                procCtx.drawImage(video, 0, 0, 320, 240);
+                targetSource = procCanvas;
+              }
+            }
+
+            const results = landmarker.detectForVideo(targetSource, now);
             const duration = performance.now() - startTimestamp;
 
             // Monitor performance
-            if (duration > 120) {
+            if (duration > 90) {
               slowFramesCount.current++;
               if (slowFramesCount.current > 8 && status !== "low_performance") {
                 setStatus("low_performance");
@@ -261,7 +297,6 @@ export function useHandGestures({
               // Update history for dynamic gesture tracking
               const history = historyRef.current;
               history.push({ landmarks: handLandmarks, timestamp: now });
-              // Keep only last 600ms of history
               while (history.length > 0 && now - (history[0]?.timestamp ?? 0) > 600) {
                 history.shift();
               }
@@ -273,8 +308,25 @@ export function useHandGestures({
               });
 
               const holdState = holdTrackerRef.current.update(detected, now);
-              setActiveGesture(holdState.activeGesture);
-              setHoldProgress(holdState.progress);
+
+              // 3. React Render Optimization: Only update activeGesture when it actually changes
+              if (lastActiveGestureRef.current !== holdState.activeGesture) {
+                lastActiveGestureRef.current = holdState.activeGesture;
+                setActiveGesture(holdState.activeGesture);
+              }
+
+              // 4. React Render Optimization: Throttle progress state to 5% increments or completion
+              const roundedProgress = Math.round(holdState.progress * 20) / 20;
+              if (
+                roundedProgress !== lastProgressRef.current &&
+                (now - lastProgressUpdateRef.current > 75 ||
+                  roundedProgress === 0 ||
+                  roundedProgress === 1)
+              ) {
+                lastProgressRef.current = roundedProgress;
+                lastProgressUpdateRef.current = now;
+                setHoldProgress(roundedProgress);
+              }
 
               if (holdState.triggeredGesture && !isPaused) {
                 const mappedAction = config.mapping[holdState.triggeredGesture];
@@ -288,9 +340,17 @@ export function useHandGestures({
                 const ctx = canvasRef.current.getContext("2d");
                 ctx?.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
               }
-              const holdState = holdTrackerRef.current.update(null, now);
-              setActiveGesture(null);
-              setHoldProgress(holdState.progress);
+              holdTrackerRef.current.update(null, now);
+
+              if (lastActiveGestureRef.current !== null) {
+                lastActiveGestureRef.current = null;
+                setActiveGesture(null);
+              }
+
+              if (lastProgressRef.current !== 0) {
+                lastProgressRef.current = 0;
+                setHoldProgress(0);
+              }
             }
           } catch (detError) {
             console.warn("Hand detection frame error:", detError);
