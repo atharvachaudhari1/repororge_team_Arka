@@ -440,12 +440,12 @@ export function AccessibilitySheetTrigger() {
       <SheetTrigger asChild>
         <button
           type="button"
-          className="inline-flex items-center gap-1.5 rounded-full border border-border bg-secondary/80 px-3 py-1 text-xs font-medium text-foreground transition-all hover:bg-secondary hover:border-foreground/40 active:scale-95"
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-border bg-secondary/80 px-3 py-1.5 text-xs font-medium text-foreground transition-all hover:bg-secondary hover:border-foreground/40 active:scale-95 whitespace-nowrap"
           aria-label="Open accessibility and display preferences"
           title="Open accessibility preferences"
         >
           <Accessibility className="size-3.5 text-foreground" />
-          <span className="hidden sm:inline font-sans">A11y</span>
+          <span className="font-sans font-semibold">A11y</span>
           {activePreset !== "custom" && (
             <span className="size-1.5 rounded-full bg-[#191716] dark:bg-white" />
           )}
