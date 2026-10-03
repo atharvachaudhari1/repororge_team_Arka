@@ -10,7 +10,7 @@ import type {
 import { SENSITIVITY_SETTINGS, ACTION_LABELS, GESTURE_LABELS } from "./types";
 import { classifyGesture } from "./classifier";
 import { GestureHoldTracker } from "./hold-detector";
-import { getHandLandmarker, drawHandSkeleton } from "./hand-landmarker-wrapper";
+import { getHandLandmarker, drawHandSkeleton, smoothLandmarks } from "./hand-landmarker-wrapper";
 
 export type UseHandGesturesOptions = {
   config: GestureConfig;
@@ -63,6 +63,8 @@ export function useHandGestures({
   const lastActiveGestureRef = useRef<HandGesture | null>(null);
   const lastProgressRef = useRef(0);
   const lastProgressUpdateRef = useRef(0);
+  const smoothedLandmarksRef = useRef<Landmark[] | null>(null);
+  const lastDetectionTimeRef = useRef(0);
 
   // Update holdTracker settings when config changes
   useEffect(() => {
@@ -103,6 +105,8 @@ export function useHandGestures({
     lastActiveGestureRef.current = null;
     lastProgressRef.current = 0;
     lastInferenceTimeRef.current = 0;
+    smoothedLandmarksRef.current = null;
+    lastDetectionTimeRef.current = 0;
     setActiveGesture(null);
     setHoldProgress(0);
   }, []);
@@ -242,21 +246,13 @@ export function useHandGestures({
 
         const now = performance.now();
 
-        // 1. FPS Throttling: Cap neural network inference at ~18-20 FPS (~55ms interval)
-        // Hand gestures take 300-700ms, so 20 FPS provides instant responsiveness
-        // while cutting CPU/GPU load by ~70%, preventing UI lag and stutter.
-        if (now - lastInferenceTimeRef.current < 55) {
-          animFrameRef.current = requestAnimationFrame(loop);
-          return;
-        }
-
-        if (video.readyState >= 2) {
+        // 1. Heavy AI Inference: Throttled to ~20 FPS (every 50ms) to conserve CPU
+        if (now - lastInferenceTimeRef.current >= 50 && video.readyState >= 2) {
           lastInferenceTimeRef.current = now;
           const startTimestamp = performance.now();
 
           try {
-            // 2. Downscaled Inference: Downsample video frame to 320x240 before passing to MediaPipe
-            // This reduces pixel volume by ~96% if webcam is 1080p, drastically speeding up WASM/GPU
+            // Downscaled Inference: Downsample video frame to 320x240 before passing to MediaPipe
             let targetSource: CanvasImageSource = video;
             if (offscreenCanvasRef.current) {
               const procCanvas = offscreenCanvasRef.current;
@@ -283,39 +279,34 @@ export function useHandGestures({
             const handLandmarks = results.landmarks?.[0] as Landmark[] | undefined;
 
             if (handLandmarks && handLandmarks.length >= 21) {
-              // Draw skeleton if canvas is present and preview enabled
-              if (canvasRef.current && config.showPreview) {
-                const canvas = canvasRef.current;
-                const ctx = canvas.getContext("2d");
-                if (ctx) {
-                  drawHandSkeleton(ctx, handLandmarks, canvas.width, canvas.height, {
-                    isMirrored: true,
-                  });
-                }
-              }
+              lastDetectionTimeRef.current = now;
+
+              // Smooth landmarks across frames to eliminate micro-jitter and fluttering
+              const smoothed = smoothLandmarks(handLandmarks, smoothedLandmarksRef.current, 0.65);
+              smoothedLandmarksRef.current = smoothed;
 
               // Update history for dynamic gesture tracking
               const history = historyRef.current;
-              history.push({ landmarks: handLandmarks, timestamp: now });
+              history.push({ landmarks: smoothed, timestamp: now });
               while (history.length > 0 && now - (history[0]?.timestamp ?? 0) > 600) {
                 history.shift();
               }
 
               const sens = SENSITIVITY_SETTINGS[config.sensitivity];
-              const detected = classifyGesture(handLandmarks, history, {
+              const detected = classifyGesture(smoothed, history, {
                 pinchDistance: sens.pinchDistance,
                 swipeThreshold: sens.swipeThreshold,
               });
 
               const holdState = holdTrackerRef.current.update(detected, now);
 
-              // 3. React Render Optimization: Only update activeGesture when it actually changes
+              // React Render Optimization: Only update activeGesture when it actually changes
               if (lastActiveGestureRef.current !== holdState.activeGesture) {
                 lastActiveGestureRef.current = holdState.activeGesture;
                 setActiveGesture(holdState.activeGesture);
               }
 
-              // 4. React Render Optimization: Throttle progress state to 5% increments or completion
+              // React Render Optimization: Throttle progress state to 5% increments or completion
               const roundedProgress = Math.round(holdState.progress * 20) / 20;
               if (
                 roundedProgress !== lastProgressRef.current &&
@@ -335,25 +326,49 @@ export function useHandGestures({
                 }
               }
             } else {
-              // No hand detected
-              if (canvasRef.current && config.showPreview) {
-                const ctx = canvasRef.current.getContext("2d");
-                ctx?.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
-              }
-              holdTrackerRef.current.update(null, now);
+              // No hand detected in this inference frame
+              // Grace window: retain skeleton for 220ms to prevent single-frame fluttering
+              if (now - lastDetectionTimeRef.current > 220) {
+                smoothedLandmarksRef.current = null;
+                holdTrackerRef.current.update(null, now);
 
-              if (lastActiveGestureRef.current !== null) {
-                lastActiveGestureRef.current = null;
-                setActiveGesture(null);
-              }
+                if (lastActiveGestureRef.current !== null) {
+                  lastActiveGestureRef.current = null;
+                  setActiveGesture(null);
+                }
 
-              if (lastProgressRef.current !== 0) {
-                lastProgressRef.current = 0;
-                setHoldProgress(0);
+                if (lastProgressRef.current !== 0) {
+                  lastProgressRef.current = 0;
+                  setHoldProgress(0);
+                }
               }
             }
           } catch (detError) {
             console.warn("Hand detection frame error:", detError);
+          }
+        }
+
+        // 2. High-Framerate Canvas Preview: Renders at display rate (30-60 FPS)
+        // Decoupled from AI inference to keep camera feed and skeleton silky smooth and flutter-free
+        if (canvasRef.current && config.showPreview && video.readyState >= 2) {
+          const canvas = canvasRef.current;
+          const ctx = canvas.getContext("2d");
+          if (ctx) {
+            const timeSinceDetection = now - lastDetectionTimeRef.current;
+            const isVisible = timeSinceDetection < 250 && smoothedLandmarksRef.current !== null;
+            const opacity = isVisible ? Math.max(0.2, 1 - (timeSinceDetection / 250) * 0.8) : 0;
+
+            drawHandSkeleton(
+              ctx,
+              isVisible ? smoothedLandmarksRef.current : null,
+              canvas.width,
+              canvas.height,
+              {
+                video,
+                isMirrored: true,
+                opacity,
+              },
+            );
           }
         }
 

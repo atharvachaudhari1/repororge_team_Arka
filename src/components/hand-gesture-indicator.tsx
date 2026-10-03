@@ -187,9 +187,9 @@ export function HandGestureIndicator() {
             <div className="relative mx-auto h-28 w-40 overflow-hidden rounded-lg border border-border/80 bg-stone-900 shadow-inner">
               <canvas
                 ref={canvasRef}
-                width={160}
-                height={112}
-                className="h-full w-full object-contain"
+                width={320}
+                height={224}
+                className="h-full w-full object-cover"
                 aria-label="Hand skeleton live preview"
               />
               <div className="absolute bottom-1 right-1 rounded bg-black/60 px-1 text-[9px] font-mono text-white/80">

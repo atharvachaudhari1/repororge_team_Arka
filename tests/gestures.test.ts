@@ -9,6 +9,7 @@ import {
 } from "@/lib/gestures/classifier";
 import { GestureHoldTracker } from "@/lib/gestures/hold-detector";
 import { DEFAULT_GESTURE_MAPPING, SENSITIVITY_SETTINGS } from "@/lib/gestures/types";
+import { smoothLandmarks } from "@/lib/gestures/hand-landmarker-wrapper";
 
 // ============================================================================
 // Synthetic Landmark Fixtures Generator
@@ -383,5 +384,25 @@ describe("Gesture Action Remapping & Sensitivity Configuration", () => {
     expect(SENSITIVITY_SETTINGS.high.swipeThreshold).toBeLessThan(
       SENSITIVITY_SETTINGS.low.swipeThreshold,
     );
+  });
+});
+
+describe("Landmark Coordinate Smoothing (Anti-Flutter)", () => {
+  it("smooths raw landmark jumps using exponential moving average", () => {
+    const prev: Landmark[] = [{ x: 0.5, y: 0.5, z: 0 }];
+    const current: Landmark[] = [{ x: 0.6, y: 0.6, z: 0 }];
+
+    const smoothed = smoothLandmarks(current, prev, 0.5);
+    expect(smoothed[0].x).toBeCloseTo(0.55, 3);
+    expect(smoothed[0].y).toBeCloseTo(0.55, 3);
+  });
+
+  it("handles null or mismatched previous state gracefully", () => {
+    const current: Landmark[] = [{ x: 0.5, y: 0.5, z: 0 }];
+    const smoothed = smoothLandmarks(current, null);
+    expect(smoothed).toEqual(current);
+
+    const mismatched = smoothLandmarks(current, []);
+    expect(mismatched).toEqual(current);
   });
 });
