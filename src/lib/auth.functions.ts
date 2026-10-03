@@ -72,20 +72,6 @@ export const finishPasskeyRegistration = createServerFn({ method: "POST" })
     (await import("./auth.server")).finishPasskeyRegistrationHandler(data),
   );
 
-export const directCameraDemoLogin = createServerFn({ method: "POST" })
-  .validator((data) =>
-    z
-      .object({
-        email: z.string().trim().email(),
-        role: z.enum(["candidate", "employer"]),
-      })
-      .parse(data),
-  )
-  .handler(async ({ data }) => {
-    const { directCameraDemoLoginHandler } = await import("./auth.server");
-    return directCameraDemoLoginHandler(data);
-  });
-
 export const readSession = createServerFn({ method: "POST" })
   .validator((data: unknown) =>
     z

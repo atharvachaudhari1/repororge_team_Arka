@@ -11,7 +11,7 @@ import {
   saveUserProfileHandler,
   getUserProfileHandler,
   verifyEmailHandler,
-  directCameraDemoLoginHandler,
+  beginPasskeyLoginHandler,
 } from "@/lib/auth.server";
 
 describe("Authentication & Session Management", () => {
@@ -188,23 +188,12 @@ describe("Authentication & Session Management", () => {
     expect(fetchResult.profile?.customAccommodation).toBe("Needs captions on video calls");
   });
 
-  it("authenticates an existing account via directCameraDemoLoginHandler and rejects unknown accounts", async () => {
-    const unknownRes = await directCameraDemoLoginHandler({
-      email: "nonexistent_camera_user@example.com",
-      role: "candidate",
+  it("handles biometric passkey login flow: rejects accounts without credentials", async () => {
+    const unknownRes = await beginPasskeyLoginHandler({
+      email: "nonexistent_biometric_user@example.com",
     });
     expect(unknownRes.ok).toBe(false);
-
-    const validRes = await directCameraDemoLoginHandler({
-      email: testEmail,
-      role: "candidate",
-    });
-    expect(validRes.ok).toBe(true);
-    if (validRes.ok) {
-      expect(validRes.user.email).toBe(testEmail.toLowerCase());
-      expect(validRes.user.role).toBe("candidate");
-      expect(validRes.token).toBeDefined();
-    }
+    expect(unknownRes.error).toMatch(/No biometric sign-in is set up/i);
   });
 
   it("logs out user and invalidates session token", async () => {

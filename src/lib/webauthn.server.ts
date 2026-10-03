@@ -254,7 +254,7 @@ async function storeCredential(userId: string, cred: StoredCredential) {
   await ensureWebAuthnTables();
   const db = await getDatabase();
   db.prepare(
-    "INSERT INTO webauthn_credentials (user_id, credential_id, public_key, counter, transports) VALUES (?, ?, ?, ?, ?)",
+    "INSERT OR REPLACE INTO webauthn_credentials (user_id, credential_id, public_key, counter, transports) VALUES (?, ?, ?, ?, ?)",
   ).run(
     userId,
     cred.credentialId,
@@ -262,6 +262,24 @@ async function storeCredential(userId: string, cred: StoredCredential) {
     cred.counter,
     JSON.stringify(cred.transports || []),
   );
+
+  try {
+    const userRow = db.prepare("SELECT email FROM users WHERE id = ?").get(userId) as { email: string } | undefined;
+    if (userRow?.email) {
+      const isB64Url = cred.publicKey.includes("-") || cred.publicKey.includes("_");
+      const b64url = isB64Url ? cred.publicKey : Buffer.from(cred.publicKey, "base64").toString("base64url");
+      db.prepare(`
+        INSERT OR REPLACE INTO passkeys (credential_id, email, public_key, counter, transports)
+        VALUES (?, ?, ?, ?, ?)
+      `).run(
+        cred.credentialId,
+        userRow.email.toLowerCase().trim(),
+        b64url,
+        cred.counter,
+        JSON.stringify(cred.transports || []),
+      );
+    }
+  } catch {}
 }
 
 async function getCredentialsForUser(userId: string): Promise<StoredCredential[]> {
@@ -272,13 +290,15 @@ async function getCredentialsForUser(userId: string): Promise<StoredCredential[]
         .collection("webauthn_credentials")
         .find({ userId })
         .toArray();
-      return docs.map((d) => ({
-        credentialId: d["credentialId"] as string,
-        publicKey: d["publicKey"] as string,
-        counter: d["counter"] as number,
-        transports: (d["transports"] as string[]) || [],
-        createdAt: String(d["createdAt"]),
-      }));
+      if (docs.length > 0) {
+        return docs.map((d) => ({
+          credentialId: d["credentialId"] as string,
+          publicKey: d["publicKey"] as string,
+          counter: d["counter"] as number,
+          transports: (d["transports"] as string[]) || [],
+          createdAt: String(d["createdAt"]),
+        }));
+      }
     } catch {
       // fall through
     }
@@ -295,6 +315,32 @@ async function getCredentialsForUser(userId: string): Promise<StoredCredential[]
     transports: string;
     created_at: string;
   }>;
+
+  try {
+    const userRow = db.prepare("SELECT email FROM users WHERE id = ?").get(userId) as { email: string } | undefined;
+    if (userRow?.email) {
+      const pRows = db.prepare("SELECT * FROM passkeys WHERE lower(trim(email)) = ?").all(userRow.email.toLowerCase().trim()) as Array<{
+        credential_id: string;
+        public_key: string;
+        counter: number;
+        transports: string;
+        created_at: string;
+      }>;
+      for (const pr of pRows) {
+        if (!rows.some((r) => r.credential_id === pr.credential_id)) {
+          const isB64Url = pr.public_key.includes("-") || pr.public_key.includes("_");
+          const b64 = isB64Url ? Buffer.from(pr.public_key, "base64url").toString("base64") : pr.public_key;
+          rows.push({
+            credential_id: pr.credential_id,
+            public_key: b64,
+            counter: pr.counter,
+            transports: pr.transports,
+            created_at: pr.created_at,
+          });
+        }
+      }
+    }
+  } catch {}
 
   return rows.map((r) => ({
     credentialId: r.credential_id,
@@ -331,7 +377,7 @@ async function getCredentialById(credentialId: string): Promise<
 
   await ensureWebAuthnTables();
   const db = await getDatabase();
-  const row = db
+  let row = db
     .prepare("SELECT * FROM webauthn_credentials WHERE credential_id = ?")
     .get(credentialId) as
     | {
@@ -343,6 +389,37 @@ async function getCredentialById(credentialId: string): Promise<
         created_at: string;
       }
     | undefined;
+
+  if (!row) {
+    try {
+      const pRow = db.prepare(`
+        SELECT p.credential_id, p.public_key, p.counter, p.transports, p.created_at, u.id as user_id
+        FROM passkeys p
+        JOIN users u ON lower(trim(u.email)) = lower(trim(p.email))
+        WHERE p.credential_id = ?
+      `).get(credentialId) as {
+        credential_id: string;
+        public_key: string;
+        counter: number;
+        transports: string;
+        created_at: string;
+        user_id: string | number;
+      } | undefined;
+
+      if (pRow) {
+        const isB64Url = pRow.public_key.includes("-") || pRow.public_key.includes("_");
+        const b64 = isB64Url ? Buffer.from(pRow.public_key, "base64url").toString("base64") : pRow.public_key;
+        row = {
+          user_id: String(pRow.user_id),
+          credential_id: pRow.credential_id,
+          public_key: b64,
+          counter: pRow.counter,
+          transports: pRow.transports,
+          created_at: pRow.created_at,
+        };
+      }
+    } catch {}
+  }
 
   if (!row) return null;
 

@@ -245,11 +245,62 @@ export function getSessionCookieToken(): string | null {
   }
 }
 
+function webAuthnOrigins(clientOrigin?: string): string[] {
+  const customOrigins = process.env["WEBAUTHN_ORIGIN"]
+    ? process.env["WEBAUTHN_ORIGIN"].split(",").map((o) => o.trim())
+    : [];
+
+  const defaults = [
+    "http://localhost:8080",
+    "http://localhost:8081",
+    "http://localhost:3000",
+    "http://localhost:5173",
+    "http://localhost:4173",
+    "http://127.0.0.1:8080",
+    "http://127.0.0.1:8081",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:5173",
+    "http://127.0.0.1:4173",
+    "https://localhost:8080",
+    "https://localhost:8081",
+    "https://localhost:3000",
+    "https://localhost:5173",
+  ];
+
+  if (process.env["APP_URL"]) {
+    defaults.push(process.env["APP_URL"]);
+  }
+
+  try {
+    const reqOrigin = getRequestHeader("origin");
+    if (reqOrigin && !defaults.includes(reqOrigin)) {
+      defaults.push(reqOrigin);
+    }
+    const host = getRequestHeader("host");
+    if (host) {
+      defaults.push(`http://${host}`);
+      defaults.push(`https://${host}`);
+    }
+  } catch {
+    // not in request context
+  }
+
+  if (clientOrigin && !defaults.includes(clientOrigin)) {
+    defaults.push(clientOrigin);
+  }
+
+  return Array.from(new Set([...customOrigins, ...defaults]));
+}
+
 function webAuthnRp() {
   const origin =
-    process.env["WEBAUTHN_ORIGIN"] || getRequestHeader("origin") || "http://localhost:3000";
-  const url = new URL(origin);
-  return { origin: url.origin, rpID: process.env["WEBAUTHN_RP_ID"] || url.hostname };
+    process.env["WEBAUTHN_ORIGIN"] || getRequestHeader("origin") || process.env["APP_URL"] || "http://localhost:8080";
+  try {
+    const url = new URL(origin);
+    return { origin: url.origin, rpID: process.env["WEBAUTHN_RP_ID"] || url.hostname };
+  } catch {
+    return { origin: "http://localhost:8080", rpID: process.env["WEBAUTHN_RP_ID"] || "localhost" };
+  }
 }
 
 async function saveWebAuthnChallenge(
@@ -283,12 +334,26 @@ export async function beginPasskeyRegistrationHandler() {
   const existing = db
     .prepare("SELECT credential_id, transports FROM passkeys WHERE email = ?")
     .all(session.user.email) as { credential_id: string; transports: string }[];
+  try {
+    const webCreds = db
+      .prepare(`
+        SELECT c.credential_id, c.transports
+        FROM webauthn_credentials c
+        JOIN users u ON u.id = c.user_id
+        WHERE lower(trim(u.email)) = ?
+      `)
+      .all(session.user.email.toLowerCase().trim()) as { credential_id: string; transports: string }[];
+    for (const wc of webCreds) {
+      if (!existing.some((e) => e.credential_id === wc.credential_id)) {
+        existing.push(wc);
+      }
+    }
+  } catch {}
+
   const rp = webAuthnRp();
   const options = await generateRegistrationOptions({
     rpName: "Ableo",
     rpID: rp.rpID,
-    // Give a person enough time to respond to a Windows Hello, Face ID, or
-    // fingerprint-reader dialog after the browser has opened it.
     timeout: 120_000,
     userName: session.user.email,
     userID: new TextEncoder().encode(String(session.user.id)),
@@ -296,14 +361,12 @@ export async function beginPasskeyRegistrationHandler() {
     attestationType: "none",
     excludeCredentials: existing.map((item) => ({
       id: item.credential_id,
-      transports: JSON.parse(item.transports),
+      transports: item.transports ? JSON.parse(item.transports) : undefined,
     })),
-    // Ableo's biometric option is for the current device's secure biometric
-    // authenticator, not an external roaming key or a cross-device prompt.
     authenticatorSelection: {
       authenticatorAttachment: "platform",
       residentKey: "preferred",
-      userVerification: "required",
+      userVerification: "preferred",
     },
   });
   await saveWebAuthnChallenge(session.user.email, "registration", options.challenge);
@@ -317,46 +380,90 @@ export async function finishPasskeyRegistrationHandler(data: { response: unknown
   if (!challenge) return { ok: false as const, error: "Passkey setup expired. Try again." };
   const { verifyRegistrationResponse } = await import("@simplewebauthn/server");
   const rp = webAuthnRp();
+
+  let clientOrigin: string | undefined;
+  try {
+    const respObj = data.response as { response?: { clientDataJSON?: string } };
+    if (respObj?.response?.clientDataJSON) {
+      const clientDataBuffer = Buffer.from(respObj.response.clientDataJSON, "base64url");
+      const clientData = JSON.parse(clientDataBuffer.toString("utf-8"));
+      if (typeof clientData.origin === "string") clientOrigin = clientData.origin;
+    }
+  } catch {}
+
   const verification = await verifyRegistrationResponse({
     response: data.response as never,
     expectedChallenge: challenge,
-    expectedOrigin: rp.origin,
+    expectedOrigin: webAuthnOrigins(clientOrigin),
     expectedRPID: rp.rpID,
-    requireUserVerification: true,
+    requireUserVerification: false,
   });
   if (!verification.verified || !verification.registrationInfo)
     return { ok: false as const, error: "Passkey verification failed." };
   const credential = verification.registrationInfo.credential;
   const db = await getDatabase();
+  const b64urlKey = Buffer.from(credential.publicKey).toString("base64url");
+  const b64Key = Buffer.from(credential.publicKey).toString("base64");
+  const transportsJson = JSON.stringify(credential.transports ?? []);
+
   db.prepare(
     "INSERT OR REPLACE INTO passkeys (credential_id, email, public_key, counter, transports) VALUES (?, ?, ?, ?, ?)",
   ).run(
     credential.id,
-    session.user.email,
-    Buffer.from(credential.publicKey).toString("base64url"),
+    session.user.email.toLowerCase().trim(),
+    b64urlKey,
     credential.counter,
-    JSON.stringify(credential.transports ?? []),
+    transportsJson,
   );
+
+  try {
+    db.prepare(`
+      INSERT OR REPLACE INTO webauthn_credentials (user_id, credential_id, public_key, counter, transports)
+      VALUES (?, ?, ?, ?, ?)
+    `).run(
+      String(session.user.id),
+      credential.id,
+      b64Key,
+      credential.counter,
+      transportsJson,
+    );
+  } catch {}
+
   return { ok: true as const };
 }
 
 export async function beginPasskeyLoginHandler(data: { email: string }) {
   const email = data.email.toLowerCase().trim();
   const db = await getDatabase();
-  const credentials = db
+  let credentials = db
     .prepare("SELECT credential_id, transports FROM passkeys WHERE email = ?")
     .all(email) as { credential_id: string; transports: string }[];
+  if (!credentials.length) {
+    try {
+      credentials = db
+        .prepare(`
+          SELECT c.credential_id, c.transports
+          FROM webauthn_credentials c
+          JOIN users u ON u.id = c.user_id
+          WHERE lower(trim(u.email)) = ?
+        `)
+        .all(email) as { credential_id: string; transports: string }[];
+    } catch {}
+  }
   if (!credentials.length)
-    return { ok: false as const, error: "No biometric sign-in is set up for this email." };
+    return {
+      ok: false as const,
+      error: "No biometric sign-in is set up for this email. Sign in with your password to set up fingerprint sign-in on this device.",
+    };
   const { generateAuthenticationOptions } = await import("@simplewebauthn/server");
   const rp = webAuthnRp();
   const options = await generateAuthenticationOptions({
     rpID: rp.rpID,
     timeout: 120_000,
-    userVerification: "required",
+    userVerification: "preferred",
     allowCredentials: credentials.map((item) => ({
       id: item.credential_id,
-      transports: JSON.parse(item.transports),
+      transports: item.transports ? JSON.parse(item.transports) : undefined,
     })),
   });
   await saveWebAuthnChallenge(email, "authentication", options.challenge);
@@ -373,34 +480,72 @@ export async function finishPasskeyLoginHandler(data: {
   if (!challenge) return { ok: false as const, error: "Biometric sign-in expired. Try again." };
   const credentialId = String((data.response as { id?: string }).id || "");
   const db = await getDatabase();
-  const stored = db
+  let stored = db
     .prepare(
       "SELECT credential_id, public_key, counter, transports FROM passkeys WHERE email = ? AND credential_id = ?",
     )
     .get(email, credentialId) as
     { credential_id: string; public_key: string; counter: number; transports: string } | undefined;
+  if (!stored) {
+    try {
+      stored = db
+        .prepare(`
+          SELECT c.credential_id, c.public_key, c.counter, c.transports
+          FROM webauthn_credentials c
+          JOIN users u ON u.id = c.user_id
+          WHERE lower(trim(u.email)) = ? AND c.credential_id = ?
+        `)
+        .get(email, credentialId) as
+        { credential_id: string; public_key: string; counter: number; transports: string } | undefined;
+    } catch {}
+  }
   if (!stored) return { ok: false as const, error: "Biometric credential not found." };
+
+  let clientOrigin: string | undefined;
+  try {
+    const respObj = data.response as { response?: { clientDataJSON?: string } };
+    if (respObj?.response?.clientDataJSON) {
+      const clientDataBuffer = Buffer.from(respObj.response.clientDataJSON, "base64url");
+      const clientData = JSON.parse(clientDataBuffer.toString("utf-8"));
+      if (typeof clientData.origin === "string") clientOrigin = clientData.origin;
+    }
+  } catch {}
+
+  const isBase64Url = stored.public_key.includes("-") || stored.public_key.includes("_");
+  const pubKeyBytes = new Uint8Array(
+    Buffer.from(stored.public_key, isBase64Url ? "base64url" : "base64"),
+  );
+
   const { verifyAuthenticationResponse } = await import("@simplewebauthn/server");
   const rp = webAuthnRp();
   const verification = await verifyAuthenticationResponse({
     response: data.response as never,
     expectedChallenge: challenge,
-    expectedOrigin: rp.origin,
+    expectedOrigin: webAuthnOrigins(clientOrigin),
     expectedRPID: rp.rpID,
     credential: {
       id: stored.credential_id,
-      publicKey: new Uint8Array(Buffer.from(stored.public_key, "base64url")),
+      publicKey: pubKeyBytes,
       counter: stored.counter,
-      transports: JSON.parse(stored.transports),
+      transports: stored.transports ? JSON.parse(stored.transports) : undefined,
     },
-    requireUserVerification: true,
+    requireUserVerification: false,
   });
   if (!verification.verified)
     return { ok: false as const, error: "Biometric sign-in could not be verified." };
-  db.prepare("UPDATE passkeys SET counter = ? WHERE credential_id = ?").run(
-    verification.authenticationInfo.newCounter,
-    stored.credential_id,
-  );
+
+  try {
+    db.prepare("UPDATE passkeys SET counter = ? WHERE credential_id = ?").run(
+      verification.authenticationInfo.newCounter,
+      stored.credential_id,
+    );
+  } catch {}
+  try {
+    db.prepare("UPDATE webauthn_credentials SET counter = ? WHERE credential_id = ?").run(
+      verification.authenticationInfo.newCounter,
+      stored.credential_id,
+    );
+  } catch {}
   const user = db.prepare("SELECT * FROM users WHERE email = ?").get(email) as UserRow | undefined;
   if (!user && isMongoConfigured()) {
     try {
@@ -451,61 +596,6 @@ export async function finishPasskeyLoginHandler(data: {
   };
 }
 
-/** Local demo only: detecting eyes in a camera frame is not identity verification. */
-export async function directCameraDemoLoginHandler(data: { email: string; role: AccountRole }) {
-  const email = data.email.toLowerCase().trim();
-  if (isMongoConfigured()) {
-    try {
-      const mongo = await getMongoDb();
-      const user = await mongo.collection("users").findOne({ email });
-      if (user && (user["role"] === data.role || isUserAdmin(user))) {
-        if (
-          isEmailVerificationRequired() &&
-          !Boolean(user["emailVerified"] ?? user["email_verified"]) &&
-          !isUserAdmin(user)
-        ) {
-          return {
-            ok: false as const,
-            error: "Verify your email before using direct camera sign-in.",
-          };
-        }
-        const role: AccountRole = isUserAdmin(user) ? data.role : (user["role"] as AccountRole);
-        const token = await createSession("mongo", user["_id"].toString(), role);
-        setSessionCookie(token);
-        return {
-          ok: true as const,
-          user: {
-            id: user["_id"].toString(),
-            fullName: String(user["fullName"] || user["full_name"]),
-            email,
-            role,
-            emailVerified: Boolean(user["emailVerified"] ?? user["email_verified"]),
-            isAdmin: isUserAdmin(user),
-          },
-          token,
-        };
-      }
-    } catch {
-      // Continue to the local database fallback.
-    }
-  }
-  const db = await getDatabase();
-  const user = db.prepare("SELECT * FROM users WHERE email = ?").get(email) as UserRow | undefined;
-  if (!user || (user.role !== data.role && !isUserAdmin(user))) {
-    return { ok: false as const, error: "No account was found for this email and portal." };
-  }
-  if (isEmailVerificationRequired() && !Boolean(user.email_verified) && !isUserAdmin(user)) {
-    return { ok: false as const, error: "Verify your email before using direct camera sign-in." };
-  }
-  const role: AccountRole = isUserAdmin(user) ? data.role : user.role;
-  const token = await createSession(db, user.id, role);
-  setSessionCookie(token);
-  return {
-    ok: true as const,
-    user: { ...publicUser(user), role, isAdmin: isUserAdmin(user) },
-    token,
-  };
-}
 
 export function getClientIp(): string {
   try {

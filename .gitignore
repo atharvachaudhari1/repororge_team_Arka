@@ -24,9 +24,7 @@ dist-ssr
 .env.*
 !.env.example
 .dev.vars
-data/*.sqlite
-data/*.sqlite-shm
-data/*.sqlite-wal
+data/
 
 # Editor directories and files
 .vscode/*
