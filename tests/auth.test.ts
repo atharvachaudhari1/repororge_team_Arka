@@ -11,6 +11,7 @@ import {
   saveUserProfileHandler,
   getUserProfileHandler,
   verifyEmailHandler,
+  directCameraDemoLoginHandler,
 } from "@/lib/auth.server";
 
 describe("Authentication & Session Management", () => {
@@ -185,6 +186,25 @@ describe("Authentication & Session Management", () => {
     expect(fetchResult.profile?.skills).toEqual(profilePayload.skills);
     expect(fetchResult.profile?.accommodations).toContain("screen_reader");
     expect(fetchResult.profile?.customAccommodation).toBe("Needs captions on video calls");
+  });
+
+  it("authenticates an existing account via directCameraDemoLoginHandler and rejects unknown accounts", async () => {
+    const unknownRes = await directCameraDemoLoginHandler({
+      email: "nonexistent_camera_user@example.com",
+      role: "candidate",
+    });
+    expect(unknownRes.ok).toBe(false);
+
+    const validRes = await directCameraDemoLoginHandler({
+      email: testEmail,
+      role: "candidate",
+    });
+    expect(validRes.ok).toBe(true);
+    if (validRes.ok) {
+      expect(validRes.user.email).toBe(testEmail.toLowerCase());
+      expect(validRes.user.role).toBe("candidate");
+      expect(validRes.token).toBeDefined();
+    }
   });
 
   it("logs out user and invalidates session token", async () => {

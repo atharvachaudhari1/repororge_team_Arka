@@ -36,6 +36,56 @@ export const loginAccount = createServerFn({ method: "POST" })
     return loginAccountHandler(data);
   });
 
+export const beginPasskeyLogin = createServerFn({ method: "POST" })
+  .validator((data) => z.object({ email: z.string().trim().email().max(254) }).parse(data))
+  .handler(async ({ data }) => {
+    const result = await (await import("./auth.server")).beginPasskeyLoginHandler(data);
+    return result.ok
+      ? { ok: true as const, error: null, optionsJson: JSON.stringify(result.options) }
+      : { ok: false as const, error: result.error, optionsJson: null };
+  });
+
+export const finishPasskeyLogin = createServerFn({ method: "POST" })
+  .validator((data) =>
+    z
+      .object({
+        email: z.string().trim().email(),
+        role: z.enum(["candidate", "employer"]),
+        response: z.unknown(),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data }) => (await import("./auth.server")).finishPasskeyLoginHandler(data));
+
+export const beginPasskeyRegistration = createServerFn({ method: "POST" })
+  .validator((data: unknown) => z.object({}).parse(data ?? {}))
+  .handler(async () => {
+    const result = await (await import("./auth.server")).beginPasskeyRegistrationHandler();
+    return result.ok
+      ? { ok: true as const, error: null, optionsJson: JSON.stringify(result.options) }
+      : { ok: false as const, error: result.error, optionsJson: null };
+  });
+
+export const finishPasskeyRegistration = createServerFn({ method: "POST" })
+  .validator((data) => z.object({ response: z.unknown() }).parse(data))
+  .handler(async ({ data }) =>
+    (await import("./auth.server")).finishPasskeyRegistrationHandler(data),
+  );
+
+export const directCameraDemoLogin = createServerFn({ method: "POST" })
+  .validator((data) =>
+    z
+      .object({
+        email: z.string().trim().email(),
+        role: z.enum(["candidate", "employer"]),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data }) => {
+    const { directCameraDemoLoginHandler } = await import("./auth.server");
+    return directCameraDemoLoginHandler(data);
+  });
+
 export const readSession = createServerFn({ method: "POST" })
   .validator((data: unknown) =>
     z
