@@ -1,14 +1,106 @@
 export const ACCESS_FEATURES = {
+  // Visual & Screen Access
   screen_reader: "Screen-reader friendly",
   accessible_application: "Accessible website/application",
   keyboard_friendly: "Keyboard-friendly application",
-  accessible_interview: "Accessible interview process",
+  assistive_tech: "Assistive technology support",
+
+  // Hearing Support
+  sign_interpreter: "Sign-language interpreter / video interview",
+  captions_first: "Captions-first meetings",
+  captioned_meetings: "Captioned meetings",
+  text_communication: "Text-based communication",
+  chat_interviews: "Chat-based interviews",
+
+  // Mobility & Physical Access
+  step_free_access: "Step-free workplace access",
+  accessible_washrooms: "Accessible washrooms",
+  accessible_transport: "Accessible parking / transport nearby",
+  accessible_workplace: "Accessible workplace",
+  remote_hybrid_option: "Remote or hybrid options",
+
+  // Cognitive & Neurodivergent Support
+  plain_language: "Plain-language job descriptions",
+  clear_interview_formats: "Clear interview formats shared in advance",
+  quiet_workspace: "Quiet workspace",
+  written_instructions: "Written instructions",
+  extended_time_assessments: "Extended time for assessments",
+
+  // Invisible & Chronic Conditions Support
+  flexible_hours: "Flexible hours",
+  remote_days: "Remote days",
+  rest_breaks: "Rest breaks",
+  leave_flexibility: "Leave flexibility",
   flexible_work: "Flexible work",
   remote_work: "Remote work",
-  assistive_tech: "Assistive technology support",
-  captioned_meetings: "Captioned meetings",
-  accessible_workplace: "Accessible workplace",
+  accessible_interview: "Accessible interview process",
 } as const;
+
+export type DisabilityCategory = "vision" | "hearing" | "mobility" | "neurodivergent" | "chronic";
+
+export const ACCESS_CATEGORIES: {
+  id: DisabilityCategory;
+  name: string;
+  description: string;
+  features: (keyof typeof ACCESS_FEATURES)[];
+}[] = [
+  {
+    id: "vision",
+    name: "Visual & Screen Access",
+    description: "Support for blind, low-vision, and screen-reader users",
+    features: ["screen_reader", "accessible_application", "keyboard_friendly", "assistive_tech"],
+  },
+  {
+    id: "hearing",
+    name: "Hearing & Deaf Support",
+    description: "Captions, sign language interpreters, and text-first communication",
+    features: [
+      "sign_interpreter",
+      "captions_first",
+      "captioned_meetings",
+      "text_communication",
+      "chat_interviews",
+    ],
+  },
+  {
+    id: "mobility",
+    name: "Mobility & Physical Access",
+    description: "Step-free facilities, accessible washrooms, and transport",
+    features: [
+      "step_free_access",
+      "accessible_washrooms",
+      "accessible_transport",
+      "accessible_workplace",
+      "remote_hybrid_option",
+    ],
+  },
+  {
+    id: "neurodivergent",
+    name: "Cognitive & Neurodivergent",
+    description: "Clear formats, plain language, quiet spaces, and extended time",
+    features: [
+      "plain_language",
+      "clear_interview_formats",
+      "quiet_workspace",
+      "written_instructions",
+      "extended_time_assessments",
+    ],
+  },
+  {
+    id: "chronic",
+    name: "Invisible & Chronic Conditions",
+    description: "Flexible hours, rest breaks, remote days, and adaptable leave",
+    features: [
+      "flexible_hours",
+      "remote_days",
+      "rest_breaks",
+      "leave_flexibility",
+      "flexible_work",
+      "remote_work",
+      "accessible_interview",
+    ],
+  },
+];
 
 export const INCLUSION_FEATURES = {
   lgbtq_policy: "LGBTQ+ inclusive policy",

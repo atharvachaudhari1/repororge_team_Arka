@@ -320,14 +320,34 @@ Useful for users with visual impairments or reading difficulties.
 
 ---
 
-### 🎨 9. Accessibility Controls
+### 🎨 9. Accessibility Controls & Multi-Disability Coverage
 
-- High contrast mode
-- Font scaling (small / medium / large)
-- Keyboard-only navigation
-- Visible focus indicators
-- Screen-reader-compatible semantic HTML
-- Accessible forms, labels, and buttons
+- **Typography & Display**:
+  - Font scaling (Normal, Large, Extra Large)
+  - Line spacing adjustment (Normal 1.0x, Relaxed 1.8x, Loose 2.2x)
+  - Dyslexia-friendly OpenDyslexic font
+  - Distraction-Free mode (hides animations and simplifies layout)
+  - High-contrast color themes & Dark/Light mode
+  - Focus Reading Ruler (keyboard-adjustable focus window)
+- **Audio & Speech**:
+  - Live subtitles toggle
+  - In-browser Text-to-Speech screen reader with speed control (0.8x, 1.0x, 1.25x)
+  - Voice Control Assistant
+- **Expanded Disability Coverage**:
+  - Comprehensive taxonomy across **Visual**, **Hearing & Deaf**, **Mobility & Physical**, **Cognitive & Neurodivergent**, and **Invisible / Chronic** conditions.
+  - Accommodations wizard & AI request assistant tailored across all 5 categories.
+  - Employer job posting with category-grouped accessibility commitments.
+- **Client-Side Hand-Gesture Navigation**:
+  - Optional, opt-in touchless navigation powered by `@mediapipe/tasks-vision` `HandLandmarker`.
+  - Runs 100% locally in browser WebAssembly — zero video or frame transmission to any server, no OpenCV.
+  - Recognizes Pinch, Open Palm, Closed Fist, Thumbs Up, and Swipes (Left/Right/Up/Down).
+  - Configurable ~500ms hold confirmation, cooldown prevention, adjustable sensitivity (low/medium/high), and remappable action config (next/prev job, select, back, save job, scroll, pause).
+  - Live skeleton preview on canvas, prominent "Camera is active" indicator, and 1-click camera turn off.
+  - Automatic hardware teardown when tab is hidden or minimized; full keyboard, touch, and voice equivalents preserved with `aria-live` announcements.
+- **India RPwD Rights Guide**:
+  - Integrated guide in `/privacy` covering Sections 20, 21, 2(y), and 34 of the Rights of Persons with Disabilities Act, 2016.
+  - UDID Swavlamban Card application and verification details.
+  - Direct links to NCPEDP (advocacy) and NHFDC (financial assistance & loans).
 
 ---
 

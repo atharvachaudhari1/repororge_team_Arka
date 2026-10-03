@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { DEFAULT_PRIVACY, useAppState } from "@/lib/app-state";
 import { isShared, privacyPreview, privacyRows } from "@/lib/privacy";
+import { IndiaRightsGuide } from "@/components/india-rights-guide";
 
 export const Route = createFileRoute("/privacy")({
   head: () => ({
@@ -179,6 +180,67 @@ function PrivacyPage() {
             )}
           </div>
         </div>
+      </section>
+
+      <section id="gestures" aria-labelledby="gestures-heading" className="surface-card mt-6 p-5">
+        <div className="flex items-center gap-2">
+          <span className="flex size-7 items-center justify-center rounded-full bg-brand/10 text-brand text-sm font-bold">
+            ✋
+          </span>
+          <h2 id="gestures-heading" className="text-xl font-semibold">
+            Hand-Gesture Navigation & Camera Privacy
+          </h2>
+        </div>
+        <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
+          Ableo includes an optional, hands-free hand gesture navigation system powered by Google
+          MediaPipe Tasks Vision running entirely client-side.
+        </p>
+
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          <div className="rounded-lg border border-border p-3.5 bg-card/60">
+            <h3 className="font-semibold text-sm text-foreground">🔒 100% On-Device Processing</h3>
+            <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
+              Hand detection and landmark tracking run completely in your local browser via
+              WebAssembly. No video frames, camera snapshots, or spatial coordinates are ever
+              transmitted over the internet to any server.
+            </p>
+          </div>
+
+          <div className="rounded-lg border border-border p-3.5 bg-card/60">
+            <h3 className="font-semibold text-sm text-foreground">🚫 Zero Data Stored</h3>
+            <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
+              Video feeds exist solely in volatile browser graphics memory during real-time frame
+              processing. Nothing is ever written to disk, databases, or cookies.
+            </p>
+          </div>
+
+          <div className="rounded-lg border border-border p-3.5 bg-card/60">
+            <h3 className="font-semibold text-sm text-foreground">⚡ Instant Automatic Teardown</h3>
+            <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
+              Your camera hardware tracks are stopped immediately the instant you toggle the feature
+              off, click the persistent &quot;Turn camera off&quot; button, or switch/minimize the
+              browser tab.
+            </p>
+          </div>
+
+          <div className="rounded-lg border border-border p-3.5 bg-card/60">
+            <h3 className="font-semibold text-sm text-foreground">
+              ✨ Strictly Opt-In & Non-Exclusive
+            </h3>
+            <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
+              Gestures are never turned on by default. Camera permission is only requested after you
+              explicitly enable the switch. Full keyboard, touch, and voice equivalents remain
+              available across the entire platform.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section id="rights" aria-labelledby="rights-heading" className="surface-card mt-6 p-5">
+        <h2 id="rights-heading" className="text-xl font-semibold mb-4">
+          Rights & Protections in India (RPwD Act 2016)
+        </h2>
+        <IndiaRightsGuide />
       </section>
 
       <section aria-labelledby="reset-heading" className="surface-card mt-6 p-5">

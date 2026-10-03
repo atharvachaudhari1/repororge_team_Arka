@@ -21,6 +21,7 @@ import { PortalGate } from "../components/portal-gate";
 import { LiveCaptions } from "../components/live-captions";
 import { VoiceAssistantModal } from "../components/voice-assistant-modal";
 import { ReadingRuler } from "../components/reading-ruler";
+import { HandGestureIndicator } from "../components/hand-gesture-indicator";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
 function NotFoundComponent() {
@@ -168,6 +169,7 @@ function RootComponent() {
             <LiveCaptions />
             <VoiceAssistantModal />
             <ReadingRuler />
+            <HandGestureIndicator />
             <CareerAssistant />
             <Toaster />
           </div>

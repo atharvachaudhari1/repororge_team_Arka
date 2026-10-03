@@ -8,9 +8,18 @@ import {
   type ReactNode,
 } from "react";
 import { JOBS, type AccessFeature, type Job } from "./jobs-data";
+import {
+  type GestureConfig,
+  type GestureSensitivity,
+  type HandGesture,
+  type GestureAction,
+  DEFAULT_GESTURE_CONFIG,
+  SENSITIVITY_SETTINGS,
+} from "./gestures";
 
 export type FontSize = "small" | "medium" | "large" | "x-large";
 export type MotionPref = "normal" | "reduced";
+export type LineSpacing = "normal" | "relaxed" | "loose";
 
 export type Profile = {
   name: string;
@@ -316,6 +325,10 @@ type State = {
   /* Disability & Multi-Modal Accessibility Features */
   dyslexiaFont: boolean;
   setDyslexiaFont: (v: boolean) => void;
+  lineSpacing: LineSpacing;
+  setLineSpacing: (v: LineSpacing) => void;
+  reducedDistraction: boolean;
+  setReducedDistraction: (v: boolean) => void;
   liveCaptions: boolean;
   setLiveCaptions: (v: boolean) => void;
   captionText: string;
@@ -334,6 +347,11 @@ type State = {
   updateJobAccess: (jobId: string, keys: AccessFeature[]) => void;
   isEmployerMode: boolean;
   setIsEmployerMode: (v: boolean) => void;
+  gestureConfig: GestureConfig;
+  setGestureConfig: React.Dispatch<React.SetStateAction<GestureConfig>>;
+  setGestureEnabled: (enabled: boolean) => void;
+  setGestureSensitivity: (sensitivity: GestureSensitivity) => void;
+  updateGestureMapping: (gesture: HandGesture, action: GestureAction | "none") => void;
 };
 
 const Ctx = createContext<State | null>(null);
@@ -399,6 +417,8 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const [feedback, setFeedback] = useState<Feedback[]>([]);
   /* Disability & Multi-Modal Accessibility Features */
   const [dyslexiaFont, setDyslexiaFont] = useState(false);
+  const [lineSpacing, setLineSpacing] = useState<LineSpacing>("normal");
+  const [reducedDistraction, setReducedDistraction] = useState(false);
   const [liveCaptions, setLiveCaptions] = useState(false);
   const [captionText, setCaptionText] = useState("");
   const [activePreset, setActivePresetState] = useState<AccessibilityPreset>("custom");
@@ -406,6 +426,9 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const [readingRuler, setReadingRuler] = useState(false);
   const [readingRulerHeight, setReadingRulerHeight] = useState(60);
   const [ttsRate, setTtsRate] = useState(1);
+  const [gestureConfig, setGestureConfig] = useState<GestureConfig>(() => ({
+    ...DEFAULT_GESTURE_CONFIG,
+  }));
   /* Career GPS */
   const [careerAssessment, setCareerAssessment] = useState<CareerAssessment | null>(null);
   const [careerDiscoveries, setCareerDiscoveries] = useState<CareerPathRecommendation[]>([]);
@@ -430,6 +453,8 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       feedback: [] as Feedback[],
       motion: "normal" as MotionPref,
       dyslexiaFont: false,
+      lineSpacing: "normal" as LineSpacing,
+      reducedDistraction: false,
       liveCaptions: false,
       activePreset: "custom" as AccessibilityPreset,
       readingRuler: false,
@@ -445,12 +470,25 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       actionPlans: {} as Record<string, ActionItem[]>,
       accessUpdates: {} as Record<string, AccessFeature[]>,
       isEmployerMode: false,
+      gestureConfig: DEFAULT_GESTURE_CONFIG as GestureConfig,
     });
+    if (s.gestureConfig) {
+      setGestureConfig({
+        ...DEFAULT_GESTURE_CONFIG,
+        ...s.gestureConfig,
+        mapping: {
+          ...DEFAULT_GESTURE_CONFIG.mapping,
+          ...(s.gestureConfig.mapping ?? {}),
+        },
+      });
+    }
     setTheme(s.theme ?? "light");
     setHighContrast(s.highContrast ?? false);
     setFontSize(s.fontSize ?? "medium");
     setMotion(s.motion ?? "normal");
     setDyslexiaFont(s.dyslexiaFont ?? false);
+    setLineSpacing(s.lineSpacing ?? "normal");
+    setReducedDistraction(s.reducedDistraction ?? false);
     setLiveCaptions(s.liveCaptions ?? false);
     setActivePresetState(s.activePreset ?? "custom");
     setReadingRuler(s.readingRuler ?? false);
@@ -552,6 +590,8 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         fontSize,
         motion,
         dyslexiaFont,
+        lineSpacing,
+        reducedDistraction,
         liveCaptions,
         activePreset,
         readingRuler,
@@ -572,6 +612,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         actionPlans,
         accessUpdates,
         isEmployerMode,
+        gestureConfig,
       }),
     );
   }, [
@@ -581,6 +622,8 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     fontSize,
     motion,
     dyslexiaFont,
+    lineSpacing,
+    reducedDistraction,
     liveCaptions,
     activePreset,
     readingRuler,
@@ -601,6 +644,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     actionPlans,
     accessUpdates,
     isEmployerMode,
+    gestureConfig,
   ]);
 
   useEffect(() => {
@@ -684,9 +728,51 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     document.documentElement.dataset["dyslexia"] = dyslexiaFont ? "true" : "false";
   }, [dyslexiaFont]);
 
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    document.documentElement.dataset["lineSpacing"] = lineSpacing;
+  }, [lineSpacing]);
+
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    document.documentElement.dataset["reducedDistraction"] = reducedDistraction ? "true" : "false";
+  }, [reducedDistraction]);
+
+  const setGestureEnabled = useCallback((enabled: boolean) => {
+    setGestureConfig((c) => ({ ...c, enabled }));
+  }, []);
+
+  const setGestureSensitivity = useCallback((sensitivity: GestureSensitivity) => {
+    const sens = SENSITIVITY_SETTINGS[sensitivity];
+    setGestureConfig((c) => ({
+      ...c,
+      sensitivity,
+      holdTimeMs: sens.holdTimeMs,
+      cooldownMs: sens.cooldownMs,
+    }));
+  }, []);
+
+  const updateGestureMapping = useCallback(
+    (gesture: HandGesture, action: GestureAction | "none") => {
+      setGestureConfig((c) => ({
+        ...c,
+        mapping: {
+          ...c.mapping,
+          [gesture]: action,
+        },
+      }));
+    },
+    [],
+  );
+
   const value: State = {
     isEmployerMode,
     setIsEmployerMode,
+    gestureConfig,
+    setGestureConfig,
+    setGestureEnabled,
+    setGestureSensitivity,
+    updateGestureMapping,
     theme,
     setTheme,
     toggleTheme: () => setTheme((t) => (t === "dark" ? "light" : "dark")),
@@ -698,6 +784,10 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     setMotion,
     dyslexiaFont,
     setDyslexiaFont,
+    lineSpacing,
+    setLineSpacing,
+    reducedDistraction,
+    setReducedDistraction,
     liveCaptions,
     setLiveCaptions,
     captionText,

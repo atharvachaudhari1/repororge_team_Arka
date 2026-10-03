@@ -41,15 +41,36 @@ export const ACCESS_PREFERENCE_OPTIONS: { key: AccessFeature; label: string }[] 
   Object.entries(ACCESS_FEATURES) as [AccessFeature, string][]
 ).map(([key, label]) => ({ key, label }));
 
-/** Older profiles stored free-text labels; map them onto the shared taxonomy. */
 const LEGACY_PREFS: Record<string, AccessFeature> = {
   "screen reader user": "screen_reader",
   "keyboard-only navigation": "keyboard_friendly",
   "magnification / large text": "screen_reader",
   "captions for meetings": "captioned_meetings",
+  "captions-first meetings": "captions_first",
+  "sign language interpreter": "sign_interpreter",
+  "text-based communication": "text_communication",
+  "chat-based interview": "chat_interviews",
+  "step-free access": "step_free_access",
+  "accessible washrooms": "accessible_washrooms",
+  "accessible parking / transport": "accessible_transport",
+  "plain language": "plain_language",
+  "quiet workspace": "quiet_workspace",
+  "written instructions": "written_instructions",
+  "extended assessment time": "extended_time_assessments",
+  "flexible hours": "flexible_hours",
+  "remote days": "remote_days",
+  "rest breaks": "rest_breaks",
+  "leave flexibility": "leave_flexibility",
   "assistive technology at work": "assistive_tech",
   "flexible or remote working": "flexible_work",
   "accessible interview format": "accessible_interview",
+  neuro_quiet_workspace: "quiet_workspace",
+  neuro_written_instructions: "written_instructions",
+  neuro_extended_time: "extended_time_assessments",
+  health_flexible_hours: "flexible_hours",
+  health_rest_breaks: "rest_breaks",
+  health_medical_leave: "leave_flexibility",
+  health_wfh_flares: "remote_days",
 };
 
 export function normalisePrefs(list: string[] | undefined = []): AccessFeature[] {

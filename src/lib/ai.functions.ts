@@ -377,7 +377,7 @@ const insightInput = z.object({
 
 const accommodationInput = z.object({
   roleTitle: z.string(),
-  selections: z.array(z.string()).min(1).max(8),
+  selections: z.array(z.string()).min(1).max(30),
   note: z.string().max(500),
 });
 
@@ -394,7 +394,7 @@ export const generateAccommodationRequest = createServerFn({ method: "POST" })
 
     const system = [
       "You draft short, professional accommodation requests for job candidates in India.",
-      "Use ONLY the accommodation options the candidate selected plus their optional note.",
+      "Use ONLY the accommodation options the candidate selected plus their optional note (covering visual, hearing/ISL, mobility, cognitive/neurodivergent, or chronic health accommodations).",
       "Never invent medical details, never diagnose anything, never mention disability status, gender or any protected identity.",
       "Write one polite sentence requesting the arrangements, then one sentence inviting the employer to suggest alternatives.",
       'Reply with JSON only: {"request":"the request text"}',

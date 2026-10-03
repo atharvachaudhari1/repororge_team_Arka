@@ -76,7 +76,9 @@ export function JobCard({ job }: { job: Job }) {
 
   return (
     <article
-      className="rounded-2xl border border-border bg-card p-6 transition-all hover:border-[#191716]/30 shadow-[0_2px_8px_rgba(0,0,0,0.02)]"
+      data-job-card="true"
+      data-job-id={job.id}
+      className="rounded-2xl border border-border bg-card p-6 transition-all hover:border-[#191716]/30 shadow-[0_2px_8px_rgba(0,0,0,0.02)] data-[active-card=true]:ring-2 data-[active-card=true]:ring-brand data-[active-card=true]:border-brand"
       aria-labelledby={`job-${job.id}-title`}
     >
       <div className="flex items-start justify-between gap-3">

@@ -15,10 +15,13 @@ import {
   Sun,
   Accessibility,
   ScanLine,
+  AlignJustify,
+  Focus,
 } from "lucide-react";
 import {
   useAppState,
   type FontSize,
+  type LineSpacing,
   type MotionPref,
   type AccessibilityPreset,
 } from "@/lib/app-state";
@@ -31,11 +34,18 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { GestureSettingsSection } from "@/components/gesture-settings";
 
 const SIZES: { value: FontSize; label: string }[] = [
   { value: "medium", label: "Normal" },
   { value: "large", label: "Large" },
   { value: "x-large", label: "Extra large" },
+];
+
+const LINE_SPACINGS: { value: LineSpacing; label: string }[] = [
+  { value: "normal", label: "1x Line" },
+  { value: "relaxed", label: "1.8x Line" },
+  { value: "loose", label: "2.2x Line" },
 ];
 
 /**
@@ -49,6 +59,10 @@ export function AccessibilityControlsContent({ inDrawer = false }: { inDrawer?: 
     setHighContrast,
     fontSize,
     setFontSize,
+    lineSpacing,
+    setLineSpacing,
+    reducedDistraction,
+    setReducedDistraction,
     motion,
     setMotion,
     dyslexiaFont,
@@ -207,6 +221,28 @@ export function AccessibilityControlsContent({ inDrawer = false }: { inDrawer?: 
             ))}
           </div>
 
+          {/* Line Spacing */}
+          <div className="inline-flex rounded-full border border-stone-300 dark:border-stone-700 p-0.5 bg-card items-center">
+            <span className="px-2 text-stone-500 font-sans text-[11px] flex items-center gap-1">
+              <AlignJustify className="size-3" />
+              Spacing:
+            </span>
+            {LINE_SPACINGS.map((ls) => (
+              <button
+                key={ls.value}
+                type="button"
+                onClick={() => setLineSpacing(ls.value)}
+                className={`rounded-full px-2.5 py-1 text-xs transition-all ${
+                  lineSpacing === ls.value
+                    ? "bg-[#7BD3C2] text-[#141817] font-semibold"
+                    : "text-stone-600 dark:text-stone-400 hover:text-foreground"
+                }`}
+              >
+                {ls.label}
+              </button>
+            ))}
+          </div>
+
           {/* Dyslexia font */}
           <button
             type="button"
@@ -219,6 +255,21 @@ export function AccessibilityControlsContent({ inDrawer = false }: { inDrawer?: 
           >
             <BookOpen className="size-3.5" />
             Dyslexia Font
+          </button>
+
+          {/* Reduced Distraction */}
+          <button
+            type="button"
+            onClick={() => setReducedDistraction(!reducedDistraction)}
+            className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs transition-all ${
+              reducedDistraction
+                ? "bg-[#7BD3C2] text-[#141817] font-semibold border border-[#191716] shadow-[1px_1px_0px_#141817]"
+                : "border border-stone-300 dark:border-stone-700 bg-card hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-700 dark:text-stone-300"
+            }`}
+            title="Hide decorative elements and simplify visual layout"
+          >
+            <Focus className="size-3.5" />
+            Distraction-Free
           </button>
 
           {/* High contrast */}
@@ -331,6 +382,14 @@ export function AccessibilityControlsContent({ inDrawer = false }: { inDrawer?: 
             Voice Control
           </button>
         </div>
+      </div>
+
+      {/* 4. Hand Gesture Navigation */}
+      <div className="space-y-2.5">
+        <span className="text-xs font-serif italic text-stone-500 tracking-wide uppercase font-semibold">
+          Touchless & Motion Control
+        </span>
+        <GestureSettingsSection />
       </div>
     </div>
   );

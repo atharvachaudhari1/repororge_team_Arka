@@ -701,12 +701,18 @@ function ProfilePage() {
               For Deaf, hard of hearing, and speech-disabled users
             </p>
             <ul className="mt-1 grid gap-2.5 sm:grid-cols-2">
-              {["captioned_meetings", "assistive_tech"].map((key) => {
+              {[
+                "sign_interpreter",
+                "captions_first",
+                "captioned_meetings",
+                "text_communication",
+                "chat_interviews",
+              ].map((key) => {
                 const pref = ACCESS_PREFERENCE_OPTIONS.find((p) => p.key === key);
                 if (!pref) return null;
                 const id = `pref-${pref.key}`;
                 const current = normalisePrefs(form.accessibilityPreferences);
-                const checked = current.includes(pref.key);
+                const checked = current.includes(pref.key as AccessFeature);
                 return (
                   <li key={pref.key} className="flex items-center gap-2.5">
                     <Checkbox
@@ -735,41 +741,43 @@ function ProfilePage() {
               Physical &amp; Mobility Access
             </legend>
             <p className="text-xs text-muted-foreground mb-2">
-              For wheelchair users, motor disabilities, and chronic pain conditions
+              For wheelchair users, step-free access, and physical mobility needs
             </p>
             <ul className="mt-1 grid gap-2.5 sm:grid-cols-2">
-              {["remote_work", "flexible_work", "accessible_workplace", "accessible_interview"].map(
-                (key) => {
-                  const pref = ACCESS_PREFERENCE_OPTIONS.find((p) => p.key === key);
-                  if (!pref) return null;
-                  const id = `pref-${pref.key}`;
-                  const current = normalisePrefs(form.accessibilityPreferences);
-                  const checked = current.includes(pref.key);
-                  return (
-                    <li key={pref.key} className="flex items-center gap-2.5">
-                      <Checkbox
-                        id={id}
-                        checked={checked}
-                        onCheckedChange={() =>
-                          set(
-                            "accessibilityPreferences",
-                            checked
-                              ? current.filter((p) => p !== pref.key)
-                              : [...current, pref.key],
-                          )
-                        }
-                      />
-                      <label htmlFor={id} className="text-sm font-medium cursor-pointer">
-                        {pref.label}
-                      </label>
-                    </li>
-                  );
-                },
-              )}
+              {[
+                "step_free_access",
+                "accessible_washrooms",
+                "accessible_transport",
+                "accessible_workplace",
+                "remote_hybrid_option",
+              ].map((key) => {
+                const pref = ACCESS_PREFERENCE_OPTIONS.find((p) => p.key === key);
+                if (!pref) return null;
+                const id = `pref-${pref.key}`;
+                const current = normalisePrefs(form.accessibilityPreferences);
+                const checked = current.includes(pref.key as AccessFeature);
+                return (
+                  <li key={pref.key} className="flex items-center gap-2.5">
+                    <Checkbox
+                      id={id}
+                      checked={checked}
+                      onCheckedChange={() =>
+                        set(
+                          "accessibilityPreferences",
+                          checked ? current.filter((p) => p !== pref.key) : [...current, pref.key],
+                        )
+                      }
+                    />
+                    <label htmlFor={id} className="text-sm font-medium cursor-pointer">
+                      {pref.label}
+                    </label>
+                  </li>
+                );
+              })}
             </ul>
           </fieldset>
 
-          {/* Cognitive & Neurodivergent Access — NEW */}
+          {/* Cognitive & Neurodivergent Access */}
           <fieldset className="rounded-lg border border-border p-3.5">
             <legend className="px-2 text-xs font-bold uppercase tracking-wider text-brand flex items-center gap-1.5">
               <Brain className="size-3.5" />
@@ -780,30 +788,31 @@ function ProfilePage() {
             </p>
             <ul className="mt-1 grid gap-2.5 sm:grid-cols-2">
               {[
-                { key: "neuro_quiet_workspace", label: "Quiet / low-sensory workspace" },
-                { key: "neuro_flexible_deadlines", label: "Flexible deadlines & pacing" },
-                { key: "neuro_written_instructions", label: "Written (not verbal) instructions" },
-                { key: "neuro_extended_time", label: "Extended time for assessments" },
-                { key: "neuro_structured_tasks", label: "Structured task breakdowns" },
-                { key: "neuro_focus_tools", label: "Focus & productivity tools allowed" },
-              ].map((opt) => {
-                const current = form.accessibilityPreferences;
-                const checked = current.includes(opt.key);
-                const id = `pref-${opt.key}`;
+                "plain_language",
+                "clear_interview_formats",
+                "quiet_workspace",
+                "written_instructions",
+                "extended_time_assessments",
+              ].map((key) => {
+                const pref = ACCESS_PREFERENCE_OPTIONS.find((p) => p.key === key);
+                if (!pref) return null;
+                const id = `pref-${pref.key}`;
+                const current = normalisePrefs(form.accessibilityPreferences);
+                const checked = current.includes(pref.key as AccessFeature);
                 return (
-                  <li key={opt.key} className="flex items-center gap-2.5">
+                  <li key={pref.key} className="flex items-center gap-2.5">
                     <Checkbox
                       id={id}
                       checked={checked}
                       onCheckedChange={() =>
                         set(
                           "accessibilityPreferences",
-                          checked ? current.filter((p) => p !== opt.key) : [...current, opt.key],
+                          checked ? current.filter((p) => p !== pref.key) : [...current, pref.key],
                         )
                       }
                     />
                     <label htmlFor={id} className="text-sm font-medium cursor-pointer">
-                      {opt.label}
+                      {pref.label}
                     </label>
                   </li>
                 );
@@ -811,41 +820,43 @@ function ProfilePage() {
             </ul>
           </fieldset>
 
-          {/* Chronic Health & Mental Health — NEW */}
+          {/* Chronic Health & Invisible Conditions */}
           <fieldset className="rounded-lg border border-border p-3.5">
             <legend className="px-2 text-xs font-bold uppercase tracking-wider text-brand flex items-center gap-1.5">
               <span className="text-sm">💙</span>
-              Chronic Health &amp; Mental Health
+              Invisible &amp; Chronic Conditions
             </legend>
             <p className="text-xs text-muted-foreground mb-2">
-              For chronic illness, energy-limiting conditions, and mental health needs
+              For chronic illness, energy-limiting conditions, and flexible work needs
             </p>
             <ul className="mt-1 grid gap-2.5 sm:grid-cols-2">
               {[
-                { key: "health_flexible_hours", label: "Flexible / reduced hours" },
-                { key: "health_medical_leave", label: "Medical leave & appointment flexibility" },
-                { key: "health_rest_breaks", label: "Frequent rest breaks" },
-                { key: "health_wfh_flares", label: "Work from home during flare-ups" },
-                { key: "health_wellness_support", label: "Employer wellness / EAP support" },
-                { key: "health_ergonomic", label: "Ergonomic workspace setup" },
-              ].map((opt) => {
-                const current = form.accessibilityPreferences;
-                const checked = current.includes(opt.key);
-                const id = `pref-${opt.key}`;
+                "flexible_hours",
+                "remote_days",
+                "rest_breaks",
+                "leave_flexibility",
+                "flexible_work",
+                "remote_work",
+              ].map((key) => {
+                const pref = ACCESS_PREFERENCE_OPTIONS.find((p) => p.key === key);
+                if (!pref) return null;
+                const id = `pref-${pref.key}`;
+                const current = normalisePrefs(form.accessibilityPreferences);
+                const checked = current.includes(pref.key as AccessFeature);
                 return (
-                  <li key={opt.key} className="flex items-center gap-2.5">
+                  <li key={pref.key} className="flex items-center gap-2.5">
                     <Checkbox
                       id={id}
                       checked={checked}
                       onCheckedChange={() =>
                         set(
                           "accessibilityPreferences",
-                          checked ? current.filter((p) => p !== opt.key) : [...current, opt.key],
+                          checked ? current.filter((p) => p !== pref.key) : [...current, pref.key],
                         )
                       }
                     />
                     <label htmlFor={id} className="text-sm font-medium cursor-pointer">
-                      {opt.label}
+                      {pref.label}
                     </label>
                   </li>
                 );

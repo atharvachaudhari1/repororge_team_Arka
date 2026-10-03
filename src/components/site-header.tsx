@@ -250,13 +250,47 @@ export function SiteFooter() {
             <span>🔊 Multi-Modal Accessible</span>
             <span>🔒 Zero Disability Data Inferred</span>
             <span>🧠 Neurodivergent-Friendly</span>
+            <Link to="/privacy" hash="rights" className="text-brand hover:underline font-medium">
+              🇮🇳 India RPwD Rights Guide
+            </Link>
           </div>
         </div>
-        <p className="mt-4 border-t border-border/50 pt-4 text-xs">
+        <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-xs border-t border-border/50 pt-3 text-muted-foreground">
+          <span className="font-semibold text-foreground">Disability Resources & Portals:</span>
+          <Link to="/privacy" hash="rights" className="hover:text-foreground underline">
+            RPwD Act 2016 Basics
+          </Link>
+          <a
+            href="https://www.swavlambancard.gov.in"
+            target="_blank"
+            rel="noreferrer noopener"
+            className="hover:text-foreground underline"
+          >
+            UDID Swavlamban Card
+          </a>
+          <a
+            href="https://ncpedp.org"
+            target="_blank"
+            rel="noreferrer noopener"
+            className="hover:text-foreground underline"
+          >
+            NCPEDP (Employment Advocacy)
+          </a>
+          <a
+            href="https://nhfdc.nic.in"
+            target="_blank"
+            rel="noreferrer noopener"
+            className="hover:text-foreground underline"
+          >
+            NHFDC (Skill Loans & Aids)
+          </a>
+        </div>
+        <p className="mt-3 text-xs text-muted-foreground">
           Ableo is designed for blind users, Deaf users, wheelchair users, neurodivergent people,
           and anyone with a disability. Accommodation details are employer-provided or verified. We
           never infer disability, never add accommodation claims without consent, and all disability
-          information stays private by default.
+          information stays private by default. Information on legal rights is general and does not
+          constitute formal legal advice.
         </p>
       </div>
     </footer>

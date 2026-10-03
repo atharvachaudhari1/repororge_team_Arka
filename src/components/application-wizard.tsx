@@ -40,11 +40,16 @@ const STEPS = [
 export const ACCOMMODATIONS = [
   "Accessible interview",
   "Screen-reader-compatible assessment",
-  "Captioned interview",
-  "Additional assessment time",
+  "Captioned interview / live subtitles",
+  "Indian Sign Language (ISL) interpreter",
+  "Written questions / chat-based interview",
+  "Wheelchair / step-free physical accessibility",
+  "Ergonomic seating or adaptive physical setup",
+  "Additional assessment time (e.g. 1.5x / 2x)",
+  "Plain-language instructions & advance agenda",
+  "Quiet, low-distraction interview space",
   "Remote interview",
-  "Flexible scheduling",
-  "Physical accessibility",
+  "Flexible scheduling / rest breaks",
   "Other",
 ];
 

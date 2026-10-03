@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/select";
 import {
   ACCESS_FEATURES,
+  ACCESS_CATEGORIES,
   INCLUSION_FEATURES,
   type AccessFeature,
   type Employment,
@@ -408,27 +409,41 @@ function EmployerPage() {
                 Select only what your organisation genuinely provides. This appears verbatim on the
                 listing so candidates can decide for themselves.
               </p>
-              <fieldset>
-                <legend className="text-sm font-medium">Accessibility</legend>
-                <ul className="mt-2 grid gap-2 sm:grid-cols-2">
-                  {(Object.entries(ACCESS_FEATURES) as [AccessFeature, string][]).map(
-                    ([k, label]) => (
-                      <li key={k} className="flex items-center gap-2">
-                        <Checkbox
-                          id={`acs-${k}`}
-                          checked={access.includes(k)}
-                          onCheckedChange={() =>
-                            setAccess((p) => (p.includes(k) ? p.filter((x) => x !== k) : [...p, k]))
-                          }
-                        />
-                        <label htmlFor={`acs-${k}`} className="text-sm">
-                          {label}
-                        </label>
-                      </li>
-                    ),
-                  )}
-                </ul>
-              </fieldset>
+              <div className="space-y-4">
+                <div className="text-sm font-medium">Accessibility by Category</div>
+                {ACCESS_CATEGORIES.map((cat) => (
+                  <fieldset
+                    key={cat.id}
+                    className="rounded-lg border border-border/60 p-3.5 bg-muted/20"
+                  >
+                    <legend className="px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      {cat.name}
+                    </legend>
+                    <p className="text-xs text-muted-foreground mb-2">{cat.description}</p>
+                    <ul className="grid gap-2 sm:grid-cols-2">
+                      {cat.features.map((k) => (
+                        <li key={k} className="flex items-center gap-2">
+                          <Checkbox
+                            id={`acs-${k}`}
+                            checked={access.includes(k)}
+                            onCheckedChange={() =>
+                              setAccess((p) =>
+                                p.includes(k) ? p.filter((x) => x !== k) : [...p, k],
+                              )
+                            }
+                          />
+                          <label
+                            htmlFor={`acs-${k}`}
+                            className="text-sm leading-tight cursor-pointer"
+                          >
+                            {ACCESS_FEATURES[k]}
+                          </label>
+                        </li>
+                      ))}
+                    </ul>
+                  </fieldset>
+                ))}
+              </div>
               <fieldset>
                 <legend className="text-sm font-medium">
                   Gender-inclusive workplace information

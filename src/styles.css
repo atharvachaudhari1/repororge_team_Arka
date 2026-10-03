@@ -278,6 +278,40 @@ html[data-dyslexia="true"] * {
   word-spacing: 0.1em !important;
 }
 
+/* Reading Comfort Settings: Line Spacing */
+html[data-line-spacing="relaxed"] body,
+html[data-line-spacing="relaxed"] p,
+html[data-line-spacing="relaxed"] li,
+html[data-line-spacing="relaxed"] dd {
+  line-height: 1.85 !important;
+}
+
+html[data-line-spacing="loose"] body,
+html[data-line-spacing="loose"] p,
+html[data-line-spacing="loose"] li,
+html[data-line-spacing="loose"] dd {
+  line-height: 2.2 !important;
+  letter-spacing: 0.035em !important;
+  word-spacing: 0.08em !important;
+}
+
+/* Reduced Distraction Mode: Declutter backgrounds, gradients, and decorative distractions */
+html[data-reduced-distraction="true"] .surface-card {
+  box-shadow: none !important;
+  border-width: 1.5px !important;
+}
+
+html[data-reduced-distraction="true"] [class*="animate-pulse"],
+html[data-reduced-distraction="true"] [class*="animate-bounce"] {
+  animation: none !important;
+}
+
+html[data-reduced-distraction="true"] .bg-gradient-to-r,
+html[data-reduced-distraction="true"] .bg-gradient-to-br,
+html[data-reduced-distraction="true"] .bg-gradient-to-tr {
+  background-image: none !important;
+}
+
 /* Focus and keyboard navigation highlight */
 :focus-visible {
   outline: 3px solid var(--color-brand) !important;
