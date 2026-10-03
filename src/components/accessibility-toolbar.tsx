@@ -35,6 +35,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { GestureSettingsSection } from "@/components/gesture-settings";
+import { EyeTrackingSettingsSection } from "@/components/eye-tracking-settings";
 
 const SIZES: { value: FontSize; label: string }[] = [
   { value: "medium", label: "Normal" },
@@ -390,6 +391,7 @@ export function AccessibilityControlsContent({ inDrawer = false }: { inDrawer?: 
           Touchless & Motion Control
         </span>
         <GestureSettingsSection />
+        <EyeTrackingSettingsSection />
       </div>
     </div>
   );

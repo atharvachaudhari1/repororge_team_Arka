@@ -16,6 +16,10 @@ import {
   DEFAULT_GESTURE_CONFIG,
   SENSITIVITY_SETTINGS,
 } from "./gestures";
+import {
+  type EyeTrackingConfig,
+  DEFAULT_EYE_TRACKING_CONFIG,
+} from "./eye-tracking";
 import { type CandidateCommuteProfile, DEFAULT_COMMUTE_PROFILE } from "./commute";
 
 export type FontSize = "small" | "medium" | "large" | "x-large";
@@ -356,6 +360,9 @@ type State = {
   setGestureEnabled: (enabled: boolean) => void;
   setGestureSensitivity: (sensitivity: GestureSensitivity) => void;
   updateGestureMapping: (gesture: HandGesture, action: GestureAction | "none") => void;
+  eyeTrackingConfig: EyeTrackingConfig;
+  setEyeTrackingConfig: React.Dispatch<React.SetStateAction<EyeTrackingConfig>>;
+  setEyeTrackingEnabled: (enabled: boolean) => void;
 };
 
 const Ctx = createContext<State | null>(null);
@@ -433,6 +440,10 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const [gestureConfig, setGestureConfig] = useState<GestureConfig>(() => ({
     ...DEFAULT_GESTURE_CONFIG,
   }));
+  const [eyeTrackingConfig, setEyeTrackingConfig] = useState<EyeTrackingConfig>(() => ({
+    ...DEFAULT_EYE_TRACKING_CONFIG,
+    enabled: false,
+  }));
   /* Career GPS */
   const [careerAssessment, setCareerAssessment] = useState<CareerAssessment | null>(null);
   const [careerDiscoveries, setCareerDiscoveries] = useState<CareerPathRecommendation[]>([]);
@@ -475,6 +486,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       accessUpdates: {} as Record<string, AccessFeature[]>,
       isEmployerMode: false,
       gestureConfig: DEFAULT_GESTURE_CONFIG as GestureConfig,
+      eyeTrackingConfig: DEFAULT_EYE_TRACKING_CONFIG as EyeTrackingConfig,
     });
     if (s.gestureConfig) {
       setGestureConfig({
@@ -487,6 +499,14 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
           ...DEFAULT_GESTURE_CONFIG.mapping,
           ...(s.gestureConfig.mapping ?? {}),
         },
+      });
+    }
+    if (s.eyeTrackingConfig) {
+      setEyeTrackingConfig({
+        ...DEFAULT_EYE_TRACKING_CONFIG,
+        ...s.eyeTrackingConfig,
+        // SECURITY: Always force enabled=false on load.
+        enabled: false,
       });
     }
     setTheme(s.theme ?? "light");
@@ -620,6 +640,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         accessUpdates,
         isEmployerMode,
         gestureConfig,
+        eyeTrackingConfig,
       }),
     );
   }, [
@@ -652,6 +673,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     accessUpdates,
     isEmployerMode,
     gestureConfig,
+    eyeTrackingConfig,
   ]);
 
   useEffect(() => {
@@ -749,6 +771,10 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     setGestureConfig((c) => ({ ...c, enabled }));
   }, []);
 
+  const setEyeTrackingEnabled = useCallback((enabled: boolean) => {
+    setEyeTrackingConfig((c) => ({ ...c, enabled }));
+  }, []);
+
   const setGestureSensitivity = useCallback((sensitivity: GestureSensitivity) => {
     const sens = SENSITIVITY_SETTINGS[sensitivity];
     setGestureConfig((c) => ({
@@ -780,6 +806,9 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     setGestureEnabled,
     setGestureSensitivity,
     updateGestureMapping,
+    eyeTrackingConfig,
+    setEyeTrackingConfig,
+    setEyeTrackingEnabled,
     theme,
     setTheme,
     toggleTheme: () => setTheme((t) => (t === "dark" ? "light" : "dark")),

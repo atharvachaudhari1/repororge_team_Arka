@@ -76,6 +76,8 @@ function Dashboard() {
     readingRuler,
     setReadingRuler,
     setVoiceAssistantOpen,
+    eyeTrackingConfig,
+    setEyeTrackingEnabled,
   } = useAppState();
   const { user } = useAuth();
 
@@ -473,6 +475,19 @@ function Dashboard() {
             }`}
           >
             Reading Ruler {readingRuler ? "✓" : ""}
+          </button>
+
+          {/* Eye Tracking Toggle */}
+          <button
+            type="button"
+            onClick={() => setEyeTrackingEnabled(!eyeTrackingConfig.enabled)}
+            className={`rounded-full px-3 py-1 text-xs border transition-all ${
+              eyeTrackingConfig.enabled
+                ? "bg-[#7BD3C2] text-[#141817] font-bold border-[#191716]"
+                : "border-border bg-secondary/40 text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Eye Tracking {eyeTrackingConfig.enabled ? "✓" : ""}
           </button>
 
           {/* Text Size Cycle */}

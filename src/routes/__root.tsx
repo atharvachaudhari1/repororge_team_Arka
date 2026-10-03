@@ -22,6 +22,7 @@ import { LiveCaptions } from "../components/live-captions";
 import { VoiceAssistantModal } from "../components/voice-assistant-modal";
 import { ReadingRuler } from "../components/reading-ruler";
 import { HandGestureIndicator } from "../components/hand-gesture-indicator";
+import { EyeGazeOverlay } from "../components/eye-gaze-overlay";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
 function NotFoundComponent() {
@@ -170,6 +171,7 @@ function RootComponent() {
             <VoiceAssistantModal />
             <ReadingRuler />
             <HandGestureIndicator />
+            <EyeGazeOverlay />
             <CareerAssistant />
             <Toaster />
           </div>
