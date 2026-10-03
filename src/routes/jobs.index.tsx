@@ -79,7 +79,7 @@ function JobsPage() {
   const { q } = Route.useSearch();
   const searchQ = q ?? "";
   const navigate = useNavigate();
-  const { allJobs } = useAppState();
+  const { allJobs, eyeTrackingConfig } = useAppState();
   const [filters, setFilters] = useState<Filters>({ ...EMPTY_FILTERS, q: searchQ });
   const [viewMode, setViewMode] = useState<"list" | "map">("list");
   const [pending, setPending] = useState<{
@@ -323,6 +323,15 @@ function JobsPage() {
               </button>
             </div>
           </div>
+          {eyeTrackingConfig.enabled && viewMode === "list" ? (
+            <p
+              data-gaze-job-results="true"
+              className="mt-3 rounded-lg border border-brand/30 bg-brand/5 px-3 py-2 text-sm text-foreground"
+            >
+              <strong>Gaze selection is ready.</strong> Look steadily at the blank area of a job
+              card to open its details, or look at any button on the card to use that action.
+            </p>
+          ) : null}
           {results.length === 0 ? (
             <p className="surface-card mt-4 p-6 text-sm text-muted-foreground">
               No jobs match these filters yet. Try removing a filter or searching a broader term

@@ -1258,7 +1258,12 @@ export async function saveUserProfileHandler(data: {
       return { ok: true, profile: profilePayload, storage: "mongodb" as const };
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
-      return { ok: false, error: `MongoDB Atlas write failed: ${msg}` };
+      // Atlas is optional in Ableo. Keep a profile save usable when an Atlas
+      // TLS handshake or network outage occurs, just as the other auth paths
+      // already do. The SQLite copy also makes the profile available to this
+      // deployment until Atlas recovers.
+      console.warn("MongoDB Atlas profile write note (falling back to SQLite):", err);
+      console.warn(`MongoDB Atlas profile write error: ${msg}`);
     }
   }
 

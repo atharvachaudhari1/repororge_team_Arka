@@ -7,8 +7,10 @@ import { MongoClient, type Db, type Collection } from "mongodb";
 
 let cachedClient: MongoClient | null = null;
 let clientPromise: Promise<MongoClient> | null = null;
+let mongoUnavailableUntil = 0;
 
 export const DEFAULT_DB_NAME = "ableo";
+const MONGO_RETRY_COOLDOWN_MS = 30_000;
 
 export function sanitizeMongoUri(raw: string | null | undefined): string | null {
   if (!raw) return null;
@@ -34,7 +36,7 @@ export function getMongoUri(): string | null {
 
 export function isMongoConfigured(): boolean {
   const uri = getMongoUri();
-  return Boolean(uri && uri.trim().startsWith("mongodb"));
+  return Boolean(uri && uri.trim().startsWith("mongodb") && Date.now() >= mongoUnavailableUntil);
 }
 
 export async function getMongoClient(): Promise<MongoClient> {
@@ -56,12 +58,25 @@ export async function getMongoClient(): Promise<MongoClient> {
       connectTimeoutMS: 10000,
     });
 
-    clientPromise = client.connect().then((connectedClient) => {
-      cachedClient = connectedClient;
-      // Initialize indexes in the background
-      void initMongoIndexes(connectedClient.db(getDatabaseName(uri)));
-      return connectedClient;
-    });
+    clientPromise = client
+      .connect()
+      .then((connectedClient) => {
+        cachedClient = connectedClient;
+        mongoUnavailableUntil = 0;
+        // Initialize indexes in the background
+        void initMongoIndexes(connectedClient.db(getDatabaseName(uri)));
+        return connectedClient;
+      })
+      .catch(async (error: unknown) => {
+        // Do not retain a rejected promise forever. TLS/network availability can
+        // change while the server is running, and the next request should be
+        // allowed to establish a fresh connection.
+        clientPromise = null;
+        cachedClient = null;
+        mongoUnavailableUntil = Date.now() + MONGO_RETRY_COOLDOWN_MS;
+        await client.close().catch(() => undefined);
+        throw error;
+      });
   }
 
   return clientPromise;
@@ -93,10 +108,18 @@ export async function checkMongoConnection(): Promise<{
   cluster?: string;
   error?: string;
 }> {
-  if (!isMongoConfigured()) {
+  const uri = getMongoUri();
+  if (!uri || !uri.trim().startsWith("mongodb")) {
     return {
       connected: false,
       error: "MONGODB_URI environment variable is not configured in .env",
+    };
+  }
+
+  if (Date.now() < mongoUnavailableUntil) {
+    return {
+      connected: false,
+      error: "MongoDB Atlas is temporarily unavailable. The app is using SQLite and will retry automatically.",
     };
   }
 

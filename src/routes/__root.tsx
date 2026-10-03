@@ -20,6 +20,7 @@ import { CareerAssistant } from "../components/career-assistant";
 import { PortalGate } from "../components/portal-gate";
 import { LiveCaptions } from "../components/live-captions";
 import { VoiceAssistantModal } from "../components/voice-assistant-modal";
+import { JarvisVoiceHud } from "../components/jarvis-voice-hud";
 import { ReadingRuler } from "../components/reading-ruler";
 import { HandGestureIndicator } from "../components/hand-gesture-indicator";
 import { EyeGazeOverlay } from "../components/eye-gaze-overlay";
@@ -168,6 +169,7 @@ function RootComponent() {
             </main>
             <SiteFooter />
             <LiveCaptions />
+            <JarvisVoiceHud />
             <VoiceAssistantModal />
             <ReadingRuler />
             <HandGestureIndicator />

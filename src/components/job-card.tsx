@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import {
   Accessibility,
   Bookmark,
@@ -51,6 +51,7 @@ function getDisabilityIcons(access: string[]): { icon: typeof Eye; label: string
 
 export function JobCard({ job }: { job: Job }) {
   const { isSaved, toggleSaved, profile } = useAppState();
+  const navigate = useNavigate();
   const [showWhy, setShowWhy] = useState(false);
   const [explainOpen, setExplainOpen] = useState(false);
   const [auditOpen, setAuditOpen] = useState(false);
@@ -77,12 +78,24 @@ export function JobCard({ job }: { job: Job }) {
     profile.workPreference === "No preference" ||
     profile.workPreference.toLowerCase() === job.workMode.toLowerCase();
 
+  const openJobFromCard = () => {
+    navigate({ to: "/jobs/$jobId", params: { jobId: job.id } });
+  };
+
   return (
     <article
       data-job-card="true"
       data-job-id={job.id}
+      data-gaze-target="job-card"
+      onClick={(event) => {
+        // A gaze dwell invokes click() on this card itself. Keep controls inside
+        // the card independent, so saving, applying, and opening dialogs still
+        // behave exactly as their own buttons intend.
+        if (event.target === event.currentTarget) openJobFromCard();
+      }}
       className="rounded-2xl border border-border bg-card p-6 transition-all hover:border-[#191716]/30 shadow-[0_2px_8px_rgba(0,0,0,0.02)] data-[active-card=true]:ring-2 data-[active-card=true]:ring-brand data-[active-card=true]:border-brand"
       aria-labelledby={`job-${job.id}-title`}
+      aria-label={`Gaze-select ${job.title} at ${job.company}`}
     >
       <div className="flex items-start justify-between gap-3">
         <div>

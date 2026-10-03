@@ -20,6 +20,7 @@ import {
   type EyeTrackingConfig,
   DEFAULT_EYE_TRACKING_CONFIG,
 } from "./eye-tracking";
+import { type VoiceNavConfig, DEFAULT_VOICE_NAV_CONFIG } from "./voice";
 import { type CandidateCommuteProfile, DEFAULT_COMMUTE_PROFILE } from "./commute";
 
 export type FontSize = "small" | "medium" | "large" | "x-large";
@@ -363,6 +364,9 @@ type State = {
   eyeTrackingConfig: EyeTrackingConfig;
   setEyeTrackingConfig: React.Dispatch<React.SetStateAction<EyeTrackingConfig>>;
   setEyeTrackingEnabled: (enabled: boolean) => void;
+  voiceNavConfig: VoiceNavConfig;
+  setVoiceNavConfig: React.Dispatch<React.SetStateAction<VoiceNavConfig>>;
+  setVoiceNavEnabled: (enabled: boolean) => void;
 };
 
 const Ctx = createContext<State | null>(null);
@@ -444,6 +448,9 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     ...DEFAULT_EYE_TRACKING_CONFIG,
     enabled: false,
   }));
+  const [voiceNavConfig, setVoiceNavConfig] = useState<VoiceNavConfig>(() => ({
+    ...DEFAULT_VOICE_NAV_CONFIG,
+  }));
   /* Career GPS */
   const [careerAssessment, setCareerAssessment] = useState<CareerAssessment | null>(null);
   const [careerDiscoveries, setCareerDiscoveries] = useState<CareerPathRecommendation[]>([]);
@@ -487,6 +494,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       isEmployerMode: false,
       gestureConfig: DEFAULT_GESTURE_CONFIG as GestureConfig,
       eyeTrackingConfig: DEFAULT_EYE_TRACKING_CONFIG as EyeTrackingConfig,
+      voiceNavConfig: DEFAULT_VOICE_NAV_CONFIG as VoiceNavConfig,
     });
     if (s.gestureConfig) {
       setGestureConfig({
@@ -507,6 +515,16 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         ...s.eyeTrackingConfig,
         // SECURITY: Always force enabled=false on load.
         enabled: false,
+      });
+    }
+    if (s.voiceNavConfig) {
+      setVoiceNavConfig({
+        ...DEFAULT_VOICE_NAV_CONFIG,
+        ...s.voiceNavConfig,
+        // Microphone requires explicit activation or preset selection each session
+        enabled: false,
+        // Voice commands must always be deliberately addressed to JARVIS.
+        wakeWordRequired: true,
       });
     }
     setTheme(s.theme ?? "light");
@@ -641,6 +659,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         isEmployerMode,
         gestureConfig,
         eyeTrackingConfig,
+        voiceNavConfig,
       }),
     );
   }, [
@@ -674,6 +693,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     isEmployerMode,
     gestureConfig,
     eyeTrackingConfig,
+    voiceNavConfig,
   ]);
 
   useEffect(() => {
@@ -734,7 +754,16 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       setMotion("reduced");
       setLiveCaptions(false);
       setDyslexiaFont(false);
-      setVoiceAssistantOpen(true);
+      setVoiceAssistantOpen(false);
+      setVoiceNavConfig((c) => ({
+        ...c,
+        enabled: true,
+        wakeWordRequired: true,
+        showNumberedBadges: true,
+      }));
+      // Motor mode is intentionally voice-first. Do not activate the camera or
+      // require hand movement from people with limited or no hand mobility.
+      setGestureConfig((c) => ({ ...c, enabled: false }));
     } else if (preset === "deaf") {
       setLiveCaptions(true);
       setHighContrast(false);
@@ -749,6 +778,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       setDyslexiaFont(false);
       setLiveCaptions(false);
       setVoiceAssistantOpen(false);
+      setVoiceNavConfig((c) => ({ ...c, enabled: false, showNumberedBadges: false }));
     }
   }, []);
 
@@ -798,6 +828,10 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     [],
   );
 
+  const setVoiceNavEnabled = useCallback((enabled: boolean) => {
+    setVoiceNavConfig((c) => ({ ...c, enabled }));
+  }, []);
+
   const value: State = {
     isEmployerMode,
     setIsEmployerMode,
@@ -809,6 +843,9 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     eyeTrackingConfig,
     setEyeTrackingConfig,
     setEyeTrackingEnabled,
+    voiceNavConfig,
+    setVoiceNavConfig,
+    setVoiceNavEnabled,
     theme,
     setTheme,
     toggleTheme: () => setTheme((t) => (t === "dark" ? "light" : "dark")),

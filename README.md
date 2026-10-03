@@ -1,15 +1,15 @@
 <div align="center">
 
-<img src="https://img.shields.io/badge/♿-AccessPath-149187?style=for-the-badge&labelColor=0f172a&color=149187" alt="AccessPath" height="40"/>
+<img src="https://img.shields.io/badge/♿-Ableo-149187?style=for-the-badge&labelColor=0f172a&color=149187" alt="Ableo" height="40"/>
 
-# AccessPath
+# Ableo
 
 ### AI-Powered Inclusive Career & Employment Platform
 
 **Find Jobs Without Barriers.**
 
-An accessibility-first career platform built for visually impaired,
-transgender, and underserved job seekers — powered by explainable AI.
+An accessibility-first job platform for people with disabilities — with
+transparent workplace accommodations, hands-free controls, and explainable AI.
 
 <br/>
 
@@ -73,9 +73,9 @@ transgender, and underserved job seekers — powered by explainable AI.
 
 ## 🌟 Overview
 
-**AccessPath** is an AI-powered, accessibility-first career platform that goes beyond job listings. It helps visually impaired, transgender, and underserved candidates not just _find_ jobs — but _understand_, _access_, and _apply_ with confidence.
+**Ableo** is an AI-powered, accessibility-first career platform that goes beyond job listings. It helps disabled and neurodivergent candidates not just _find_ jobs — but _understand_, _access_, and _apply_ with confidence.
 
-| Traditional Job Portals         | AccessPath                        |
+| Traditional Job Portals         | Ableo                             |
 | ------------------------------- | --------------------------------- |
 | Job listings + keyword search   | Career discovery + explainable AI |
 | Apply blindly                   | Understand your match score       |
@@ -190,7 +190,7 @@ Search and filter jobs by:
 
 ### 🎙️ 2. Voice-Powered Search
 
-Speak naturally. AccessPath converts your words into structured filters.
+Speak naturally. Ableo converts your words into structured filters.
 
 **Example input:**
 
@@ -206,6 +206,12 @@ Filter     →  Accessible Interview ✓
 ```
 
 **Why it matters:** Reduces navigation effort for users with visual impairments. Voice-first interaction makes job discovery faster and more independent.
+
+---
+
+### 🤖 JARVIS Hands-Free Navigation
+
+JARVIS provides voice-operated page navigation for people with limited motor control. It supports a wake word, standby/wake controls, numbered click targets, search, scrolling, accessibility controls, and spoken feedback. Commands are parsed locally in the browser through standard speech APIs.
 
 ---
 
@@ -593,7 +599,7 @@ They must never be used to screen out or deprioritise candidates.
 | **Frontend**       | React 19, TypeScript, Vite 8, TanStack Start & Router                  |
 | **Styling**        | Tailwind CSS 4, tw-animate-css, Radix UI                               |
 | **AI / LLM**       | Google Gemini 2.5 Flash & TinyFish Web Agent API (with local fallback) |
-| **Backend / Data** | MongoDB Atlas (with SQLite local fallback)                             |
+| **Backend / Data** | MongoDB Atlas with resilient SQLite fallback during network/TLS outages |
 | **Accessibility**  | Web Speech API, Text-to-Speech, ARIA, Semantic HTML                    |
 | **Testing / CI**   | Vitest, GitHub Actions CI                                              |
 | **Standards**      | WCAG 2.2 AA                                                            |
@@ -864,7 +870,7 @@ Greater Employment Access
 
 | Resource        | Link                                                                |
 | --------------- | ------------------------------------------------------------------- |
-| 💻 GitHub       | [Repoforge-Win](https://github.com/atharvachaudhari1/Repoforge-Win) |
+| 💻 GitHub       | [test-repoforge-](https://github.com/atharvachaudhari1/test-repoforge-) |
 | 🎥 Demo Video   | _Add YouTube link_                                                  |
 | 📊 Presentation | _Add Slides link_                                                   |
 | 🌐 Live Demo    | _Add deployed URL_                                                  |

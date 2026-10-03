@@ -36,6 +36,7 @@ import {
 } from "@/components/ui/sheet";
 import { GestureSettingsSection } from "@/components/gesture-settings";
 import { EyeTrackingSettingsSection } from "@/components/eye-tracking-settings";
+import { VoiceSettingsSection } from "@/components/voice-settings";
 
 const SIZES: { value: FontSize; label: string }[] = [
   { value: "medium", label: "Normal" },
@@ -73,7 +74,6 @@ export function AccessibilityControlsContent({ inDrawer = false }: { inDrawer?: 
     setCaptionText,
     activePreset,
     applyPreset,
-    setVoiceAssistantOpen,
     readingRuler,
     setReadingRuler,
     ttsRate,
@@ -376,11 +376,12 @@ export function AccessibilityControlsContent({ inDrawer = false }: { inDrawer?: 
           {/* Voice Control */}
           <button
             type="button"
-            onClick={() => setVoiceAssistantOpen(true)}
+            onClick={() => applyPreset(activePreset === "motor" ? "custom" : "motor")}
+            aria-pressed={activePreset === "motor"}
             className="inline-flex items-center gap-1.5 rounded-full border border-[#191716] bg-[#7BD3C2] px-3.5 py-1.5 text-xs font-semibold text-[#141817] shadow-[1px_1px_0px_#141817] transition-all hover:bg-[#6ec2b1]"
           >
             <Mic className="size-3.5" />
-            Voice Control
+            {activePreset === "motor" ? "Stop Voice Control" : "Start Voice Control"}
           </button>
         </div>
       </div>
@@ -392,6 +393,13 @@ export function AccessibilityControlsContent({ inDrawer = false }: { inDrawer?: 
         </span>
         <GestureSettingsSection />
         <EyeTrackingSettingsSection />
+      </div>
+
+      <div className="space-y-2.5">
+        <span className="text-xs font-serif italic text-stone-500 tracking-wide uppercase font-semibold">
+          Hands-Free Voice Navigation
+        </span>
+        <VoiceSettingsSection />
       </div>
     </div>
   );
