@@ -24,6 +24,7 @@ import {
   Footprints,
   MapPin,
   Navigation,
+  Fingerprint,
 } from "lucide-react";
 import { DEFAULT_COMMUTE_PROFILE, type CandidateCommuteProfile } from "@/lib/commute";
 import { Button } from "@/components/ui/button";
@@ -46,6 +47,59 @@ import type { AccessFeature } from "@/lib/jobs-data";
 import { parseResumeText, DEMO_RESUMES, type ParsedResume } from "@/lib/resume-parser";
 import { extractResumeText } from "@/lib/resume-file";
 import { AccessibleResumeExportModal } from "@/components/accessible-resume-export";
+import { useBiometricAuth } from "@/hooks/use-biometric-auth";
+
+/** Biometric enrollment card shown on the profile page. */
+function BiometricEnrollmentSection() {
+  const bio = useBiometricAuth();
+
+  if (!bio.isSupported) return null;
+
+  return (
+    <section className="space-y-3 rounded-2xl border border-border bg-card/60 p-5">
+      <div className="flex items-center gap-2">
+        <Fingerprint className="size-5 text-[#7BD3C2]" />
+        <h3 className="text-base font-semibold text-foreground">Biometric Sign-In</h3>
+        {bio.isRegistered && (
+          <span className="ml-auto inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-xs font-medium text-emerald-700 dark:text-emerald-300">
+            <CheckCircle2 className="size-3" />
+            Enrolled
+          </span>
+        )}
+      </div>
+
+      <p className="text-sm text-muted-foreground">
+        {bio.isRegistered
+          ? "Your device biometrics are enrolled. You can sign in using Touch ID, Face ID, Windows Hello, or your device's built-in biometric."
+          : "Register your device biometrics for fast, passwordless sign-in. Supports Touch ID, Face ID, Windows Hello, and more."}
+      </p>
+
+      {bio.error && (
+        <p className="text-sm text-destructive">{bio.error}</p>
+      )}
+      {bio.success && (
+        <p className="text-sm text-emerald-600 dark:text-emerald-400">{bio.success}</p>
+      )}
+
+      {!bio.isRegistered && (
+        <Button
+          type="button"
+          variant="outline"
+          className="gap-2 border-[#7BD3C2]/40 hover:border-[#7BD3C2] hover:bg-[#7BD3C2]/10"
+          disabled={bio.isLoading}
+          onClick={() => void bio.registerBiometric()}
+        >
+          {bio.isLoading ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : (
+            <Fingerprint className="size-4 text-[#7BD3C2]" />
+          )}
+          <span>{bio.isLoading ? "Registering…" : "Register Biometric"}</span>
+        </Button>
+      )}
+    </section>
+  );
+}
 
 export const Route = createFileRoute("/profile")({
   head: () => ({
@@ -224,6 +278,16 @@ function ProfilePage() {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2 self-start sm:self-center">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-8 gap-1.5 text-xs font-semibold"
+            onClick={() => navigate({ to: "/resume-builder" })}
+          >
+            <Sparkles className="size-3.5" />
+            Guided Resume Builder
+          </Button>
           <Button
             type="button"
             variant="outline"
@@ -1111,6 +1175,9 @@ function ProfilePage() {
             </label>
           </div>
         </section>
+
+        {/* ── Biometric Authentication ─────────────────────────── */}
+        <BiometricEnrollmentSection />
 
         <div className="flex flex-wrap items-center gap-3 pt-2">
           <Button type="submit" size="lg" className="min-w-44 gap-2" disabled={isSaving}>

@@ -65,6 +65,9 @@ export function useHandGestures({
   const lastProgressUpdateRef = useRef(0);
   const smoothedLandmarksRef = useRef<Landmark[] | null>(null);
   const lastDetectionTimeRef = useRef(0);
+  const pinchStartRef = useRef<number | null>(null);
+  const airClickCooldownRef = useRef(0);
+  const airHoveredElementRef = useRef<HTMLElement | null>(null);
 
   const configRef = useRef(config);
   configRef.current = config;
@@ -119,6 +122,12 @@ export function useHandGestures({
     lastInferenceTimeRef.current = 0;
     smoothedLandmarksRef.current = null;
     lastDetectionTimeRef.current = 0;
+    pinchStartRef.current = null;
+    airClickCooldownRef.current = 0;
+    airHoveredElementRef.current = null;
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("ableo:air-cursor-hide"));
+    }
     setActiveGesture(null);
     setHoldProgress(0);
   }, []);
@@ -279,6 +288,61 @@ export function useHandGestures({
               // Smooth landmarks across frames to eliminate micro-jitter and fluttering (alpha = 0.35)
               const smoothed = smoothLandmarks(handLandmarks, smoothedLandmarksRef.current, 0.35);
               smoothedLandmarksRef.current = smoothed;
+              const sens = SENSITIVITY_SETTINGS[configRef.current.sensitivity];
+
+              if (configRef.current.airCursorEnabled && !isPausedRef.current) {
+                const indexTip = smoothed[8];
+                const thumbTip = smoothed[4];
+                if (indexTip && thumbTip) {
+                  const x = Math.max(
+                    0,
+                    Math.min(window.innerWidth, (1 - indexTip.x) * window.innerWidth),
+                  );
+                  const y = Math.max(
+                    0,
+                    Math.min(window.innerHeight, indexTip.y * window.innerHeight),
+                  );
+                  const pinchDistance = Math.hypot(
+                    indexTip.x - thumbTip.x,
+                    indexTip.y - thumbTip.y,
+                  );
+                  const pinching = pinchDistance <= sens.pinchDistance;
+
+                  window.dispatchEvent(
+                    new CustomEvent("ableo:air-cursor-move", {
+                      detail: { x, y, pinching },
+                    }),
+                  );
+
+                  const target = document.elementFromPoint(x, y) as HTMLElement | null;
+                  if (target !== airHoveredElementRef.current) {
+                    airHoveredElementRef.current?.dispatchEvent(
+                      new MouseEvent("mouseout", { bubbles: true, clientX: x, clientY: y }),
+                    );
+                    target?.dispatchEvent(
+                      new MouseEvent("mouseover", { bubbles: true, clientX: x, clientY: y }),
+                    );
+                    airHoveredElementRef.current = target;
+                  }
+                  target?.dispatchEvent(
+                    new MouseEvent("mousemove", { bubbles: true, clientX: x, clientY: y }),
+                  );
+
+                  if (pinching) {
+                    pinchStartRef.current ??= now;
+                    if (now - pinchStartRef.current >= 280 && now >= airClickCooldownRef.current) {
+                      target?.click();
+                      airClickCooldownRef.current = now + 850;
+                      pinchStartRef.current = now;
+                      window.dispatchEvent(
+                        new CustomEvent("ableo:air-cursor-click", { detail: { x, y } }),
+                      );
+                    }
+                  } else {
+                    pinchStartRef.current = null;
+                  }
+                }
+              }
 
               // Update history for dynamic gesture tracking
               const history = historyRef.current;
@@ -287,7 +351,6 @@ export function useHandGestures({
                 history.shift();
               }
 
-              const sens = SENSITIVITY_SETTINGS[configRef.current.sensitivity];
               const detected = classifyGesture(smoothed, history, {
                 pinchDistance: sens.pinchDistance,
                 swipeThreshold: sens.swipeThreshold,
@@ -324,6 +387,9 @@ export function useHandGestures({
               // No hand detected in this inference frame
               // Grace window: retain skeleton for 400ms to prevent single-frame fluttering
               if (now - lastDetectionTimeRef.current > 400) {
+                pinchStartRef.current = null;
+                airHoveredElementRef.current = null;
+                window.dispatchEvent(new CustomEvent("ableo:air-cursor-hide"));
                 smoothedLandmarksRef.current = null;
                 holdTrackerRef.current.update(null, now);
 

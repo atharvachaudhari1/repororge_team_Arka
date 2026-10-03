@@ -9,7 +9,12 @@ import {
   type AuthUser,
 } from "./auth.functions";
 
-type Credentials = { email: string; password: string; role: AccountRole };
+type Credentials = {
+  email: string;
+  password: string;
+  role: AccountRole;
+  rememberMe?: boolean | undefined;
+};
 type Registration = Credentials & { fullName: string };
 
 export type AuthResult = {
@@ -27,6 +32,8 @@ type AuthState = {
   login: (data: Credentials) => Promise<AuthResult>;
   register: (data: Registration) => Promise<AuthResult>;
   logout: () => void;
+  /** Set user from external auth flow (e.g. biometric) */
+  setAuthUser: (user: AuthUser) => void;
 };
 
 const AuthContext = createContext<AuthState | null>(null);
@@ -105,8 +112,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(null);
         void logoutFn({ data: {} });
       },
+      setAuthUser: (u: AuthUser) => {
+        setUser(u);
+      },
     }),
-    [isLoading, loginFn, logoutFn, registerFn, user],
+    [isLoading, loginFn, logoutFn, registerFn, user, setUser],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

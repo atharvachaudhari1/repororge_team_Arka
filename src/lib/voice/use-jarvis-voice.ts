@@ -3,6 +3,7 @@ import { useNavigate } from "@tanstack/react-router";
 import type { VoiceNavConfig, VoiceNavStatus, VoiceCommand } from "./types";
 import type { FontSize } from "@/lib/app-state";
 import { parseVoiceCommand } from "./command-parser";
+import { askJarvis } from "../ai.functions";
 import { playJarvisChime, speakJarvis, stopJarvis } from "./jarvis-speech";
 import {
   renderNumberedBadgesOverlay,
@@ -65,7 +66,6 @@ export type UseJarvisVoiceOptions = {
     setCaptionText: (t: string) => void;
     eyeTrackingEnabled: boolean;
     gesturesEnabled: boolean;
-    activateHandsFreeControls: () => void;
   };
 };
 
@@ -89,7 +89,7 @@ export function useJarvisVoice({
   const isSleepingRef = useRef(isSleeping);
   const configRef = useRef(config);
   const appActionsRef = useRef(appActions);
-  // After the user says "Hey Jarvis", accept a short sequence of follow-up
+  // After the user says "Hey Janvi", accept a short sequence of follow-up
   // commands. Each accepted command refreshes the window for hands-free use.
   const commandWindowUntilRef = useRef(0);
 
@@ -119,7 +119,7 @@ export function useJarvisVoice({
         const display = feedbackText || speech;
         setLastActionFeedback(display);
         setAnnouncement(display);
-        actions.setCaptionText(`JARVIS: "${display}"`);
+        actions.setCaptionText(`JANVI: "${display}"`);
 
         if (conf.soundEffects) {
           playJarvisChime("confirm");
@@ -128,13 +128,6 @@ export function useJarvisVoice({
           speakJarvis(speech, { rate: conf.ttsRate, lang: conf.lang });
         }
       };
-
-      // A recognized command is an explicit request to begin a hands-free
-      // session. Keep the voice control, gaze control, and hand gestures in
-      // sync while preserving the browser's camera-permission prompt.
-      if (command.type !== "sleep" && command.type !== "disable") {
-        actions.activateHandsFreeControls();
-      }
 
       switch (command.type) {
         // --- Navigation ---
@@ -431,24 +424,45 @@ export function useJarvisVoice({
           setIsSleeping(true);
           if (conf.soundEffects) playJarvisChime("sleep");
           respond(
-            "Standby mode activated. Say 'Hey Jarvis' or 'Wake up' to resume listening.",
-            "Jarvis in Standby",
+            "Standby mode activated. Say 'Hey Janvi' or 'Wake up' to resume listening.",
+            "Janvi in Standby",
           );
           break;
 
         case "wake":
           setIsSleeping(false);
           if (conf.soundEffects) playJarvisChime("wake");
-          respond("Jarvis online and ready. What can I do for you?", "Jarvis Ready");
+          respond("Janvi online and ready. What can I do for you?", "Janvi Ready");
           break;
 
         case "help":
           respond(
-            "You can say: Go to jobs, Open dashboard, Scroll down, Show numbers, Click number, Search for developer, High contrast, or Jarvis sleep.",
+            "You can say: Go to jobs, Open dashboard, Scroll down, Show numbers, Click number, Search for developer, High contrast, or Janvi sleep.",
             "Command Options Available",
           );
           onHelp?.();
           break;
+
+        case "ask_question": {
+          const question = typeof command.payload === "string" ? command.payload : "";
+          respond("I’m checking the project for that.", "Searching project context…");
+          void askJarvis({ data: { question } })
+            .then((result) => {
+              const answer = result.ok ? result.answer : result.error;
+              setLastActionFeedback(answer);
+              setAnnouncement(answer);
+              actions.setCaptionText(`JANVI: "${answer}"`);
+              if (conf.speechFeedback) speakJarvis(answer, { rate: conf.ttsRate, lang: conf.lang });
+            })
+            .catch(() => {
+              const answer = "I couldn’t reach the project assistant right now.";
+              setLastActionFeedback(answer);
+              setAnnouncement(answer);
+              actions.setCaptionText(`JANVI: "${answer}"`);
+              if (conf.speechFeedback) speakJarvis(answer, { rate: conf.ttsRate, lang: conf.lang });
+            });
+          break;
+        }
 
         case "disable":
           if (onConfigChange) {
@@ -499,7 +513,7 @@ export function useJarvisVoice({
         const rec = new SpeechRecognitionClass();
         recognitionRef.current = rec;
         // Keep the recognition engine ready for the wake phrase. Command parsing
-        // still ignores ordinary speech unless it follows "Hey Jarvis".
+        // still ignores ordinary speech unless it follows "Hey Janvi".
         rec.continuous = true;
         rec.interimResults = false;
         rec.lang = configRef.current.lang || "en-IN";
@@ -527,7 +541,7 @@ export function useJarvisVoice({
           if (final.trim()) {
             const commandWindowOpen = Date.now() < commandWindowUntilRef.current;
             const parsed = parseVoiceCommand(final.trim(), {
-              // A command can be spoken either in one phrase ("Hey Jarvis,
+              // A command can be spoken either in one phrase ("Hey Janvi,
               // open jobs") or as the follow-up to a wake word.
               wakeWordRequired: !commandWindowOpen,
               isSleeping: isSleepingRef.current,
@@ -633,11 +647,11 @@ export function useJarvisVoice({
       const next = !prev;
       if (next) {
         if (config.soundEffects) playJarvisChime("sleep");
-        setLastActionFeedback("Jarvis in Standby");
+        setLastActionFeedback("Janvi in Standby");
       } else {
         if (config.soundEffects) playJarvisChime("wake");
-        setLastActionFeedback("Jarvis Ready");
-        speakJarvis("Jarvis ready.", { rate: config.ttsRate, lang: config.lang });
+        setLastActionFeedback("Janvi Ready");
+        speakJarvis("Janvi ready.", { rate: config.ttsRate, lang: config.lang });
       }
       return next;
     });

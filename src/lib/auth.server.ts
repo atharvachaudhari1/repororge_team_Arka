@@ -160,9 +160,13 @@ async function createSession(
   dbOrMongo: SqliteDatabase | "mongo",
   userId: number | string,
   role?: AccountRole,
+  rememberMe: boolean = true,
 ) {
   const token = (await crypto()).randomBytes(32).toString("hex");
-  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+  const durationMs = rememberMe
+    ? 30 * 24 * 60 * 60 * 1000 // 30 days
+    : 24 * 60 * 60 * 1000; // 1 day
+  const expiresAt = new Date(Date.now() + durationMs);
 
   if (dbOrMongo === "mongo") {
     const mongo = await getMongoDb();
@@ -186,14 +190,17 @@ async function createSession(
 
 const COOKIE_NAME = "ableo_session";
 
-export function setSessionCookie(token: string) {
+export function setSessionCookie(token: string, rememberMe: boolean = true) {
   try {
+    const maxAge = rememberMe
+      ? 30 * 24 * 60 * 60 // 30 days in seconds
+      : 24 * 60 * 60; // 1 day in seconds
     setCookie(COOKIE_NAME, token, {
       httpOnly: true,
       secure: process.env["NODE_ENV"] === "production",
       sameSite: "lax",
       path: "/",
-      maxAge: 7 * 24 * 60 * 60, // 7 days in seconds
+      maxAge,
     });
   } catch (err) {
     console.error("Could not set session cookie:", err);
@@ -392,6 +399,7 @@ export async function loginAccountHandler(data: {
   email: string;
   password: string;
   role: AccountRole;
+  rememberMe?: boolean | undefined;
 }) {
   const ip = getClientIp();
   const ipKey = `ip:${ip}`;
@@ -481,8 +489,9 @@ export async function loginAccountHandler(data: {
       await mongo.collection("login_attempts").deleteMany({ key: { $in: [ipKey, emailKey] } });
       const userId = userDoc!["_id"].toString();
       const effectiveRole: AccountRole = isAdmin ? data.role : (userDoc!["role"] as AccountRole);
-      const token = await createSession("mongo", userId, effectiveRole);
-      setSessionCookie(token);
+      const remember = data.rememberMe ?? true;
+      const token = await createSession("mongo", userId, effectiveRole, remember);
+      setSessionCookie(token, remember);
 
       return {
         ok: true as const,
@@ -577,8 +586,9 @@ export async function loginAccountHandler(data: {
 
   db.prepare("DELETE FROM login_attempts WHERE key IN (?, ?)").run(ipKey, emailKey);
   const effectiveRole: AccountRole = isRowAdmin ? data.role : row!.role;
-  const token = await createSession(db, row!.id, effectiveRole);
-  setSessionCookie(token);
+  const remember = data.rememberMe ?? true;
+  const token = await createSession(db, row!.id, effectiveRole, remember);
+  setSessionCookie(token, remember);
   return {
     ok: true as const,
     user: {

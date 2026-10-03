@@ -50,7 +50,8 @@ export type VoiceCommandType =
   | "sleep"
   | "wake"
   | "help"
-  | "disable";
+  | "disable"
+  | "ask_question";
 
 export type VoiceCommand = {
   type: VoiceCommandType;

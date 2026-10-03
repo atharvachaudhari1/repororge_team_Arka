@@ -33,7 +33,7 @@ export function VoiceSettingsSection() {
               🎙️
             </span>
             <h3 className="font-semibold text-base text-foreground font-serif">
-              JARVIS Voice Navigation
+              Janvi Voice Navigation
             </h3>
             {voiceNavConfig.enabled && (
               <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
@@ -93,17 +93,17 @@ export function VoiceSettingsSection() {
               <div className="space-y-0.5">
                 <div className="flex items-center gap-1.5 font-medium text-xs text-foreground">
                   <Sparkles className="size-3.5 text-amber-500" />
-                  "Hey Jarvis" Wake Word Required
+                  "Hey Janvi" Wake Word Required
                 </div>
                 <p className="text-[11px] text-muted-foreground">
-                  Commands only run after you say "Hey Jarvis", so normal conversation cannot
+                  Commands only run after you say "Hey Janvi", so normal conversation cannot
                   control the website.
                 </p>
               </div>
               <Switch
                 checked={voiceNavConfig.wakeWordRequired}
                 disabled
-                aria-label="Hey Jarvis wake word is required"
+                  aria-label="Hey Janvi wake word is required"
               />
             </div>
 
@@ -116,10 +116,10 @@ export function VoiceSettingsSection() {
                   ) : (
                     <VolumeX className="size-3.5 text-muted-foreground" />
                   )}
-                  JARVIS Verbal Responses
+                  Janvi Verbal Responses
                 </div>
                 <p className="text-[11px] text-muted-foreground">
-                  JARVIS speaks verbal confirmations aloud (e.g. "Opening Jobs", "Scrolling down").
+                  Janvi speaks verbal confirmations aloud (e.g. "Opening Jobs", "Scrolling down").
                 </p>
               </div>
               <Switch
@@ -127,7 +127,7 @@ export function VoiceSettingsSection() {
                 onCheckedChange={(checked) =>
                   setVoiceNavConfig((prev) => ({ ...prev, speechFeedback: checked }))
                 }
-                aria-label="Toggle JARVIS verbal voice responses"
+                aria-label="Toggle Janvi verbal voice responses"
               />
             </div>
 
@@ -139,7 +139,7 @@ export function VoiceSettingsSection() {
                   Harmonic Chimes & Tones
                 </div>
                 <p className="text-[11px] text-muted-foreground">
-                  Futuristic audio chimes when JARVIS wakes, executes an action, or enters standby.
+                  Futuristic audio chimes when Janvi wakes, executes an action, or enters standby.
                 </p>
               </div>
               <Switch
@@ -175,7 +175,7 @@ export function VoiceSettingsSection() {
 
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <Label className="text-xs font-semibold text-foreground">JARVIS Speech Rate</Label>
+                <Label className="text-xs font-semibold text-foreground">Janvi Speech Rate</Label>
                 <span className="text-[11px] text-muted-foreground font-mono">
                   {voiceNavConfig.ttsRate.toFixed(2)}x
                 </span>
@@ -191,7 +191,7 @@ export function VoiceSettingsSection() {
                   }
                 }}
                 className="py-1"
-                aria-label="JARVIS speech rate"
+                aria-label="Janvi speech rate"
               />
             </div>
           </div>
@@ -209,7 +209,7 @@ export function VoiceSettingsSection() {
       ) : (
         <div className="rounded-xl border border-dashed border-border/80 bg-background/30 p-4 text-center">
           <p className="text-xs text-muted-foreground">
-            Activate JARVIS Voice Navigation to control Ableo completely hands-free using your
+            Activate Janvi Voice Navigation to control Ableo completely hands-free using your
             voice.
           </p>
         </div>

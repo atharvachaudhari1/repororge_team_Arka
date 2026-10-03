@@ -63,6 +63,14 @@ export function VoiceAssistantModal() {
       return;
     }
 
+    if (text.includes("resume") && (text.includes("build") || text.includes("create"))) {
+      setFeedback("Opening Guided Resume Builder…");
+      tts.play("Opening Guided Resume Builder");
+      navigate({ to: "/resume-builder" });
+      setVoiceAssistantOpen(false);
+      return;
+    }
+
     if (text.includes("resume") || text.includes("match")) {
       setFeedback("Opening Resume Match…");
       tts.play("Opening Resume Match");

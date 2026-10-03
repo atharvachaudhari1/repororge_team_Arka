@@ -162,6 +162,26 @@ export function GestureSettingsSection() {
             />
           </div>
 
+          {/* Air cursor toggle */}
+          <div className="flex items-center justify-between rounded-xl border border-brand/30 bg-brand/5 p-3">
+            <div className="space-y-0.5">
+              <span className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                <span aria-hidden="true">☝️</span>
+                Control Cursor in Air
+              </span>
+              <p className="text-[11px] text-muted-foreground">
+                Point with your index finger. Pinch thumb and index finger to click.
+              </p>
+            </div>
+            <Switch
+              checked={gestureConfig.airCursorEnabled}
+              onCheckedChange={(checked) =>
+                setGestureConfig((c) => ({ ...c, airCursorEnabled: checked }))
+              }
+              aria-label="Toggle air cursor control"
+            />
+          </div>
+
           {/* Gesture Mapping Table */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">

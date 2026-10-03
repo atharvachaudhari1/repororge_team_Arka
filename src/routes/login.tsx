@@ -8,11 +8,14 @@ import {
   CheckCircle2,
   MailCheck,
   RotateCw,
+  Fingerprint,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from "@/lib/auth-context";
+import { useBiometricAuth } from "@/hooks/use-biometric-auth";
 import {
   requestPasswordReset,
   confirmPasswordReset,
@@ -66,7 +69,7 @@ function LoginPage() {
   } = Route.useSearch();
   const initialRole: AccountRole = searchRole === "employer" ? "employer" : "candidate";
   const navigate = useNavigate();
-  const { login, register } = useAuth();
+  const { login, register, setAuthUser } = useAuth();
   const requestResetFn = useServerFn(requestPasswordReset);
   const confirmResetFn = useServerFn(confirmPasswordReset);
   const requestVerificationFn = useServerFn(requestEmailVerification);
@@ -86,6 +89,56 @@ function LoginPage() {
   const [error, setError] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
+
+  // Auto-fill remembered email
+  useEffect(() => {
+    if (!searchEmail) {
+      try {
+        const saved = localStorage.getItem("ableo:remember_email");
+        if (saved) {
+          setEmail(saved);
+        }
+      } catch {
+        // ignore
+      }
+    }
+  }, [searchEmail]);
+
+  const biometric = useBiometricAuth();
+
+  const submitBiometricLogin = async () => {
+    if (!email.trim()) {
+      setError("Please enter your email address first to use biometric sign-in.");
+      return;
+    }
+    setError("");
+    setSuccessMsg("");
+    setIsSubmitting(true);
+    try {
+      const result = await biometric.authenticateWithBiometric(email.trim(), role);
+      if (!result.ok || !result.user) {
+        setError(result.error ?? "Biometric authentication failed.");
+        return;
+      }
+      setAuthUser(result.user);
+      try {
+        localStorage.setItem("ableo:remember_email", email.trim());
+      } catch {
+        // ignore
+      }
+      // Navigate after successful biometric login
+      if (redirect) {
+        window.location.assign(redirect);
+        return;
+      }
+      navigate({ to: result.user.role === "employer" ? "/employer" : "/dashboard" });
+    } catch {
+      setError("Biometric authentication failed. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const submitAuth = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -96,7 +149,7 @@ function LoginPage() {
       const result =
         mode === "register"
           ? await register({ fullName, email, password, role })
-          : await login({ email, password, role });
+          : await login({ email, password, role, rememberMe });
 
       if (result.requiresVerification) {
         setMode("verify_email");
@@ -113,6 +166,21 @@ function LoginPage() {
         setError(result.error ?? "We couldn't sign you in.");
         return;
       }
+
+      if (rememberMe) {
+        try {
+          localStorage.setItem("ableo:remember_email", email.trim());
+        } catch {
+          // ignore
+        }
+      } else {
+        try {
+          localStorage.removeItem("ableo:remember_email");
+        } catch {
+          // ignore
+        }
+      }
+
       if (redirect) {
         window.location.assign(redirect);
         return;
@@ -331,6 +399,22 @@ function LoginPage() {
               />
             </div>
 
+            {mode === "login" && (
+              <div className="flex items-center space-x-2 pt-1 pb-0.5">
+                <Checkbox
+                  id="remember-me"
+                  checked={rememberMe}
+                  onCheckedChange={(checked) => setRememberMe(Boolean(checked))}
+                />
+                <label
+                  htmlFor="remember-me"
+                  className="text-xs font-medium text-muted-foreground hover:text-foreground cursor-pointer select-none"
+                >
+                  Remember me for 30 days
+                </label>
+              </div>
+            )}
+
             {error && (
               <div
                 role="alert"
@@ -348,6 +432,31 @@ function LoginPage() {
                   ? `Create ${role} account`
                   : `Sign in as ${role === "candidate" ? "user" : "employer"}`}
             </Button>
+
+            {/* Biometric Login Option */}
+            {mode === "login" && biometric.isSupported && (
+              <>
+                <div className="relative my-2">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t border-border" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-card px-2 text-muted-foreground">or</span>
+                  </div>
+                </div>
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full gap-2 border-[#7BD3C2]/40 hover:border-[#7BD3C2] hover:bg-[#7BD3C2]/10 transition-all duration-200"
+                  disabled={isSubmitting || biometric.isLoading}
+                  onClick={submitBiometricLogin}
+                >
+                  <Fingerprint className="size-5 text-[#7BD3C2]" />
+                  <span>Sign in with Biometrics</span>
+                </Button>
+              </>
+            )}
           </form>
         )}
 

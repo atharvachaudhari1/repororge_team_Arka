@@ -1,7 +1,7 @@
 import { extractSpokenNumber } from "./words-to-numbers";
 import type { VoiceCommand } from "./types";
 
-const WAKE_WORDS = ["hey jarvis", "jarvis", "okay jarvis", "ok jarvis", "hi jarvis", "computer"];
+const WAKE_WORDS = ["hey janvi", "janvi", "okay janvi", "ok janvi", "hi janvi", "computer"];
 
 export type ParseOptions = {
   wakeWordRequired?: boolean;
@@ -29,8 +29,37 @@ export function stripWakeWord(raw: string): { hasWakeWord: boolean; cleanText: s
   return { hasWakeWord: false, cleanText: lower };
 }
 
+/** Normalize conversational speech without changing the user's intent. */
+function normalizeIntentText(text: string): string {
+  let normalized = text
+    .toLowerCase()
+    .replace(/[’']/g, "'")
+    .replace(/[!?.,;:]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  const leadIns = [
+    /^(?:please|kindly)\s+/,
+    /^(?:can|could|would|will)\s+you\s+/,
+    /^(?:i want to|i'd like to|i would like to|help me|let's)\s+/,
+  ];
+
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (const leadIn of leadIns) {
+      if (leadIn.test(normalized)) {
+        normalized = normalized.replace(leadIn, "").trim();
+        changed = true;
+      }
+    }
+  }
+
+  return normalized.replace(/\s+(?:for me|please)$/i, "").trim();
+}
+
 /**
- * Parses raw speech input into an executable JARVIS voice command.
+ * Parses raw speech input into an executable Janvi voice command.
  */
 export function parseVoiceCommand(
   rawTranscript: string,
@@ -44,7 +73,7 @@ export function parseVoiceCommand(
     if (
       (cleanText === "" && hasWakeWord) ||
       /\b(wake up|wake|resume|listen|start listening|i'm back|online)\b/.test(cleanText) ||
-      /\b(jarvis wake|wake jarvis)\b/.test(rawTranscript.toLowerCase())
+      /\b(janvi wake|wake janvi)\b/.test(rawTranscript.toLowerCase())
     ) {
       return {
         type: "wake",
@@ -60,7 +89,7 @@ export function parseVoiceCommand(
     return null;
   }
 
-  // If user just said "Hey Jarvis" with no follow-up, treat as wake/attention check
+  // If user just said "Hey Janvi" with no follow-up, treat as wake/attention check
   if (hasWakeWord && cleanText === "") {
     return {
       type: "wake",
@@ -69,7 +98,7 @@ export function parseVoiceCommand(
     };
   }
 
-  const text = cleanText;
+  const text = normalizeIntentText(cleanText);
 
   // 1. SLEEP & STANDBY
   if (
@@ -136,10 +165,14 @@ export function parseVoiceCommand(
   }
 
   // 7. SCROLLING
-  if (/\b(scroll down|page down|move down|go down|down a bit)\b/.test(text)) {
+  if (
+    /\b(scroll down|page down|move down|move the page down|go down|go down a little|down a bit)\b/.test(
+      text,
+    )
+  ) {
     return { type: "scroll_down", rawText: rawTranscript, confidence: 0.95 };
   }
-  if (/\b(scroll up|page up|move up|go up|up a bit)\b/.test(text)) {
+  if (/\b(scroll up|page up|move up|move the page up|go up|go up a little|up a bit)\b/.test(text)) {
     return { type: "scroll_up", rawText: rawTranscript, confidence: 0.95 };
   }
   if (/\b(scroll to top|scroll top|go to top|top of page|back to top)\b/.test(text)) {
@@ -151,18 +184,20 @@ export function parseVoiceCommand(
 
   // 8. NAVIGATION
   if (
-    /\b(?:go to|open|show|find|browse)\s+(?:the\s+)?(?:job|jobs|search|vacancies|openings)\b/.test(
+    /\b(?:go to|open|show|find|browse|take me to|bring me to|navigate to|send me to)\s+(?:the\s+)?(?:job|jobs|search|vacancies|openings|job board|job listings)\b/.test(
       text,
     ) ||
+    /\b(?:job search|job board|job listings|available jobs|open roles)\b/.test(text) ||
     text === "jobs" ||
-    text === "find jobs" ||
-    text === "job search"
+    text === "find jobs"
   ) {
     return { type: "nav_jobs", rawText: rawTranscript, confidence: 0.95 };
   }
 
   if (
-    /\b(?:go to|open|show)\s+(?:the\s+)?dashboard\b/.test(text) ||
+    /\b(?:go to|open|show|take me to|bring me to|navigate to)\s+(?:the\s+)?dashboard\b/.test(
+      text,
+    ) ||
     text === "dashboard" ||
     text === "my dashboard"
   ) {
@@ -170,7 +205,9 @@ export function parseVoiceCommand(
   }
 
   if (
-    /\b(?:go to|open|show|edit)\s+(?:my\s+)?(?:profile|resume|cv)\b/.test(text) ||
+    /\b(?:go to|open|show|edit|take me to|bring me to|navigate to|view)\s+(?:my\s+)?(?:profile|resume|cv)\b/.test(
+      text,
+    ) ||
     text === "profile" ||
     text === "my profile"
   ) {
@@ -178,7 +215,9 @@ export function parseVoiceCommand(
   }
 
   if (
-    /\b(?:go to|open|show)\s+(?:my\s+)?applications\b/.test(text) ||
+    /\b(?:go to|open|show|see|take me to|bring me to|navigate to|view|check)\s+(?:my\s+)?applications\b/.test(
+      text,
+    ) ||
     text === "applications" ||
     text === "applied jobs" ||
     text === "my applications"
@@ -187,7 +226,9 @@ export function parseVoiceCommand(
   }
 
   if (
-    /\b(?:go to|open|run)\s+(?:the\s+)?(?:resume match|resume matcher|cv matcher)\b/.test(text) ||
+    /\b(?:go to|open|run|take me to|bring me to|navigate to|use)\s+(?:the\s+)?(?:resume match|resume matcher|cv matcher)\b/.test(
+      text,
+    ) ||
     text === "resume match" ||
     text === "match resume"
   ) {
@@ -195,7 +236,7 @@ export function parseVoiceCommand(
   }
 
   if (
-    /\b(?:go to|open|talk to|chat with)\s+(?:the\s+)?(?:career gps|career coach|coach|angie|ai coach)\b/.test(
+    /\b(?:go to|open|talk to|chat with|take me to|bring me to|navigate to)\s+(?:the\s+)?(?:career gps|career coach|coach|angie|ai coach)\b/.test(
       text,
     ) ||
     text === "career gps" ||
@@ -206,7 +247,9 @@ export function parseVoiceCommand(
   }
 
   if (
-    /\b(?:go to|open|show)\s+(?:the\s+)?(?:employer portal|employer|hire|recruit)\b/.test(text) ||
+    /\b(?:go to|open|show|take me to|bring me to|navigate to)\s+(?:the\s+)?(?:employer portal|employer|hire|recruit)\b/.test(
+      text,
+    ) ||
     text === "employer" ||
     text === "employer portal"
   ) {
@@ -214,7 +257,7 @@ export function parseVoiceCommand(
   }
 
   if (
-    /\b(?:go to|open|show)\s+(?:the\s+)?(?:privacy|rights|legal rights|rpwd|rights guide)\b/.test(
+    /\b(?:go to|open|show|take me to|bring me to|navigate to)\s+(?:the\s+)?(?:privacy|rights|legal rights|rpwd|rights guide)\b/.test(
       text,
     ) ||
     text === "privacy" ||
@@ -224,7 +267,9 @@ export function parseVoiceCommand(
   }
 
   if (
-    /\b(?:go to|open|show)\s+(?:the\s+)?(?:home|home page|landing page)\b/.test(text) ||
+    /\b(?:go to|open|show|take me to|bring me to|navigate to)\s+(?:the\s+)?(?:home|home page|landing page)\b/.test(
+      text,
+    ) ||
     text === "home" ||
     text === "go home"
   ) {
@@ -245,7 +290,7 @@ export function parseVoiceCommand(
 
   // 9. SEARCH & INPUT
   const searchMatch = text.match(
-    /\b(?:search for|search|find jobs for|look up|look for)\s+([a-z0-9\s,.-]+)\b/i,
+    /\b(?:search for|search|find jobs for|find me|look up|look for)\s+(?:some\s+)?([a-z0-9\s,.-]+)\b/i,
   );
   if (
     searchMatch &&
@@ -342,6 +387,18 @@ export function parseVoiceCommand(
         confidence: 0.85,
       };
     }
+  }
+
+  // Once Janvi has the user's attention, treat otherwise-unmatched speech
+  // as a question instead of forcing the user to learn a command vocabulary.
+  // The server-side assistant answers from a read-only, redacted project index.
+  if (text.length >= 3) {
+    return {
+      type: "ask_question",
+      payload: text,
+      rawText: rawTranscript,
+      confidence: 0.65,
+    };
   }
 
   return null;

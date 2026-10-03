@@ -42,6 +42,7 @@ export type GestureStatus =
 
 export type GestureConfig = {
   enabled: boolean;
+  airCursorEnabled: boolean;
   sensitivity: GestureSensitivity;
   holdTimeMs: number;
   cooldownMs: number;
@@ -86,6 +87,7 @@ export const SENSITIVITY_SETTINGS: Record<
 
 export const DEFAULT_GESTURE_CONFIG: GestureConfig = {
   enabled: false,
+  airCursorEnabled: false,
   sensitivity: "medium",
   holdTimeMs: 500,
   cooldownMs: 700,

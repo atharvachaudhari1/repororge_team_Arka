@@ -17,6 +17,7 @@ import { Route as EmployerRouteImport } from './routes/employer'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as ResumeBuilderRouteImport } from './routes/resume-builder'
 import { Route as ResumeMatchRouteImport } from './routes/resume-match'
 import { Route as SavedRouteImport } from './routes/saved'
 import { Route as ApplyJobIdRouteImport } from './routes/apply.$jobId'
@@ -63,6 +64,11 @@ const ProfileRoute = ProfileRouteImport.update({
   path: '/profile',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ResumeBuilderRoute = ResumeBuilderRouteImport.update({
+  id: '/resume-builder',
+  path: '/resume-builder',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ResumeMatchRoute = ResumeMatchRouteImport.update({
   id: '/resume-match',
   path: '/resume-match',
@@ -98,6 +104,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
+  '/resume-builder': typeof ResumeBuilderRoute
   '/resume-match': typeof ResumeMatchRoute
   '/saved': typeof SavedRoute
   '/apply/$jobId': typeof ApplyJobIdRoute
@@ -113,6 +120,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
+  '/resume-builder': typeof ResumeBuilderRoute
   '/resume-match': typeof ResumeMatchRoute
   '/saved': typeof SavedRoute
   '/apply/$jobId': typeof ApplyJobIdRoute
@@ -129,6 +137,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
+  '/resume-builder': typeof ResumeBuilderRoute
   '/resume-match': typeof ResumeMatchRoute
   '/saved': typeof SavedRoute
   '/apply/$jobId': typeof ApplyJobIdRoute
@@ -146,6 +155,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/privacy'
     | '/profile'
+    | '/resume-builder'
     | '/resume-match'
     | '/saved'
     | '/apply/$jobId'
@@ -161,6 +171,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/privacy'
     | '/profile'
+    | '/resume-builder'
     | '/resume-match'
     | '/saved'
     | '/apply/$jobId'
@@ -176,6 +187,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/privacy'
     | '/profile'
+    | '/resume-builder'
     | '/resume-match'
     | '/saved'
     | '/apply/$jobId'
@@ -192,6 +204,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   PrivacyRoute: typeof PrivacyRoute
   ProfileRoute: typeof ProfileRoute
+  ResumeBuilderRoute: typeof ResumeBuilderRoute
   ResumeMatchRoute: typeof ResumeMatchRoute
   SavedRoute: typeof SavedRoute
   ApplyJobIdRoute: typeof ApplyJobIdRoute
@@ -257,6 +270,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProfileRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/resume-builder': {
+      id: '/resume-builder'
+      path: '/resume-builder'
+      fullPath: '/resume-builder'
+      preLoaderRoute: typeof ResumeBuilderRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/resume-match': {
       id: '/resume-match'
       path: '/resume-match'
@@ -304,6 +324,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   PrivacyRoute: PrivacyRoute,
   ProfileRoute: ProfileRoute,
+  ResumeBuilderRoute: ResumeBuilderRoute,
   ResumeMatchRoute: ResumeMatchRoute,
   SavedRoute: SavedRoute,
   ApplyJobIdRoute: ApplyJobIdRoute,

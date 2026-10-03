@@ -19,7 +19,7 @@ import { useJarvisVoice } from "@/lib/voice/use-jarvis-voice";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 /**
- * JARVIS Hands-Free Voice Control HUD.
+ * Janvi Hands-Free Voice Control HUD.
  * Designed specifically for users with zero or limited motor control (no hands).
  * Provides continuous listening, live visual feedback, wake-word standby, and click-by-number overlays.
  */
@@ -30,8 +30,6 @@ export function JarvisVoiceHud() {
     gestureConfig,
     setVoiceNavConfig,
     setVoiceNavEnabled,
-    setEyeTrackingEnabled,
-    setGestureEnabled,
     highContrast,
     setHighContrast,
     dyslexiaFont,
@@ -82,10 +80,6 @@ export function JarvisVoiceHud() {
       setCaptionText,
       eyeTrackingEnabled: eyeTrackingConfig.enabled,
       gesturesEnabled: gestureConfig.enabled,
-      activateHandsFreeControls: () => {
-        if (!eyeTrackingConfig.enabled) setEyeTrackingEnabled(true);
-        if (!gestureConfig.enabled) setGestureEnabled(true);
-      },
     },
   });
 
@@ -103,12 +97,12 @@ export function JarvisVoiceHud() {
   return (
     <>
       {/* ARIA Live Region for Screen Readers */}
-      <div aria-live="polite" aria-atomic="true" className="sr-only">
+        <div aria-live="polite" aria-atomic="true" className="sr-only">
         {announcement}
       </div>
 
       <aside
-        aria-label="JARVIS Voice Navigation HUD"
+        aria-label="Janvi Voice Navigation HUD"
         className="fixed bottom-4 right-4 z-50 flex flex-col gap-2 rounded-2xl border-2 border-[#191716] bg-card/95 p-3.5 shadow-[4px_4px_0px_#191716] backdrop-blur-md max-w-sm w-[340px] transition-all dark:border-stone-700"
       >
         {/* Header Bar */}
@@ -141,7 +135,7 @@ export function JarvisVoiceHud() {
             <div>
               <div className="flex items-center gap-1.5">
                 <span className="text-xs font-bold tracking-tight font-serif text-foreground">
-                  JARVIS Voice
+                  Janvi Voice
                 </span>
                 <span
                   className={`rounded-full px-1.5 py-0.2 text-[9px] font-bold uppercase tracking-wider ${
@@ -211,7 +205,7 @@ export function JarvisVoiceHud() {
             <div className="rounded-xl border border-border/80 bg-background/80 p-2.5 space-y-1">
               <div className="flex items-center justify-between text-[10px] text-muted-foreground">
                 <span className="font-semibold uppercase tracking-wider">
-                  {isSleeping ? "Say 'Hey Jarvis' or 'Wake up'" : "Live Speech:"}
+                  {isSleeping ? "Say 'Hey Janvi' or 'Wake up'" : "Live Speech:"}
                 </span>
                 {liveTranscript && (
                   <span className="flex size-1.5 rounded-full bg-brand animate-ping" />
@@ -225,7 +219,7 @@ export function JarvisVoiceHud() {
                   <span className="text-muted-foreground italic">Sleeping… Say "Wake up"</span>
                 ) : (
                   <span className="text-muted-foreground italic">
-                    Say "Hey Jarvis", then give commands for 5 seconds.
+                    Say "Hey Janvi", then give commands for 5 seconds.
                   </span>
                 )}
               </p>
@@ -249,7 +243,7 @@ export function JarvisVoiceHud() {
                     ? "border-amber-500 bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200"
                     : "border-border bg-secondary/60 text-foreground hover:bg-secondary"
                 }`}
-                title={isSleeping ? "Wake Jarvis up" : "Put Jarvis in standby"}
+                title={isSleeping ? "Wake Janvi up" : "Put Janvi in standby"}
               >
                 {isSleeping ? (
                   <Sun className="size-3 text-amber-600" />
@@ -285,8 +279,8 @@ export function JarvisVoiceHud() {
                 }`}
                 title={
                   voiceNavConfig.speechFeedback
-                    ? "JARVIS Voice Speech: ON"
-                    : "JARVIS Voice Speech: Muted"
+                    ? "Janvi Voice Speech: ON"
+                    : "Janvi Voice Speech: Muted"
                 }
               >
                 {voiceNavConfig.speechFeedback ? (
@@ -301,7 +295,7 @@ export function JarvisVoiceHud() {
             {/* Quick Prompt Hint */}
             <div className="flex items-center justify-between text-[10px] text-muted-foreground border-t border-border/50 pt-1.5 px-0.5">
               <span>
-                Try: <strong>"Hey Jarvis, click 1"</strong>
+                Try: <strong>"Hey Janvi, click 1"</strong>
               </span>
               <button
                 type="button"
@@ -323,12 +317,12 @@ export function JarvisVoiceHud() {
               <span className="flex size-8 items-center justify-center rounded-full bg-[#7BD3C2] text-[#141817] text-sm">
                 <Mic className="size-4" />
               </span>
-              JARVIS Voice Commands Reference
+              Janvi Voice Commands Reference
             </DialogTitle>
           </DialogHeader>
 
           <p className="text-xs text-muted-foreground">
-            JARVIS gives people with zero motor function (no hands) complete, hands-free mastery
+              Janvi gives people with zero motor function (no hands) complete, hands-free mastery
             over Ableo. Speak naturally into your microphone.
           </p>
 
@@ -473,10 +467,10 @@ export function JarvisVoiceHud() {
               </h4>
               <div className="grid grid-cols-2 gap-2 text-muted-foreground">
                 <div>
-                  • <strong>"Jarvis sleep"</strong> / "Standby"
+                  • <strong>"Janvi sleep"</strong> / "Standby"
                 </div>
                 <div>
-                  • <strong>"Wake up"</strong> / "Hey Jarvis"
+                  • <strong>"Wake up"</strong> / "Hey Janvi"
                 </div>
                 <div>
                   • <strong>"Help"</strong> (shows this guide)

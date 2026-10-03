@@ -61,6 +61,55 @@ async function callAI(system: string, user: string, maxTokens = 1200) {
   }
 }
 
+/** Local-only model call used by Jarvis so project context stays on-device. */
+async function callOllama(system: string, user: string, maxTokens = 650) {
+  const baseUrl = (process.env["OLLAMA_BASE_URL"] ?? "http://127.0.0.1:11434").replace(/\/$/, "");
+  const model = process.env["OLLAMA_MODEL"] ?? "qwen3.5:4b";
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 12_000);
+
+  try {
+    const res = await fetch(`${baseUrl}/api/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      signal: controller.signal,
+      body: JSON.stringify({
+        model,
+        stream: false,
+        think: false,
+        messages: [
+          { role: "system", content: system },
+          { role: "user", content: user },
+        ],
+        options: { temperature: 0.2, num_predict: maxTokens },
+      }),
+    });
+
+    if (!res.ok) {
+      return {
+        ok: false as const,
+        error: `Ollama could not load model "${model}". Run: ollama pull ${model}`,
+      };
+    }
+
+    const json = (await res.json()) as { message?: { content?: string } };
+    const content = json.message?.content?.trim() ?? "";
+    return content
+      ? { ok: true as const, content }
+      : { ok: false as const, error: "Ollama returned an empty answer." };
+  } catch (error) {
+    return {
+      ok: false as const,
+      error:
+        error instanceof Error && error.name === "AbortError"
+          ? "Ollama took too long to answer. Try a smaller local model."
+          : "Ollama is not running. Start it with `ollama serve` and try again.",
+    };
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 /* ------------------------------------------------------------------ */
 /*  Before You Apply                                                  */
 /* ------------------------------------------------------------------ */
@@ -601,5 +650,131 @@ export const explainJobMatch = createServerFn({ method: "POST" })
       answer,
       improvementTips,
       accommodationAdvice,
+    };
+  });
+
+/* ------------------------------------------------------------------ */
+/* JARVIS — read-only project-aware voice assistant                    */
+/* ------------------------------------------------------------------ */
+
+const jarvisQuestionInput = z.object({
+  question: z.string().trim().min(3).max(1200),
+});
+
+type ProjectFile = { path: string; content: string };
+let projectIndexPromise: Promise<ProjectFile[]> | null = null;
+const FALLBACK_PROJECT_CONTEXT = `Ableo is a TanStack Start + React + TypeScript accessibility-first job platform.
+The root app is in src/routes/__root.tsx. Main routes include jobs, dashboard, profile, applications, resume-match, career-gps, employer, login, and privacy.
+Voice navigation lives in src/lib/voice, including command-parser.ts, use-jarvis-voice.ts, dom-actions.ts, and jarvis-speech.ts.
+Application state and persisted accessibility preferences live in src/lib/app-state.tsx. Job data and matching logic live in src/lib/jobs-data.ts and src/lib/matching.ts.
+AI server functions live in src/lib/ai.functions.ts and call Gemini server-side with authentication and rate limiting. Camera features use MediaPipe for optional eye tracking and hand gestures.
+Jarvis voice commands require a wake word when that safety setting is enabled. Project questions use a read-only, redacted project index and never execute arbitrary commands or expose secrets.`;
+
+function redactProjectText(value: string): string {
+  return value
+    .replace(
+      /(api[_-]?key|secret|token|password|authorization)\s*[:=]\s*[^\s,;]+/gi,
+      "$1=[redacted]",
+    )
+    .replace(/(AIza[0-9A-Za-z_-]{20,})/g, "[redacted-key]");
+}
+
+async function getProjectIndex(): Promise<ProjectFile[]> {
+  if (projectIndexPromise) return projectIndexPromise;
+
+  projectIndexPromise = (async () => {
+    const { readdir, readFile } = await import("node:fs/promises");
+    const path = await import("node:path");
+    const root = process.cwd();
+    const allowed = /\.(ts|tsx|js|jsx|json|md|css|html|sh)$/i;
+    const ignored = new Set(["node_modules", ".git", ".output", "dist", "build", ".next"]);
+    const files: ProjectFile[] = [];
+
+    async function visit(directory: string) {
+      if (files.reduce((sum, file) => sum + file.content.length, 0) >= 180_000) return;
+      for (const entry of await readdir(directory, { withFileTypes: true })) {
+        if (ignored.has(entry.name) || entry.name.startsWith(".")) continue;
+        const fullPath = path.join(directory, entry.name);
+        if (entry.isDirectory()) {
+          await visit(fullPath);
+        } else if (entry.isFile() && allowed.test(entry.name)) {
+          try {
+            const raw = await readFile(fullPath, "utf8");
+            files.push({
+              path: path.relative(root, fullPath),
+              content: redactProjectText(raw).slice(0, 7000),
+            });
+          } catch {
+            // Ignore unreadable files and keep the assistant available.
+          }
+        }
+      }
+    }
+
+    await visit(path.join(root, "src"));
+    for (const fileName of [
+      "package.json",
+      "README.md",
+      "AGENTS.md",
+      "vite.config.ts",
+      "tsconfig.json",
+    ]) {
+      try {
+        const raw = await readFile(path.join(root, fileName), "utf8");
+        files.push({ path: fileName, content: redactProjectText(raw).slice(0, 7000) });
+      } catch {
+        // Optional project files.
+      }
+    }
+    return files;
+  })();
+
+  return projectIndexPromise;
+}
+
+export const askJarvis = createServerFn({ method: "POST" })
+  .validator((data) => jarvisQuestionInput.parse(data))
+  .handler(async ({ data }) => {
+    const { verifyAiAuthAndRateLimit } = await import("./auth.server");
+    const auth = await verifyAiAuthAndRateLimit();
+    if (!auth.ok) return { ok: false as const, error: auth.error };
+
+    const files = await getProjectIndex().catch(() => [
+      { path: "built-in project overview", content: FALLBACK_PROJECT_CONTEXT },
+    ]);
+    const terms = data.question
+      .toLowerCase()
+      .split(/\W+/)
+      .filter((term) => term.length > 2);
+    const relevant = files
+      .map((file) => ({
+        file,
+        score: terms.reduce(
+          (score, term) => score + (file.content.toLowerCase().includes(term) ? 1 : 0),
+          0,
+        ),
+      }))
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 8)
+      .map(({ file }) => `--- ${file.path} ---\n${file.content}`)
+      .join("\n\n");
+
+    const system = [
+      "You are JARVIS, the fast voice assistant for the Ableo project.",
+      "Answer the user's question directly and conversationally in plain English.",
+      "Use only the supplied project files. If the files do not establish an answer, say so clearly and suggest what to inspect next.",
+      "You have read-only project access. Never claim to have run commands, changed files, accessed secrets, or accessed files absent from the context.",
+      "Keep voice answers concise: normally 1-4 short sentences. Mention file paths when useful.",
+    ].join(" ");
+
+    const result = await callOllama(
+      system,
+      `Question: ${data.question}\n\nProject context:\n${relevant}`,
+      650,
+    );
+    if (!result.ok) return { ok: false as const, error: result.error };
+    return {
+      ok: true as const,
+      answer: result.content.trim() || "I couldn't find an answer in the project context.",
     };
   });

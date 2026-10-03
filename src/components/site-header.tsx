@@ -93,7 +93,8 @@ export function SiteHeader() {
                 className="whitespace-nowrap shrink-0 rounded-full px-3 py-1.5 text-xs font-medium text-muted-foreground transition-all hover:text-foreground hover:bg-secondary/80"
                 activeOptions={{ exact: true }}
                 activeProps={{
-                  className: "text-foreground font-semibold bg-secondary border border-border/70 shadow-xs",
+                  className:
+                    "text-foreground font-semibold bg-secondary border border-border/70 shadow-xs",
                 }}
               >
                 {item.label}
@@ -147,8 +148,8 @@ export function SiteHeader() {
             </button>
 
             {/* User Profile Dropdown or Sign In */}
-            {!isLoading && (
-              user ? (
+            {!isLoading &&
+              (user ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <button
@@ -178,8 +179,8 @@ export function SiteHeader() {
                         {user.isAdmin
                           ? "Admin"
                           : user.role === "employer"
-                          ? "Employer"
-                          : "Candidate"}
+                            ? "Employer"
+                            : "Candidate"}
                       </span>
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator className="my-1" />
@@ -225,6 +226,15 @@ export function SiteHeader() {
                         >
                           <Compass className="size-3.5 text-muted-foreground" />
                           <span>Career GPS &amp; AI Coach</span>
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link
+                          to="/resume-builder"
+                          className="flex items-center gap-2 px-2 py-1.5 text-xs rounded-lg cursor-pointer"
+                        >
+                          <FileText className="size-3.5 text-muted-foreground" />
+                          <span>Guided Resume Builder</span>
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>
@@ -281,8 +291,7 @@ export function SiteHeader() {
                     Find Jobs
                   </Link>
                 </div>
-              )
-            )}
+              ))}
 
             {/* Mobile Navigation Drawer Trigger */}
             <div className="lg:hidden shrink-0">
