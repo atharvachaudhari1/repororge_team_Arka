@@ -90,6 +90,25 @@ export async function getDatabase(): Promise<SqliteDatabase> {
           profile_data TEXT NOT NULL,
           updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
         );
+
+        -- Passkeys contain only public WebAuthn credentials. Biometric templates
+        -- never leave the user's authenticator or get stored by Ableo.
+        CREATE TABLE IF NOT EXISTS passkeys (
+          credential_id TEXT PRIMARY KEY,
+          email TEXT NOT NULL COLLATE NOCASE,
+          public_key TEXT NOT NULL,
+          counter INTEGER NOT NULL DEFAULT 0,
+          transports TEXT NOT NULL DEFAULT '[]',
+          created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );
+
+        CREATE TABLE IF NOT EXISTS webauthn_challenges (
+          email TEXT NOT NULL COLLATE NOCASE,
+          purpose TEXT NOT NULL CHECK (purpose IN ('registration', 'authentication')),
+          challenge TEXT NOT NULL,
+          expires_at TEXT NOT NULL,
+          PRIMARY KEY (email, purpose)
+        );
       `);
 
       try {
@@ -217,6 +236,268 @@ export function getSessionCookieToken(): string | null {
   } catch {
     return null;
   }
+}
+
+function webAuthnRp() {
+  const origin =
+    process.env["WEBAUTHN_ORIGIN"] || getRequestHeader("origin") || "http://localhost:3000";
+  const url = new URL(origin);
+  return { origin: url.origin, rpID: process.env["WEBAUTHN_RP_ID"] || url.hostname };
+}
+
+async function saveWebAuthnChallenge(
+  email: string,
+  purpose: "registration" | "authentication",
+  challenge: string,
+) {
+  const db = await getDatabase();
+  db.prepare("DELETE FROM webauthn_challenges WHERE email = ? AND purpose = ?").run(email, purpose);
+  db.prepare(
+    "INSERT INTO webauthn_challenges (email, purpose, challenge, expires_at) VALUES (?, ?, ?, ?)",
+  ).run(email, purpose, challenge, new Date(Date.now() + 5 * 60_000).toISOString());
+}
+
+async function consumeWebAuthnChallenge(email: string, purpose: "registration" | "authentication") {
+  const db = await getDatabase();
+  const row = db
+    .prepare(
+      "SELECT challenge FROM webauthn_challenges WHERE email = ? AND purpose = ? AND expires_at > ?",
+    )
+    .get(email, purpose, new Date().toISOString()) as { challenge: string } | undefined;
+  db.prepare("DELETE FROM webauthn_challenges WHERE email = ? AND purpose = ?").run(email, purpose);
+  return row?.challenge;
+}
+
+export async function beginPasskeyRegistrationHandler() {
+  const session = await readSessionHandler({});
+  if (!session.user) return { ok: false as const, error: "Sign in before adding a passkey." };
+  const { generateRegistrationOptions } = await import("@simplewebauthn/server");
+  const db = await getDatabase();
+  const existing = db
+    .prepare("SELECT credential_id, transports FROM passkeys WHERE email = ?")
+    .all(session.user.email) as { credential_id: string; transports: string }[];
+  const rp = webAuthnRp();
+  const options = await generateRegistrationOptions({
+    rpName: "Ableo",
+    rpID: rp.rpID,
+    // Give a person enough time to respond to a Windows Hello, Face ID, or
+    // fingerprint-reader dialog after the browser has opened it.
+    timeout: 120_000,
+    userName: session.user.email,
+    userID: new TextEncoder().encode(String(session.user.id)),
+    userDisplayName: session.user.fullName,
+    attestationType: "none",
+    excludeCredentials: existing.map((item) => ({
+      id: item.credential_id,
+      transports: JSON.parse(item.transports),
+    })),
+    // Ableo's biometric option is for the current device's secure biometric
+    // authenticator, not an external roaming key or a cross-device prompt.
+    authenticatorSelection: {
+      authenticatorAttachment: "platform",
+      residentKey: "preferred",
+      userVerification: "required",
+    },
+  });
+  await saveWebAuthnChallenge(session.user.email, "registration", options.challenge);
+  return { ok: true as const, options };
+}
+
+export async function finishPasskeyRegistrationHandler(data: { response: unknown }) {
+  const session = await readSessionHandler({});
+  if (!session.user) return { ok: false as const, error: "Your session has expired." };
+  const challenge = await consumeWebAuthnChallenge(session.user.email, "registration");
+  if (!challenge) return { ok: false as const, error: "Passkey setup expired. Try again." };
+  const { verifyRegistrationResponse } = await import("@simplewebauthn/server");
+  const rp = webAuthnRp();
+  const verification = await verifyRegistrationResponse({
+    response: data.response as never,
+    expectedChallenge: challenge,
+    expectedOrigin: rp.origin,
+    expectedRPID: rp.rpID,
+    requireUserVerification: true,
+  });
+  if (!verification.verified || !verification.registrationInfo)
+    return { ok: false as const, error: "Passkey verification failed." };
+  const credential = verification.registrationInfo.credential;
+  const db = await getDatabase();
+  db.prepare(
+    "INSERT OR REPLACE INTO passkeys (credential_id, email, public_key, counter, transports) VALUES (?, ?, ?, ?, ?)",
+  ).run(
+    credential.id,
+    session.user.email,
+    Buffer.from(credential.publicKey).toString("base64url"),
+    credential.counter,
+    JSON.stringify(credential.transports ?? []),
+  );
+  return { ok: true as const };
+}
+
+export async function beginPasskeyLoginHandler(data: { email: string }) {
+  const email = data.email.toLowerCase().trim();
+  const db = await getDatabase();
+  const credentials = db
+    .prepare("SELECT credential_id, transports FROM passkeys WHERE email = ?")
+    .all(email) as { credential_id: string; transports: string }[];
+  if (!credentials.length)
+    return { ok: false as const, error: "No biometric sign-in is set up for this email." };
+  const { generateAuthenticationOptions } = await import("@simplewebauthn/server");
+  const rp = webAuthnRp();
+  const options = await generateAuthenticationOptions({
+    rpID: rp.rpID,
+    timeout: 120_000,
+    userVerification: "required",
+    allowCredentials: credentials.map((item) => ({
+      id: item.credential_id,
+      transports: JSON.parse(item.transports),
+    })),
+  });
+  await saveWebAuthnChallenge(email, "authentication", options.challenge);
+  return { ok: true as const, options };
+}
+
+export async function finishPasskeyLoginHandler(data: {
+  email: string;
+  role: AccountRole;
+  response: unknown;
+}) {
+  const email = data.email.toLowerCase().trim();
+  const challenge = await consumeWebAuthnChallenge(email, "authentication");
+  if (!challenge) return { ok: false as const, error: "Biometric sign-in expired. Try again." };
+  const credentialId = String((data.response as { id?: string }).id || "");
+  const db = await getDatabase();
+  const stored = db
+    .prepare(
+      "SELECT credential_id, public_key, counter, transports FROM passkeys WHERE email = ? AND credential_id = ?",
+    )
+    .get(email, credentialId) as
+    { credential_id: string; public_key: string; counter: number; transports: string } | undefined;
+  if (!stored) return { ok: false as const, error: "Biometric credential not found." };
+  const { verifyAuthenticationResponse } = await import("@simplewebauthn/server");
+  const rp = webAuthnRp();
+  const verification = await verifyAuthenticationResponse({
+    response: data.response as never,
+    expectedChallenge: challenge,
+    expectedOrigin: rp.origin,
+    expectedRPID: rp.rpID,
+    credential: {
+      id: stored.credential_id,
+      publicKey: new Uint8Array(Buffer.from(stored.public_key, "base64url")),
+      counter: stored.counter,
+      transports: JSON.parse(stored.transports),
+    },
+    requireUserVerification: true,
+  });
+  if (!verification.verified)
+    return { ok: false as const, error: "Biometric sign-in could not be verified." };
+  db.prepare("UPDATE passkeys SET counter = ? WHERE credential_id = ?").run(
+    verification.authenticationInfo.newCounter,
+    stored.credential_id,
+  );
+  const user = db.prepare("SELECT * FROM users WHERE email = ?").get(email) as UserRow | undefined;
+  if (!user && isMongoConfigured()) {
+    try {
+      const mongo = await getMongoDb();
+      const mongoUser = await mongo.collection("users").findOne({ email });
+      if (!mongoUser || (!isUserAdmin(mongoUser) && mongoUser["role"] !== data.role)) {
+        return { ok: false as const, error: "Incorrect email or portal." };
+      }
+      if (
+        isEmailVerificationRequired() &&
+        !Boolean(mongoUser["emailVerified"] ?? mongoUser["email_verified"]) &&
+        !isUserAdmin(mongoUser)
+      ) {
+        return { ok: false as const, error: "Verify your email before using biometric sign-in." };
+      }
+      const role: AccountRole = isUserAdmin(mongoUser)
+        ? data.role
+        : (mongoUser["role"] as AccountRole);
+      const token = await createSession("mongo", mongoUser["_id"].toString(), role);
+      setSessionCookie(token);
+      return {
+        ok: true as const,
+        user: {
+          id: mongoUser["_id"].toString(),
+          fullName: String(mongoUser["fullName"] || mongoUser["full_name"]),
+          email,
+          role,
+          emailVerified: Boolean(mongoUser["emailVerified"] ?? mongoUser["email_verified"]),
+          isAdmin: isUserAdmin(mongoUser),
+        },
+        token,
+      };
+    } catch {
+      // SQLite fallback below returns the neutral authentication failure.
+    }
+  }
+  if (!user || (user.role !== data.role && !isUserAdmin(user)))
+    return { ok: false as const, error: "Incorrect email or portal." };
+  if (isEmailVerificationRequired() && !Boolean(user.email_verified) && !isUserAdmin(user))
+    return { ok: false as const, error: "Verify your email before using biometric sign-in." };
+  const effectiveRole: AccountRole = isUserAdmin(user) ? data.role : user.role;
+  const token = await createSession(db, user.id, effectiveRole);
+  setSessionCookie(token);
+  return {
+    ok: true as const,
+    user: { ...publicUser(user), role: effectiveRole, isAdmin: isUserAdmin(user) },
+    token,
+  };
+}
+
+/** Local demo only: detecting eyes in a camera frame is not identity verification. */
+export async function directCameraDemoLoginHandler(data: { email: string; role: AccountRole }) {
+  const email = data.email.toLowerCase().trim();
+  if (isMongoConfigured()) {
+    try {
+      const mongo = await getMongoDb();
+      const user = await mongo.collection("users").findOne({ email });
+      if (user && (user["role"] === data.role || isUserAdmin(user))) {
+        if (
+          isEmailVerificationRequired() &&
+          !Boolean(user["emailVerified"] ?? user["email_verified"]) &&
+          !isUserAdmin(user)
+        ) {
+          return {
+            ok: false as const,
+            error: "Verify your email before using direct camera sign-in.",
+          };
+        }
+        const role: AccountRole = isUserAdmin(user) ? data.role : (user["role"] as AccountRole);
+        const token = await createSession("mongo", user["_id"].toString(), role);
+        setSessionCookie(token);
+        return {
+          ok: true as const,
+          user: {
+            id: user["_id"].toString(),
+            fullName: String(user["fullName"] || user["full_name"]),
+            email,
+            role,
+            emailVerified: Boolean(user["emailVerified"] ?? user["email_verified"]),
+            isAdmin: isUserAdmin(user),
+          },
+          token,
+        };
+      }
+    } catch {
+      // Continue to the local database fallback.
+    }
+  }
+  const db = await getDatabase();
+  const user = db.prepare("SELECT * FROM users WHERE email = ?").get(email) as UserRow | undefined;
+  if (!user || (user.role !== data.role && !isUserAdmin(user))) {
+    return { ok: false as const, error: "No account was found for this email and portal." };
+  }
+  if (isEmailVerificationRequired() && !Boolean(user.email_verified) && !isUserAdmin(user)) {
+    return { ok: false as const, error: "Verify your email before using direct camera sign-in." };
+  }
+  const role: AccountRole = isUserAdmin(user) ? data.role : user.role;
+  const token = await createSession(db, user.id, role);
+  setSessionCookie(token);
+  return {
+    ok: true as const,
+    user: { ...publicUser(user), role, isAdmin: isUserAdmin(user) },
+    token,
+  };
 }
 
 export function getClientIp(): string {
