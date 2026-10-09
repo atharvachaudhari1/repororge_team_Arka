@@ -673,8 +673,8 @@ git --version
 ### 1. Clone
 
 ```bash
-git clone https://github.com/atharvachaudhari1/Repoforge-Win.git
-cd Repoforge-Win
+git clone https://github.com/fernandesallan745-eng/Whisp.git
+cd Whisp
 ```
 
 ### 2. Install dependencies
@@ -870,7 +870,7 @@ Greater Employment Access
 
 | Resource        | Link                                                                |
 | --------------- | ------------------------------------------------------------------- |
-| 💻 GitHub       | [test-repoforge-](https://github.com/atharvachaudhari1/test-repoforge-) |
+| 💻 GitHub       | [Whisp](https://github.com/fernandesallan745-eng/Whisp) |
 | 🎥 Demo Video   | _Add YouTube link_                                                  |
 | 📊 Presentation | _Add Slides link_                                                   |
 | 🌐 Live Demo    | _Add deployed URL_                                                  |
@@ -949,7 +949,7 @@ _We are building the access layer between people and opportunity."_
 
 <br/>
 
-[![GitHub Stars](https://img.shields.io/github/stars/atharvachaudhari1/Repoforge-Win?style=social)](https://github.com/atharvachaudhari1/Repoforge-Win)
-[![GitHub Forks](https://img.shields.io/github/forks/atharvachaudhari1/Repoforge-Win?style=social)](https://github.com/atharvachaudhari1/Repoforge-Win/fork)
+[![GitHub Stars](https://img.shields.io/github/stars/fernandesallan745-eng/Whisp?style=social)](https://github.com/fernandesallan745-eng/Whisp)
+[![GitHub Forks](https://img.shields.io/github/forks/fernandesallan745-eng/Whisp?style=social)](https://github.com/fernandesallan745-eng/Whisp/fork)
 
 </div>
