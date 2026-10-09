@@ -9,15 +9,13 @@ import {
   type AuthUser,
 } from "./auth.functions";
 
-export type { AccountRole };
-
-export type Credentials = {
+type Credentials = {
   email: string;
-  password?: string;
+  password: string;
   role: AccountRole;
   rememberMe?: boolean | undefined;
 };
-export type Registration = Omit<Credentials, "password"> & { password: string; fullName: string };
+type Registration = Credentials & { fullName: string };
 
 export type AuthResult = {
   ok: boolean;
@@ -49,13 +47,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const localToken =
-      typeof window !== "undefined"
-        ? window.localStorage.getItem("ableo:session-token") || undefined
-        : undefined;
+    // Clear legacy localStorage session token from prior versions (prevent XSS exposure)
+    try {
+      window.localStorage.removeItem("ableo:session-token");
+    } catch (err) {
+      void err;
+    }
 
-    // Read session directly via HttpOnly cookie or token fallback
-    sessionFn({ data: { token: localToken } })
+    // Read session directly via HttpOnly cookie
+    sessionFn({ data: {} })
       .then((result) => {
         setUser(result?.user ?? null);
       })
@@ -72,7 +72,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           ok: boolean;
           error?: string;
           user?: AuthUser;
-          token?: string;
           requiresVerification?: boolean;
           email?: string;
         };
@@ -85,11 +84,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           };
         }
         if (!res.user) return { ok: false, error: res.error };
-        if (res.token && typeof window !== "undefined") {
-          try {
-            window.localStorage.setItem("ableo:session-token", res.token);
-          } catch {}
-        }
         setUser(res.user);
         return { ok: true, user: res.user };
       },
@@ -98,7 +92,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           ok: boolean;
           error?: string;
           user?: AuthUser;
-          token?: string;
           requiresVerification?: boolean;
           message?: string;
         };
@@ -112,20 +105,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           };
         }
         if (!res.user) return { ok: false, error: res.error };
-        if (res.token && typeof window !== "undefined") {
-          try {
-            window.localStorage.setItem("ableo:session-token", res.token);
-          } catch {}
-        }
         setUser(res.user);
         return { ok: true, user: res.user };
       },
       logout: () => {
-        if (typeof window !== "undefined") {
-          try {
-            window.localStorage.removeItem("ableo:session-token");
-          } catch {}
-        }
         setUser(null);
         void logoutFn({ data: {} });
       },

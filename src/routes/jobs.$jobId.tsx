@@ -1,237 +1,266 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useState } from "react";
 import {
-  ArrowLeft,
   Bookmark,
-  Building2,
-  CheckCircle2,
-  Clock,
-  Compass,
+  BookmarkCheck,
   FileText,
-  MapPin,
-  Share2,
+  LayoutList,
+  RefreshCcw,
+  ShieldCheck,
   Sparkles,
-  Zap,
 } from "lucide-react";
-import { ACCESS_FEATURES, INCLUSION_FEATURES, getJob, type Job } from "@/lib/jobs-data";
-import { useAppState } from "@/lib/app-state";
-import { accessibilityFit } from "@/lib/accessibility";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { getJob } from "@/lib/jobs-data";
+import { useAppState } from "@/lib/app-state";
+import { MatchScoreCard, WhyThisJob, MatchPill } from "@/components/match-insights";
+import { scoreJob } from "@/lib/matching";
+import { accessibilityFit } from "@/lib/accessibility";
+import { AccessibilityFitCard, AccessibilityTransparencyCard } from "@/components/transparency";
+import { AccessibleJobView } from "@/components/accessible-job-view";
+import { JobListen } from "@/components/job-listen";
+import { BeforeYouApply } from "@/components/before-you-apply";
+import { EmployerInclusionCard } from "@/components/employer-inclusion";
+import { WorkplaceCompass } from "@/components/workplace-compass";
+import { ConfidenceCheck } from "@/components/confidence-check";
+import { EmployerAccessibilityAuditModal } from "@/components/employer-accessibility-audit";
+import { MatchExplainerModal } from "@/components/match-explainer-modal";
+import { CommuteAccessibilityCard } from "@/components/commute-accessibility-card";
 
 export const Route = createFileRoute("/jobs/$jobId")({
-  component: JobDetailPage,
+  loader: ({ params }) => {
+    const job = getJob(params.jobId);
+    return job ? { job } : null;
+  },
+  head: ({ loaderData }) => {
+    if (!loaderData) {
+      return {
+        meta: [{ title: "Job unavailable — AccessPath" }, { name: "robots", content: "noindex" }],
+      };
+    }
+    const { job } = loaderData;
+    const title = `${job.title} at ${job.company} — AccessPath`;
+    const description = `${job.workMode} • ${job.city} • ${job.experience}. Accessibility and inclusion details ${job.accessSource.toLowerCase()}.`;
+    return {
+      meta: [
+        { title },
+        { name: "description", content: description },
+        { property: "og:title", content: title },
+        { property: "og:description", content: description },
+      ],
+    };
+  },
+  component: JobDetails,
 });
 
-function JobDetailPage() {
+function List({ items }: { items: string[] }) {
+  return (
+    <ul className="mt-2 list-disc space-y-1 pl-5 text-sm">
+      {items.map((i) => (
+        <li key={i}>{i}</li>
+      ))}
+    </ul>
+  );
+}
+
+function JobDetails() {
+  const data = Route.useLoaderData();
   const { jobId } = Route.useParams();
-  const { savedJobs, toggleSavedJob, profile } = useAppState();
-  const job = getJob(jobId);
+  const { isSaved, toggleSaved, hasApplied, findJob, profile } = useAppState();
+  const [accessibleView, setAccessibleView] = useState(false);
+  const [auditOpen, setAuditOpen] = useState(false);
+  const [explainOpen, setExplainOpen] = useState(false);
+  // Context first, so employer transparency updates are reflected immediately.
+  const job = findJob(jobId) ?? data?.job;
 
   if (!job) {
     return (
-      <div className="mx-auto max-w-4xl px-4 py-16 text-center">
-        <h1 className="font-display text-2xl font-bold">Job Not Found</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          The requested position does not exist or may have expired.
-        </p>
-        <Button asChild className="mt-6" variant="outline">
-          <Link to="/jobs">Back to All Jobs</Link>
+      <div className="mx-auto max-w-3xl px-4 py-12">
+        <h1 className="text-2xl font-bold">This job could not be found</h1>
+        <p className="mt-2 text-muted-foreground">The listing may have been removed.</p>
+        <Button asChild className="mt-4">
+          <Link to="/jobs" search={{ q: "" }}>
+            Back to job search
+          </Link>
         </Button>
       </div>
     );
   }
 
-  const isSaved = savedJobs.includes(job.id);
-  const fit = accessibilityFit(profile?.accessibilityPreferences as any || [], job);
+  const match = scoreJob(profile, job);
+  const fit = accessibilityFit(profile.accessibilityPreferences, job);
+  const saved = isSaved(job.id);
+  const applied = hasApplied(job.id);
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 space-y-8">
-      {/* Back button */}
-      <div>
-        <Button asChild variant="ghost" size="sm" className="gap-2 text-xs text-muted-foreground hover:text-foreground">
-          <Link to="/jobs">
-            <ArrowLeft className="size-3.5" />
-            Back to Job Discovery
-          </Link>
-        </Button>
-      </div>
+    <div className="mx-auto max-w-4xl px-4 py-8">
+      <Link
+        to="/jobs"
+        search={{ q: "" }}
+        className="text-sm font-medium text-brand hover:underline"
+      >
+        ← Back to job search
+      </Link>
 
-      {/* Hero Header */}
-      <div className="surface-card p-6 sm:p-8 rounded-3xl space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-semibold text-muted-foreground flex items-center gap-1">
-                <Building2 className="size-4 text-brand" />
-                {job.company}
-              </span>
-              {(job.transparencyLevel === "verified" || job.accessSource === "Verified by AccessPath") && (
-                <Badge variant="outline" className="border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 text-xs">
-                  <CheckCircle2 className="size-3 mr-1" />
-                  Verified PwD Friendly
-                </Badge>
-              )}
-            </div>
+      <EmployerAccessibilityAuditModal job={job} open={auditOpen} onOpenChange={setAuditOpen} />
+      <MatchExplainerModal
+        match={match}
+        open={explainOpen}
+        onOpenChange={setExplainOpen}
+        accessibilityFitScore={fit.score}
+      />
 
-            <h1 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold text-foreground">
-              {job.title}
-            </h1>
+      <header className="surface-card mt-4 p-5 sm:p-6">
+        <h1 className="text-2xl font-bold sm:text-3xl">{job.title}</h1>
+        <p className="mt-2 text-muted-foreground">
+          {job.company} • {job.city} • {job.workMode} • {job.employment} • {job.experience}
+          {job.salary ? ` • ${job.salary}` : ""}
+        </p>
 
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-muted-foreground pt-1">
-              <span className="flex items-center gap-1 font-medium text-foreground">
-                <MapPin className="size-3.5 text-brand" />
-                {job.city}
-              </span>
-              <span className="flex items-center gap-1">
-                <Clock className="size-3.5" />
-                {job.workMode} • {job.employment}
-              </span>
-              {job.salary && (
-                <span className="font-semibold text-foreground">
-                  {job.salary}
-                </span>
-              )}
-            </div>
-          </div>
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <MatchPill score={match.total} />
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            className="h-7 text-xs gap-1 text-brand font-semibold hover:underline"
+            onClick={() => setExplainOpen(true)}
+          >
+            <Sparkles className="size-3.5" />
+            Explain Match
+          </Button>
+          {fit.hasPreferences ? (
+            <span className="inline-flex items-center rounded-full bg-brand/15 px-2.5 py-1 text-xs font-semibold text-brand">
+              {fit.score}% Accessibility Fit
+            </span>
+          ) : null}
+          {job.accessUpdated ? (
+            <span className="inline-flex items-center gap-1 rounded-full bg-success/15 px-2.5 py-1 text-xs font-semibold text-success">
+              <RefreshCcw aria-hidden="true" className="size-3" />
+              <span className="sr-only">Status: </span>
+              Accessibility information updated
+            </span>
+          ) : null}
+        </div>
 
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => toggleSavedJob(job.id)}
-              className="gap-2 text-xs"
-            >
-              <Bookmark className={`size-3.5 ${isSaved ? "fill-brand text-brand" : ""}`} />
-              {isSaved ? "Saved" : "Save Job"}
+        <div className="mt-4 flex flex-wrap gap-2">
+          {applied ? (
+            <Button asChild variant="secondary" className="min-h-11">
+              <Link to="/applications">Applied — track application</Link>
             </Button>
-
-            <Button asChild size="sm" className="bg-[#7BD3C2] text-[#141817] hover:bg-[#68c5b3] font-semibold text-xs px-5">
-              <Link to={`/apply/${job.id}` as any}>
-                Apply Now
+          ) : (
+            <Button asChild className="min-h-11">
+              <Link to="/apply/$jobId" params={{ jobId: job.id }}>
+                Apply now
               </Link>
             </Button>
-          </div>
+          )}
+          <BeforeYouApply job={job} profile={profile} />
+          <Button
+            type="button"
+            variant="outline"
+            className="min-h-11 gap-1.5"
+            onClick={() => setAuditOpen(true)}
+          >
+            <ShieldCheck className="size-4 text-brand" />
+            Accessibility Audit
+          </Button>
+          <Button
+            variant="outline"
+            className="min-h-11"
+            aria-pressed={saved}
+            onClick={() => toggleSaved(job.id)}
+          >
+            {saved ? <BookmarkCheck aria-hidden="true" /> : <Bookmark aria-hidden="true" />}
+            {saved ? "Saved" : "Save job"}
+          </Button>
         </div>
 
-        {/* Accommodation Fit Banner */}
-        {fit.fitScore > 0 && (
-          <div className="flex items-center justify-between rounded-xl border border-brand/30 bg-brand-soft/40 p-4 text-xs">
-            <div className="flex items-center gap-2.5">
-              <Sparkles className="size-4 text-brand" />
-              <span>
-                <strong>{fit.fitScore}% Accommodation Match</strong> based on your profile accessibility needs.
-              </span>
+        <JobListen job={job} />
+      </header>
+
+      <div className="mt-6 grid gap-6 md:grid-cols-[1fr_280px]">
+        <div className="space-y-6">
+          <section aria-labelledby="desc-heading" className="surface-card p-5">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <h2 id="desc-heading" className="text-xl font-semibold">
+                {accessibleView ? "Accessible view" : "Job description"}
+              </h2>
+              <Button
+                variant={accessibleView ? "default" : "outline"}
+                size="sm"
+                className="min-h-11"
+                aria-pressed={accessibleView}
+                onClick={() => setAccessibleView((v) => !v)}
+              >
+                {accessibleView ? (
+                  <FileText aria-hidden="true" />
+                ) : (
+                  <LayoutList aria-hidden="true" />
+                )}
+                {accessibleView ? "Original description" : "Accessible view"}
+              </Button>
             </div>
-            <span className="font-semibold text-brand">
-              {fit.matchedFeatures.length} / {profile.accessibilityPreferences.length} Matched
-            </span>
-          </div>
-        )}
-      </div>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Accessible view restructures the same information into short, labelled sections. The
+              original description stays available.
+            </p>
 
-      {/* Two Column Layout: Description + Accommodations */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Main Column: Details, Skills, Process */}
-        <div className="lg:col-span-2 space-y-6">
-          <Card className="surface-card">
-            <CardHeader>
-              <CardTitle className="text-base font-bold">About the Role</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4 text-sm text-foreground leading-relaxed">
-              <p>{job.description || job.about}</p>
-            </CardContent>
-          </Card>
-
-          {/* Required & Preferred Skills */}
-          <Card className="surface-card">
-            <CardHeader>
-              <CardTitle className="text-base font-bold">Required &amp; Preferred Skills</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                  Required Competencies
-                </h3>
-                <div className="flex flex-wrap gap-2">
-                  {job.requiredSkills.map((skill) => (
-                    <Badge key={skill} variant="secondary" className="text-xs">
-                      {skill}
-                    </Badge>
-                  ))}
+            {accessibleView ? (
+              <AccessibleJobView job={job} />
+            ) : (
+              <div className="mt-4 space-y-5">
+                <div>
+                  <h3 className="text-sm font-semibold">About the role</h3>
+                  <p className="mt-2 text-sm">{job.about}</p>
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold">Responsibilities</h3>
+                  <List items={job.responsibilities} />
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold">Required skills</h3>
+                  <List items={job.requiredSkills} />
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold">Preferred skills</h3>
+                  <List items={job.preferredSkills} />
                 </div>
               </div>
+            )}
+          </section>
 
-              {job.preferredSkills?.length > 0 && (
-                <div className="pt-2">
-                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                    Bonus / Preferred Skills
-                  </h3>
-                  <div className="flex flex-wrap gap-2">
-                    {job.preferredSkills.map((skill) => (
-                      <Badge key={skill} variant="outline" className="text-xs">
-                        {skill}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <MatchScoreCard match={match} />
+          <WhyThisJob match={match} />
+          <AccessibilityFitCard job={job} preferences={profile.accessibilityPreferences} />
+          <CommuteAccessibilityCard job={job} profile={profile} />
+          <AccessibilityTransparencyCard job={job} />
+          <WorkplaceCompass job={job} />
+          <ConfidenceCheck job={job} profile={profile} />
+          <EmployerInclusionCard job={job} />
         </div>
 
-        {/* Sidebar Column: Workplace Accommodations */}
-        <div className="space-y-6">
-          <Card className="surface-card">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base font-bold flex items-center gap-2">
-                <Zap className="size-4 text-amber-500" />
-                Workplace Accommodations
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 pt-1">
-              {job.access.map((accKey) => {
-                const featLabel = ACCESS_FEATURES[accKey] || accKey;
-                return (
-                  <div key={accKey} className="flex items-start gap-2.5 rounded-lg border border-border/60 bg-secondary/30 p-2.5 text-xs">
-                    <span className="text-base" aria-hidden="true">♿</span>
-                    <div>
-                      <span className="font-semibold block text-foreground">
-                        {featLabel}
-                      </span>
-                      <span className="text-[11px] text-muted-foreground">
-                        Workplace accessibility accommodation supported
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
-            </CardContent>
-          </Card>
-
-          {/* Inclusion & Culture */}
-          {job.inclusion?.length > 0 && (
-            <Card className="surface-card">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base font-bold flex items-center gap-2">
-                  <CheckCircle2 className="size-4 text-brand" />
-                  Inclusion Standards
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2 text-xs">
-                {job.inclusion.map((incKey) => {
-                  const incLabel = INCLUSION_FEATURES[incKey] || incKey;
-                  return (
-                    <div key={incKey} className="flex items-center gap-2 text-foreground">
-                      <span aria-hidden="true">✨</span>
-                      <span>{incLabel}</span>
-                    </div>
-                  );
-                })}
-              </CardContent>
-            </Card>
-          )}
-        </div>
+        <aside aria-label="Job summary" className="surface-card h-fit p-5">
+          <h2 className="text-lg font-semibold">Job summary</h2>
+          <dl className="mt-3 space-y-3 text-sm">
+            {[
+              ["Salary", job.salary ?? "Not disclosed"],
+              ["Location", job.city],
+              ["Work mode", job.workMode],
+              ["Experience", job.experience],
+              ["Employment", job.employment],
+              ["Category", job.category],
+              ["Posted", job.posted],
+            ].map(([k, v]) => (
+              <div key={k}>
+                <dt className="text-muted-foreground">{k}</dt>
+                <dd className="font-medium">{v}</dd>
+              </div>
+            ))}
+          </dl>
+          <p className="mt-4 text-xs text-muted-foreground">
+            You never need to disclose disability or gender identity to apply.
+          </p>
+        </aside>
       </div>
     </div>
   );

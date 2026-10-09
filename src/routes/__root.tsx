@@ -158,6 +158,7 @@ function RootComponent() {
           <div className="flex min-h-dvh flex-col bg-background text-foreground">
             <SiteHeader />
             <main id="main" className="flex-1">
+              {/* The public landing page is open to everyone; all tools and portals require an account. */}
               {isPublicPage ? (
                 <Outlet />
               ) : (

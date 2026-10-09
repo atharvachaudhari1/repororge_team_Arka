@@ -1,120 +1,137 @@
+import { ACCESS_FEATURES, CITIES, INCLUSION_FEATURES } from "./jobs-data";
 import { EMPTY_FILTERS, type Filters } from "./search";
-import { ACCESS_FEATURES } from "./jobs-data";
 
-export type QueryChip = {
-  type: "text" | "workMode" | "city" | "access" | "employment";
-  label: string;
-  value: string;
-};
+/** A single interpreted piece of a spoken query, shown as an editable chip. */
+export type QueryChip = { group: keyof Filters; value: string; label: string };
 
-export type VoiceQueryResult = {
-  filters: Filters;
-  chips: QueryChip[];
-};
+const MODE_WORDS: [string[], string][] = [
+  [["remote", "work from home", "from home", "wfh"], "Remote"],
+  [["hybrid"], "Hybrid"],
+  [["on site", "onsite", "on-site", "in office", "office based"], "On-site"],
+];
 
-const CITY_SYNONYMS: Record<string, string> = {
-  bengaluru: "Bengaluru",
-  bangalore: "Bengaluru",
-  mumbai: "Mumbai",
-  bombay: "Mumbai",
-  delhi: "Delhi-NCR",
-  ncr: "Delhi-NCR",
-  gurgaon: "Delhi-NCR",
-  noida: "Delhi-NCR",
-  hyderabad: "Hyderabad",
-  chennai: "Chennai",
-  madras: "Chennai",
-  pune: "Pune",
-};
+const EXPERIENCE_WORDS: [string[], string][] = [
+  [["fresher", "freshers", "entry level", "graduate", "no experience"], "Fresher"],
+  [["junior", "0 to 2", "0-2", "one year", "two years"], "0-2 years"],
+  [["mid level", "2 to 5", "2-5", "three years", "four years"], "2-5 years"],
+  [["senior", "lead", "5 plus", "5+", "experienced"], "5+ years"],
+];
 
-const WORK_MODE_SYNONYMS: Record<string, string> = {
-  remote: "Remote",
-  "work from home": "Remote",
-  wfh: "Remote",
-  hybrid: "Hybrid",
-  "on site": "On-site",
-  onsite: "On-site",
-  office: "On-site",
-};
+const EMPLOYMENT_WORDS: [string[], string][] = [
+  [["full time", "full-time"], "Full-time"],
+  [["part time", "part-time"], "Part-time"],
+  [["internship", "intern"], "Internship"],
+  [["contract", "freelance"], "Contract"],
+];
 
-const ACCESS_SYNONYMS: Record<string, keyof typeof ACCESS_FEATURES> = {
-  "screen reader": "screen_reader",
-  "screen readers": "screen_reader",
-  "wheelchair": "step_free_access",
-  "step free": "step_free_access",
-  "ramp": "step_free_access",
-  "accessible washroom": "accessible_washrooms",
-  "washrooms": "accessible_washrooms",
-  "sign language": "sign_interpreter",
-  "interpreter": "sign_interpreter",
-  "caption": "captioned_meetings",
-  "captions": "captioned_meetings",
-  "flexible hours": "flexible_hours",
-  "flexible time": "flexible_hours",
-  "quiet workspace": "quiet_workspace",
-  "quiet room": "quiet_workspace",
-};
+const ACCESS_WORDS: [string[], keyof typeof ACCESS_FEATURES][] = [
+  [
+    ["accessible interview", "interview accessible", "accessible interviews"],
+    "accessible_interview",
+  ],
+  [["screen reader", "screenreader", "nvda", "jaws", "talkback"], "screen_reader"],
+  [
+    ["flexible hours", "flexible working", "flexible schedule", "flexible timing", "flexible work"],
+    "flexible_work",
+  ],
+  [["caption", "captions", "captioned", "subtitles"], "captioned_meetings"],
+  [["assistive technology", "assistive tech", "braille", "magnifier"], "assistive_tech"],
+  [["keyboard"], "keyboard_friendly"],
+  [["accessible application", "accessible website", "accessible apply"], "accessible_application"],
+  [
+    ["accessible workplace", "accessible office", "step free", "wheelchair"],
+    "accessible_workplace",
+  ],
+];
 
-/**
- * Parses a spoken natural language job search query into structured search filters and visual chips.
- */
-export function parseVoiceQuery(utterance: string): VoiceQueryResult {
-  const filters: Filters = { ...EMPTY_FILTERS };
+const INCLUSION_WORDS: [string[], keyof typeof INCLUSION_FEATURES][] = [
+  [["lgbtq", "lgbt", "queer friendly", "transgender friendly", "trans friendly"], "lgbtq_policy"],
+  [["gender neutral", "gender-neutral"], "gender_neutral_facilities"],
+  [["equal opportunity"], "equal_opportunity"],
+  [["inclusive hiring", "inclusive hiring program"], "inclusive_hiring"],
+];
+
+const FILLER =
+  /\b(find|search|show|me|please|for|with|that|have|has|the|a|an|and|jobs?|job|roles?|openings?|opening|vacancy|vacancies|in|at|near|around|any|available|hiring|looking|want|need|i|my)\b/g;
+
+/** Converts a spoken sentence into structured filters plus a free-text remainder. */
+export function parseVoiceQuery(text: string): { filters: Filters; chips: QueryChip[] } {
+  const raw = ` ${text
+    .toLowerCase()
+    .replace(/[.,!?]/g, " ")
+    .replace(/\s+/g, " ")} `;
+  let rest = raw;
+  const filters: Filters = {
+    ...EMPTY_FILTERS,
+    workModes: [],
+    cities: [],
+    employment: [],
+    experience: [],
+    access: [],
+    inclusion: [],
+  };
   const chips: QueryChip[] = [];
-  let remaining = utterance.toLowerCase();
 
-  // Strip conversational prefixes
-  remaining = remaining
-    .replace(/^(search for|find me a job for|find jobs for|show me|jobs for|look for|i am looking for)\s+/i, "")
-    .trim();
-
-  // 1. Detect Work Mode
-  for (const [key, val] of Object.entries(WORK_MODE_SYNONYMS)) {
-    if (new RegExp(`\\b${key}\\b`, "i").test(remaining)) {
-      if (!filters.workModes.includes(val)) {
-        filters.workModes.push(val);
-        chips.push({ type: "workMode", label: val, value: val });
+  const take = (phrases: string[]) => {
+    let hit = false;
+    for (const p of phrases) {
+      if (rest.includes(` ${p} `) || rest.includes(`${p} `) || rest.includes(p)) {
+        if (!rest.includes(p)) continue;
+        hit = true;
+        rest = rest.split(p).join(" ");
       }
-      remaining = remaining.replace(new RegExp(`\\b${key}\\b`, "gi"), " ");
+    }
+    return hit;
+  };
+
+  for (const [words, value] of MODE_WORDS)
+    if (take(words) && !filters.workModes.includes(value)) {
+      filters.workModes.push(value);
+      chips.push({ group: "workModes", value, label: value });
+    }
+  for (const [words, value] of EXPERIENCE_WORDS)
+    if (take(words) && !filters.experience.includes(value)) {
+      filters.experience.push(value);
+      chips.push({ group: "experience", value, label: value });
+    }
+  for (const [words, value] of EMPLOYMENT_WORDS)
+    if (take(words) && !filters.employment.includes(value)) {
+      filters.employment.push(value);
+      chips.push({ group: "employment", value, label: value });
+    }
+  for (const [words, key] of ACCESS_WORDS)
+    if (take(words) && !filters.access.includes(key)) {
+      filters.access.push(key);
+      chips.push({ group: "access", value: key, label: ACCESS_FEATURES[key] });
+    }
+  for (const [words, key] of INCLUSION_WORDS)
+    if (take(words) && !filters.inclusion.includes(key)) {
+      filters.inclusion.push(key);
+      chips.push({ group: "inclusion", value: key, label: INCLUSION_FEATURES[key] });
+    }
+  for (const city of CITIES) {
+    const name = city.replace(" (India)", "").toLowerCase();
+    if (name === "remote") continue;
+    if (rest.includes(name)) {
+      rest = rest.split(name).join(" ");
+      filters.cities.push(city);
+      chips.push({ group: "cities", value: city, label: city });
     }
   }
 
-  // 2. Detect Cities
-  for (const [key, val] of Object.entries(CITY_SYNONYMS)) {
-    if (new RegExp(`\\b${key}\\b`, "i").test(remaining)) {
-      if (!filters.cities.includes(val)) {
-        filters.cities.push(val);
-        chips.push({ type: "city", label: val, value: val });
-      }
-      remaining = remaining.replace(new RegExp(`\\b${key}\\b`, "gi"), " ");
-    }
-  }
-
-  // 3. Detect Accessibility Accommodations
-  for (const [phrase, featureKey] of Object.entries(ACCESS_SYNONYMS)) {
-    if (remaining.includes(phrase)) {
-      if (!filters.access.includes(featureKey)) {
-        filters.access.push(featureKey);
-        chips.push({
-          type: "access",
-          label: ACCESS_FEATURES[featureKey] || featureKey,
-          value: featureKey,
-        });
-      }
-      remaining = remaining.replace(phrase, " ");
-    }
-  }
-
-  // 4. Remaining keywords clean up
-  const cleanQ = remaining
-    .replace(/\b(in|with|for|and|at|the|a|an|jobs|positions|roles)\b/gi, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-
-  if (cleanQ) {
-    filters.q = cleanQ;
-    chips.push({ type: "text", label: `"${cleanQ}"`, value: cleanQ });
-  }
-
+  const q = rest.replace(FILLER, " ").replace(/\s+/g, " ").trim();
+  filters.q = q;
+  if (q) chips.push({ group: "q", value: q, label: q });
   return { filters, chips };
+}
+
+export function describeFilters(filters: Filters) {
+  const parts: string[] = [];
+  if (filters.q) parts.push(filters.q);
+  parts.push(...filters.workModes, ...filters.cities, ...filters.experience, ...filters.employment);
+  parts.push(...filters.access.map((a) => ACCESS_FEATURES[a as keyof typeof ACCESS_FEATURES] ?? a));
+  parts.push(
+    ...filters.inclusion.map((i) => INCLUSION_FEATURES[i as keyof typeof INCLUSION_FEATURES] ?? i),
+  );
+  return parts;
 }

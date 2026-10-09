@@ -117,31 +117,6 @@ export async function getDatabase(): Promise<SqliteDatabase> {
         // column already exists
       }
 
-      // Seed standard demo users if not present
-      try {
-        const salt = "ableo-demo-salt-2026";
-        const c = await import("node:crypto");
-        const hashed = c.scryptSync("password123", salt, 64).toString("hex");
-
-        const candExists = db.prepare("SELECT id FROM users WHERE email = ?").get("alex.morgan@inclusive-work.dev");
-        if (!candExists) {
-          db.prepare(`
-            INSERT INTO users (full_name, email, role, password_hash, password_salt, email_verified)
-            VALUES (?, ?, ?, ?, ?, 1)
-          `).run("Alex Morgan", "alex.morgan@inclusive-work.dev", "candidate", hashed, salt);
-        }
-
-        const empExists = db.prepare("SELECT id FROM users WHERE email = ?").get("recruiter@inclusive-work.dev");
-        if (!empExists) {
-          db.prepare(`
-            INSERT INTO users (full_name, email, role, password_hash, password_salt, email_verified)
-            VALUES (?, ?, ?, ?, ?, 1)
-          `).run("Inclusive Employer Lead", "recruiter@inclusive-work.dev", "employer", hashed, salt);
-        }
-      } catch (err) {
-        console.warn("Could not seed demo users:", err);
-      }
-
       return db;
     })();
   }
@@ -929,54 +904,20 @@ export async function loginAccountHandler(data: {
     };
   }
 
-  let row = db.prepare("SELECT * FROM users WHERE email = ?").get(data.email.toLowerCase()) as
+  const row = db.prepare("SELECT * FROM users WHERE email = ?").get(data.email) as
     UserRow | undefined;
-
-  if (!row) {
-    const defaultName = (data.email.split("@")[0] || "User")
-      .replace(/[._-]/g, " ")
-      .replace(/\b\w/g, (c) => c.toUpperCase());
-    const regResult = await registerAccountHandler({
-      fullName: defaultName || "Ableo User",
-      email: data.email,
-      password: data.password || "password123",
-      role: data.role,
-    });
-    if (regResult.ok && regResult.user) {
-      return {
-        ok: true as const,
-        user: regResult.user,
-        token: regResult.token,
-      };
-    }
-    row = db.prepare("SELECT * FROM users WHERE email = ?").get(data.email.toLowerCase()) as
-      UserRow | undefined;
-  }
-
   const isRowAdmin = isUserAdmin(row);
   let authFailed = false;
 
-  if (!row) {
+  if (!row || (!isRowAdmin && row.role !== data.role)) {
     authFailed = true;
   } else {
-    let matches = false;
+    const expected = Buffer.from(row.password_hash, "hex");
+    const supplied = Buffer.from(await passwordHash(data.password, row.password_salt), "hex");
     if (
-      (row.email.toLowerCase() === "alex.morgan@inclusive-work.dev" ||
-        row.email.toLowerCase() === "recruiter@inclusive-work.dev") &&
-      (data.password === "password123" || !data.password)
+      expected.length !== supplied.length ||
+      !(await crypto()).timingSafeEqual(expected, supplied)
     ) {
-      matches = true;
-    } else {
-      const expected = Buffer.from(row.password_hash, "hex");
-      const supplied = Buffer.from(await passwordHash(data.password, row.password_salt), "hex");
-      if (
-        expected.length === supplied.length &&
-        (await crypto()).timingSafeEqual(expected, supplied)
-      ) {
-        matches = true;
-      }
-    }
-    if (!matches) {
       authFailed = true;
     }
   }

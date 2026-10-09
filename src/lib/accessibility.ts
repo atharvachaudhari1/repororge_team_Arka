@@ -126,12 +126,10 @@ export function transparencyCounts(job: Job) {
 export type AccessibilityFit = {
   /** Percentage of the candidate's chosen preferences this role lists. 0 when none chosen. */
   score: number;
-  fitScore: number;
   hasPreferences: boolean;
   preferenceCount: number;
   availableCount: number;
   available: TransparencyRow[];
-  matchedFeatures: string[];
   missing: TransparencyRow[];
   /** Everything the employer states for this role, regardless of preferences. */
   provided: TransparencyRow[];
@@ -154,12 +152,10 @@ export function accessibilityFit(preferences: string[], job: Job): Accessibility
     : "Choose your accessibility preferences in your profile to see an Accessibility Fit for every role.";
   return {
     score,
-    fitScore: score,
     hasPreferences: prefs.length > 0,
     preferenceCount: prefs.length,
     availableCount: available.length,
     available,
-    matchedFeatures: available.map((a) => a.label),
     missing,
     provided,
     summary,

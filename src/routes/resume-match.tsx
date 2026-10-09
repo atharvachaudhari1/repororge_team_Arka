@@ -1,303 +1,333 @@
-import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useMemo, useState } from "react";
 import {
+  AlertTriangle,
+  Check,
   FileText,
   Sparkles,
-  Search,
-  CheckCircle2,
-  Building2,
-  MapPin,
-  Clock,
+  Upload,
+  Loader2,
   ArrowRight,
-  ShieldCheck,
-  Plus,
-  X,
 } from "lucide-react";
-import { useAppState } from "@/lib/app-state";
-import { recommendJobs } from "@/lib/search";
-import { accessibilityFit } from "@/lib/accessibility";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useAppState } from "@/lib/app-state";
+import { analyseResume } from "@/lib/matching";
+import { DEMO_RESUMES } from "@/lib/resume-parser";
+import { extractResumeText } from "@/lib/resume-file";
+import { AccessibleResumeExportModal } from "@/components/accessible-resume-export";
 
 export const Route = createFileRoute("/resume-match")({
+  head: () => ({
+    meta: [
+      { title: "Resume to Job Match — Ableo" },
+      {
+        name: "description",
+        content:
+          "Upload your resume (PDF, DOCX, TXT) and Ableo will analyze skill coverage, accommodation compatibility, and suggest improvements — fully accessible for screen readers and voice input.",
+      },
+      { property: "og:title", content: "Resume to Job Match — Ableo" },
+      {
+        property: "og:description",
+        content:
+          "Accessible resume analysis: skills match, accommodation fit, and AI suggestions for PwD.",
+      },
+    ],
+  }),
   component: ResumeMatchPage,
 });
 
 function ResumeMatchPage() {
-  const { profile, updateProfile } = useAppState();
-  const [newSkill, setNewSkill] = useState("");
-  const [resumeSnippet, setResumeSnippet] = useState(profile.resumeText || "");
+  const { profile, saveProfile, allJobs } = useAppState();
+  const [text, setText] = useState(profile.resumeText || DEMO_RESUMES[0]?.parsed.rawText || "");
+  const [jobId, setJobId] = useState(allJobs[0]?.id ?? "");
+  const [showImprove, setShowImprove] = useState(false);
+  const [isScanning, setIsScanning] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
 
-  const handleAddSkill = (e: React.FormEvent) => {
-    e.preventDefault();
-    const trimmed = newSkill.trim();
-    if (trimmed && !profile.skills.includes(trimmed)) {
-      updateProfile({ skills: [...profile.skills, trimmed] });
-      setNewSkill("");
-    }
-  };
-
-  const handleRemoveSkill = (skillToRemove: string) => {
-    updateProfile({
-      skills: profile.skills.filter((s) => s !== skillToRemove),
-    });
-  };
-
-  const handleUpdateResume = () => {
-    updateProfile({ resumeText: resumeSnippet });
-  };
-
-  const recommendations = recommendJobs(profile, 10);
+  const job = allJobs.find((j) => j.id === jobId);
+  const result = useMemo(
+    () => (job && text.trim() ? analyseResume(text, job, profile) : null),
+    [job, text, profile],
+  );
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 space-y-8">
-      {/* Header Banner */}
-      <div className="surface-card p-6 sm:p-8 rounded-3xl relative overflow-hidden space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="space-y-2">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand/10 border border-brand/20 text-xs font-semibold text-brand">
-              <Sparkles className="size-3.5" />
-              <span>Skills &amp; Accommodation Matcher</span>
-            </div>
-            <h1 className="font-display text-2xl sm:text-3xl font-bold text-foreground">
-              Resume &amp; Role Fit Engine
-            </h1>
-            <p className="text-sm text-muted-foreground max-w-2xl">
-              Match your verified competencies and workplace accommodations against thousands of inclusive openings across India without disclosing personal disability details.
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button asChild variant="outline" size="sm" className="gap-2 text-xs">
-              <Link to="/profile">
-                Profile Settings
-              </Link>
-            </Button>
-            <Button asChild size="sm" className="gap-2 text-xs bg-[#7BD3C2] text-[#141817] hover:bg-[#68c5b3] font-semibold">
-              <Link to="/jobs">
-                Browse All Jobs
-              </Link>
-            </Button>
-          </div>
+    <div className="mx-auto max-w-4xl px-4 py-8">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div>
+          <h1 className="text-3xl font-bold">Resume to Job Match</h1>
+          <p className="mt-1 text-muted-foreground">
+            Ableo AI analyzes your resume against target job requirements, identifying matched
+            skills, missing criteria, and ATS recommendations.
+          </p>
+        </div>
+        <div className="flex items-center gap-2 self-start sm:self-center">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-8 gap-1.5 text-xs font-semibold border-brand/50 text-brand hover:bg-brand/10"
+            onClick={() => setExportOpen(true)}
+          >
+            <FileText className="size-3.5" />
+            Export Accessible Resume
+          </Button>
+          <Badge variant="outline" className="bg-brand/5 border-brand/30 text-brand">
+            Pillar 1 &amp; 3: Skill &amp; Resume Intelligence
+          </Badge>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left: Candidate Profile & Skills Input */}
-        <div className="space-y-6">
-          <Card className="surface-card border-border">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base font-bold flex items-center justify-between">
-                <span>Active Skills</span>
-                <span className="text-xs font-normal text-muted-foreground">
-                  {profile.skills.length} skills
-                </span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex flex-wrap gap-1.5">
-                {profile.skills.map((skill) => (
-                  <Badge
-                    key={skill}
-                    variant="secondary"
-                    className="text-xs pr-1 py-1 gap-1 items-center bg-secondary hover:bg-secondary/80"
-                  >
-                    <span>{skill}</span>
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveSkill(skill)}
-                      className="rounded p-0.5 hover:bg-destructive/10 hover:text-destructive text-muted-foreground"
-                      aria-label={`Remove skill ${skill}`}
-                    >
-                      <X className="size-3" />
-                    </button>
-                  </Badge>
-                ))}
-              </div>
+      <AccessibleResumeExportModal open={exportOpen} onOpenChange={setExportOpen} />
 
-              <form onSubmit={handleAddSkill} className="flex gap-2 pt-2">
-                <Input
-                  value={newSkill}
-                  onChange={(e) => setNewSkill(e.target.value)}
-                  placeholder="Add skill (e.g. Python, SQL)"
-                  className="text-xs h-9"
-                />
-                <Button type="submit" size="sm" variant="secondary" className="h-9 px-3 shrink-0">
-                  <Plus className="size-4" />
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
+      <div className="mt-6 grid gap-6 md:grid-cols-2">
+        <section aria-labelledby="resume-heading" className="surface-card space-y-4 p-5">
+          <h2 id="resume-heading" className="flex items-center gap-2 text-xl font-semibold">
+            <FileText aria-hidden="true" className="size-5 text-brand" />
+            Your Resume
+          </h2>
 
-          {/* Quick Resume Text Analyzer */}
-          <Card className="surface-card border-border">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base font-bold flex items-center gap-2">
-                <FileText className="size-4 text-brand" />
-                <span>Resume Excerpt</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <p className="text-xs text-muted-foreground">
-                Paste your resume summary or key accomplishments to enhance keyword scoring.
-              </p>
-              <Textarea
-                rows={4}
-                value={resumeSnippet}
-                onChange={(e) => setResumeSnippet(e.target.value)}
-                placeholder="Paste experience highlights, technical stacks, or project summaries..."
-                className="text-xs font-mono"
-              />
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={handleUpdateResume}
-                className="w-full text-xs"
-              >
-                Sync with Matches
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Privacy Guarantee */}
-          <div className="rounded-2xl border border-border/80 bg-muted/40 p-4 space-y-2">
-            <div className="flex items-center gap-2 text-xs font-semibold text-foreground">
-              <ShieldCheck className="size-4 text-brand" />
-              <span>Privacy Shield</span>
-            </div>
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              Match calculation runs strictly on client device memory. Your specific disability category or medical history is never required or inferred.
-            </p>
-          </div>
-        </div>
-
-        {/* Right: Job Recommendations & Scores */}
-        <div className="lg:col-span-2 space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="font-display text-lg font-bold text-foreground">
-              Top Role Matches ({recommendations.length})
-            </h2>
-            <span className="text-xs text-muted-foreground">
-              Ranked by skill synergy &amp; preference alignment
-            </span>
-          </div>
-
-          <div className="space-y-4">
-            {recommendations.map(({ job, score }) => {
-              const fit = accessibilityFit(profile.accessibilityPreferences, job);
-              return (
-                <article
-                  key={job.id}
-                  className="surface-card rounded-2xl border border-border p-5 transition-all hover:border-brand/60 hover:shadow-sm space-y-4"
+          {/* Quick Demo Resumes */}
+          <div className="rounded-lg border border-border bg-secondary/30 p-3 text-xs">
+            <span className="font-semibold block mb-1.5">Load Sample Resume:</span>
+            <div className="flex flex-wrap gap-1.5">
+              {DEMO_RESUMES.map((d) => (
+                <Button
+                  key={d.id}
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-7 text-xs"
+                  onClick={() => {
+                    setText(d.parsed.rawText);
+                    toast.success(`Loaded sample: ${d.role}`);
+                  }}
                 >
-                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
-                          <Building2 className="size-3.5" />
-                          {job.company}
-                        </span>
-                        {(job.transparencyLevel === "verified" || job.accessSource === "Verified by AccessPath") && (
-                          <Badge
-                            variant="outline"
-                            className="border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 text-[10px]"
-                          >
-                            <CheckCircle2 className="size-3 mr-1" />
-                            Verified PwD
-                          </Badge>
-                        )}
-                      </div>
-                      <h3 className="font-display text-lg font-bold text-foreground">
-                        <Link to={`/jobs/${job.id}` as any} className="hover:text-brand transition-colors">
-                          {job.title}
-                        </Link>
-                      </h3>
-                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                          <MapPin className="size-3.5 text-brand" />
-                          {job.city}
-                        </span>
-                        <span>•</span>
-                        <span className="flex items-center gap-1">
-                          <Clock className="size-3.5" />
-                          {job.workMode}
-                        </span>
-                        {job.salary && (
-                          <>
-                            <span>•</span>
-                            <span className="font-semibold text-foreground">{job.salary}</span>
-                          </>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="flex sm:flex-col items-end gap-2 shrink-0">
-                      <div className="text-right">
-                        <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-brand/10 text-brand font-bold text-xs">
-                          <Sparkles className="size-3" />
-                          Score: {score}
-                        </div>
-                        {fit.fitScore > 0 && (
-                          <div className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold mt-1">
-                            {fit.fitScore}% Accommodations Fit
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Skills synergy */}
-                  <div className="flex flex-wrap gap-1.5 pt-1">
-                    {job.requiredSkills.map((reqSkill) => {
-                      const isMatched = profile.skills.some(
-                        (s) =>
-                          s.toLowerCase() === reqSkill.toLowerCase() ||
-                          reqSkill.toLowerCase().includes(s.toLowerCase())
-                      );
-                      return (
-                        <span
-                          key={reqSkill}
-                          className={`inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-medium ${
-                            isMatched
-                              ? "bg-emerald-500/15 text-emerald-800 dark:text-emerald-300 border border-emerald-500/30"
-                              : "bg-secondary text-muted-foreground"
-                          }`}
-                        >
-                          {isMatched ? "✓ " : ""}
-                          {reqSkill}
-                        </span>
-                      );
-                    })}
-                  </div>
-
-                  <div className="flex items-center justify-between pt-2 border-t border-border/50 text-xs">
-                    <span className="text-muted-foreground">
-                      Category: <strong>{job.category}</strong>
-                    </span>
-                    <div className="flex items-center gap-2">
-                      <Button asChild variant="outline" size="sm" className="h-8 text-xs">
-                        <Link to={`/jobs/${job.id}` as any}>
-                          Details
-                        </Link>
-                      </Button>
-                      <Button
-                        asChild
-                        size="sm"
-                        className="h-8 text-xs bg-[#7BD3C2] text-[#141817] hover:bg-[#68c5b3] font-semibold"
-                      >
-                        <Link to={`/apply/${job.id}` as any}>
-                          Apply Now
-                          <ArrowRight className="size-3.5 ml-1" />
-                        </Link>
-                      </Button>
-                    </div>
-                  </div>
-                </article>
-              );
-            })}
+                  {d.role}
+                </Button>
+              ))}
+            </div>
           </div>
+
+          <div>
+            <label htmlFor="resume-upload" className="block text-sm font-medium">
+              Upload CV / Resume (PDF, DOCX, TXT)
+            </label>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              Your actual document text is extracted locally for skill and experience analysis.
+            </p>
+            <Input
+              id="resume-upload"
+              type="file"
+              accept=".txt,.md,.pdf,.docx"
+              className="mt-1.5"
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                setIsScanning(true);
+                try {
+                  const content = await extractResumeText(file);
+                  setText(content);
+                  saveProfile({ ...profile, resumeName: file.name, resumeText: content });
+                  toast.success(`${file.name} loaded and saved for matching.`);
+                } catch (error) {
+                  toast.error(
+                    error instanceof Error ? error.message : "Could not read this resume.",
+                  );
+                } finally {
+                  setIsScanning(false);
+                }
+              }}
+            />
+            {isScanning ? (
+              <p className="mt-1 text-xs text-brand flex items-center gap-1.5">
+                <Loader2 className="size-3.5 animate-spin" /> Scanning resume text…
+              </p>
+            ) : null}
+          </div>
+
+          <div>
+            <label htmlFor="resume-text" className="block text-sm font-medium">
+              Resume Text
+            </label>
+            <Textarea
+              id="resume-text"
+              rows={12}
+              className="mt-1.5 font-mono text-xs"
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              placeholder="Paste your resume here…"
+            />
+          </div>
+
+          <Button
+            variant="outline"
+            className="w-full"
+            onClick={() => {
+              saveProfile({ ...profile, resumeText: text });
+              toast.success("Resume text saved to your profile");
+            }}
+          >
+            Save resume text to profile
+          </Button>
+        </section>
+
+        <div className="space-y-6">
+          <section aria-labelledby="job-heading" className="surface-card p-5">
+            <h2 id="job-heading" className="text-xl font-semibold">
+              Choose Target Role
+            </h2>
+            <div className="mt-3">
+              <label htmlFor="job-select" className="block text-sm font-medium">
+                Role
+              </label>
+              <Select value={jobId} onValueChange={setJobId}>
+                <SelectTrigger id="job-select" className="mt-1.5">
+                  <SelectValue placeholder="Select a job" />
+                </SelectTrigger>
+                <SelectContent>
+                  {allJobs.map((j) => (
+                    <SelectItem key={j.id} value={j.id}>
+                      {j.title} — {j.company} ({j.workMode})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </section>
+
+          <section aria-labelledby="analysis-heading" className="surface-card p-5">
+            <h2 id="analysis-heading" className="flex items-center gap-2 text-xl font-semibold">
+              <Sparkles aria-hidden="true" className="size-5 text-brand" />
+              Ableo Match Analysis
+            </h2>
+            {!result || !job ? (
+              <p className="mt-2 text-sm text-muted-foreground">
+                Add your resume text and select a role to see the analysis.
+              </p>
+            ) : (
+              <div aria-live="polite">
+                <p className="mt-3 text-3xl font-bold">
+                  {result.coverage}%{" "}
+                  <span className="text-base font-medium text-muted-foreground">
+                    requirement coverage
+                  </span>
+                </p>
+                <Progress
+                  value={result.coverage}
+                  className="mt-2"
+                  aria-label={`Coverage ${result.coverage} percent`}
+                />
+
+                <h3 className="mt-4 text-sm font-semibold">Matched Skills</h3>
+                {result.matched.length ? (
+                  <ul className="mt-2 flex flex-wrap gap-1.5 text-sm">
+                    {result.matched.map((s) => (
+                      <li
+                        key={s}
+                        className="flex items-center gap-1 rounded-md bg-success/10 px-2 py-0.5 text-xs font-medium text-success"
+                      >
+                        <Check aria-hidden="true" className="size-3.5" />
+                        {s}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    None of the listed skills were found in your resume text.
+                  </p>
+                )}
+
+                <h3 className="mt-4 text-sm font-semibold">Missing Skills (To Close)</h3>
+                {result.missingRequired.length || result.missingPreferred.length ? (
+                  <ul className="mt-2 space-y-1.5 text-sm">
+                    {[...result.missingRequired, ...result.missingPreferred].map((s) => (
+                      <li key={s} className="flex items-center gap-2 text-xs">
+                        <AlertTriangle
+                          aria-hidden="true"
+                          className="size-3.5 text-warning shrink-0"
+                        />
+                        <span className="font-medium text-foreground">{s}</span>
+                        <span className="text-muted-foreground">
+                          {result.missingRequired.includes(s) ? "(required)" : "(preferred)"}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    All listed skills found in your resume!
+                  </p>
+                )}
+
+                <h3 className="mt-4 text-sm font-semibold">Experience Match</h3>
+                <p className="mt-1 text-sm">
+                  {result.experience}% — role asks for {job.experience}
+                  {profile.experienceBand
+                    ? `, your profile says ${profile.experienceBand}`
+                    : ". Add experience level to your profile for accuracy."}
+                </p>
+
+                {result.notes.length ? (
+                  <>
+                    <h3 className="mt-4 text-sm font-semibold">Recommended Improvements</h3>
+                    <ul className="mt-2 list-disc space-y-1 pl-5 text-xs text-muted-foreground">
+                      {result.notes.map((n) => (
+                        <li key={n}>{n}</li>
+                      ))}
+                    </ul>
+                  </>
+                ) : null}
+
+                <Button
+                  className="mt-4 w-full"
+                  onClick={() => setShowImprove((v) => !v)}
+                  aria-expanded={showImprove}
+                >
+                  {showImprove ? "Hide bullet suggestions" : "Suggested Bullet Improvements"}
+                </Button>
+                {showImprove ? (
+                  <div className="mt-3 rounded-md border border-border bg-secondary/50 p-3">
+                    <h3 className="text-xs font-semibold uppercase tracking-wider text-brand">
+                      Suggested Bullet Points
+                    </h3>
+                    <ul className="mt-2 list-disc space-y-2 pl-4 text-xs">
+                      {result.bullets.map((b) => (
+                        <li key={b}>{b}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+
+                <div className="mt-5 pt-3 border-t border-border flex items-center justify-between">
+                  <Link
+                    to="/jobs/$jobId"
+                    params={{ jobId: job.id }}
+                    className="text-xs font-medium text-brand hover:underline"
+                  >
+                    View Job &amp; Accommodations
+                  </Link>
+                  <Button asChild size="sm" className="gap-1 bg-brand text-brand-foreground">
+                    <Link to="/apply/$jobId" params={{ jobId: job.id }}>
+                      Apply with Ableo
+                      <ArrowRight className="size-3" />
+                    </Link>
+                  </Button>
+                </div>
+              </div>
+            )}
+          </section>
         </div>
       </div>
     </div>

@@ -1,268 +1,356 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
-import {
-  Briefcase,
-  CheckCircle2,
-  Filter,
-  MapPin,
-  RotateCcw,
-  SlidersHorizontal,
-  Sparkles,
-  Zap,
-} from "lucide-react";
-import { ACCESS_FEATURES, CITIES, INCLUSION_FEATURES, JOBS, type Job } from "@/lib/jobs-data";
-import { EMPTY_FILTERS, filterJobs, type Filters } from "@/lib/search";
-import { useAppState } from "@/lib/app-state";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useMemo, useRef, useState } from "react";
+import { X, List, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { JobCard } from "@/components/job-card";
 import { JobSearchBar } from "@/components/job-search-bar";
-import { EmptyState } from "@/components/states";
+import { JobMapExplorer } from "@/components/job-map-explorer";
+import { ACCESS_FEATURES, CITIES, INCLUSION_FEATURES } from "@/lib/jobs-data";
+import { EMPTY_FILTERS, filterJobs, type Filters } from "@/lib/search";
+import { useAppState } from "@/lib/app-state";
+import type { QueryChip } from "@/lib/voice-query";
 
 export const Route = createFileRoute("/jobs/")({
+  validateSearch: (search: Record<string, unknown>): { q?: string | undefined } => ({
+    q: typeof search["q"] === "string" ? (search["q"] as string) : undefined,
+  }),
+  head: () => ({
+    meta: [
+      { title: "Job Search — AccessPath" },
+      {
+        name: "description",
+        content:
+          "Search and filter Indian jobs by work mode, experience, accessibility support and inclusive workplace policies.",
+      },
+      { property: "og:title", content: "Job Search — AccessPath" },
+      {
+        property: "og:description",
+        content: "Filter jobs by accessibility support and inclusive workplace information.",
+      },
+    ],
+  }),
   component: JobsPage,
 });
 
-const WORK_MODES = ["Remote", "Hybrid", "On-site"];
-const EMPLOYMENT_TYPES = ["Full-time", "Part-time", "Contract", "Internship"];
-const EXPERIENCE_LEVELS = ["Fresher", "0-2 years", "2-5 years", "5+ years"];
+type Group = { key: keyof Filters; legend: string; options: { value: string; label: string }[] };
+
+const GROUPS: Group[] = [
+  {
+    key: "workModes",
+    legend: "Location & work mode",
+    options: [
+      { value: "Remote", label: "Remote" },
+      { value: "Hybrid", label: "Hybrid" },
+      { value: "On-site", label: "On-site" },
+    ],
+  },
+  {
+    key: "employment",
+    legend: "Employment type",
+    options: ["Full-time", "Part-time", "Internship", "Contract"].map((v) => ({
+      value: v,
+      label: v,
+    })),
+  },
+  {
+    key: "experience",
+    legend: "Experience",
+    options: ["Fresher", "0-2 years", "2-5 years", "5+ years"].map((v) => ({ value: v, label: v })),
+  },
+  {
+    key: "cities",
+    legend: "City",
+    options: CITIES.map((c) => ({ value: c, label: c })),
+  },
+  {
+    key: "access",
+    legend: "Accessibility support",
+    options: Object.entries(ACCESS_FEATURES).map(([value, label]) => ({ value, label })),
+  },
+  {
+    key: "inclusion",
+    legend: "Inclusive workplace information",
+    options: Object.entries(INCLUSION_FEATURES).map(([value, label]) => ({ value, label })),
+  },
+];
 
 function JobsPage() {
-  const { profile } = useAppState();
-  const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
-  const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const { q } = Route.useSearch();
+  const searchQ = q ?? "";
+  const navigate = useNavigate();
+  const { allJobs, eyeTrackingConfig } = useAppState();
+  const [filters, setFilters] = useState<Filters>({ ...EMPTY_FILTERS, q: searchQ });
+  const [viewMode, setViewMode] = useState<"list" | "map">("list");
+  const [pending, setPending] = useState<{
+    filters: Filters;
+    chips: QueryChip[];
+    heard: string;
+  } | null>(null);
+  const [announcement, setAnnouncement] = useState("");
+  const filterPanel = useRef<HTMLDivElement | null>(null);
+  const query = filters.q || searchQ;
 
-  // Filter jobs with search core engine
-  const filteredJobs = useMemo(() => {
-    return filterJobs(filters, JOBS);
-  }, [filters]);
+  const results = useMemo(
+    () => filterJobs({ ...filters, q: query }, allJobs),
+    [filters, query, allJobs],
+  );
+  const activeCount = GROUPS.reduce((n, g) => n + (filters[g.key] as string[]).length, 0);
 
-  const toggleFilterItem = (category: keyof Filters, value: string) => {
+  const toggle = (key: keyof Filters, value: string) =>
     setFilters((prev) => {
-      const arr = prev[category] as string[];
-      const next = arr.includes(value) ? arr.filter((v) => v !== value) : [...arr, value];
-      return { ...prev, [category]: next };
+      const list = prev[key] as string[];
+      return {
+        ...prev,
+        [key]: list.includes(value) ? list.filter((v) => v !== value) : [...list, value],
+      };
     });
+
+  const setQuery = (value: string) => {
+    setFilters((prev) => ({ ...prev, q: value }));
+    navigate({ to: "/jobs", search: { q: value }, replace: true });
   };
 
-  const activeFilterCount =
-    (filters.q ? 1 : 0) +
-    filters.workModes.length +
-    filters.cities.length +
-    filters.employment.length +
-    filters.experience.length +
-    filters.access.length +
-    filters.inclusion.length;
+  const applyParsed = (next: Filters) => {
+    setFilters(next);
+    navigate({ to: "/jobs", search: { q: next.q }, replace: true });
+  };
+
+  /** Chips reflect every active filter, so removing one re-runs the search. */
+  const chips: QueryChip[] = [
+    ...(query ? [{ group: "q" as keyof Filters, value: query, label: query }] : []),
+    ...GROUPS.flatMap((g) =>
+      (filters[g.key] as string[]).map((v) => ({
+        group: g.key,
+        value: v,
+        label: g.options.find((o) => o.value === v)?.label ?? v,
+      })),
+    ),
+  ];
+
+  const removeChip = (chip: QueryChip) => {
+    if (chip.group === "q") {
+      setQuery("");
+      setAnnouncement(`Removed search term ${chip.label}.`);
+      return;
+    }
+    toggle(chip.group, chip.value);
+    setAnnouncement(`Removed filter ${chip.label}.`);
+  };
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-8">
-      {/* Search Header Banner */}
-      <div className="rounded-3xl border border-border bg-gradient-to-b from-card to-background p-6 sm:p-10 shadow-sm">
-        <div className="max-w-3xl">
-          <div className="inline-flex items-center gap-2 rounded-full border border-brand/40 bg-brand-soft/70 px-3.5 py-1 text-xs font-semibold text-foreground mb-3">
-            <Sparkles className="size-3 text-brand" />
-            <span>Search Core Engine • {JOBS.length} Inclusive Roles Loaded</span>
-          </div>
-          <h1 className="font-display text-3xl sm:text-4xl font-bold tracking-tight text-foreground">
-            Explore Accessible Jobs
-          </h1>
-          <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-            Filter by verified workplace accommodations, wheelchair accessibility, screen-reader compatibility,
-            and transit-friendly locations across Indian metro hubs.
-          </p>
-        </div>
+    <div className="mx-auto max-w-6xl px-4 py-8">
+      <h1 className="text-3xl font-bold">Find your next opportunity</h1>
+      <p className="mt-2 max-w-2xl text-muted-foreground">
+        Accessibility and inclusion details below are provided by the employer or verified by
+        AccessPath.
+      </p>
 
-        {/* Global Search Bar */}
-        <div className="mt-6">
-          <JobSearchBar
-            filters={filters}
-            onChange={setFilters}
-            totalCount={filteredJobs.length}
-          />
-        </div>
+      <div className="mt-6">
+        <JobSearchBar
+          value={query}
+          onChange={setQuery}
+          onSubmit={setQuery}
+          onVoiceParse={(result) => setPending(result)}
+        />
       </div>
 
-      {/* Main Layout: Filters Sidebar + Results Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
-        {/* Mobile Filter Toggle */}
-        <div className="lg:hidden flex justify-between items-center bg-card p-3 rounded-xl border border-border">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowMobileFilters(!showMobileFilters)}
-            className="gap-2 text-xs"
-          >
-            <Filter className="size-3.5 text-brand" />
-            {showMobileFilters ? "Hide Filters" : "Show Accommodation Filters"}
-            {activeFilterCount > 0 && (
-              <span className="size-4 rounded-full bg-brand text-[#141817] text-[10px] font-bold flex items-center justify-center">
-                {activeFilterCount}
-              </span>
-            )}
-          </Button>
+      <p aria-live="polite" className="sr-only">
+        {announcement}
+      </p>
 
-          {activeFilterCount > 0 && (
+      {pending ? (
+        <section
+          aria-labelledby="voice-understood"
+          className="surface-card mt-4 border-brand/40 p-4"
+        >
+          <h2 id="voice-understood" className="font-semibold">
+            I understood:
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground">You said: “{pending.heard}”</p>
+          <ul className="mt-3 flex flex-wrap gap-2">
+            {pending.chips.length ? (
+              pending.chips.map((c) => (
+                <li
+                  key={`${c.group}-${c.value}`}
+                  className="rounded-full border border-border bg-secondary px-3 py-1 text-sm"
+                >
+                  {c.label}
+                </li>
+              ))
+            ) : (
+              <li className="text-sm text-muted-foreground">No filters — all jobs.</li>
+            )}
+          </ul>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <Button
+              onClick={() => {
+                applyParsed(pending.filters);
+                setAnnouncement(
+                  `Filters applied. ${pending.chips.length} interpreted from your voice search.`,
+                );
+                setPending(null);
+              }}
+            >
+              Apply filters
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                applyParsed(pending.filters);
+                setPending(null);
+                setAnnouncement("Filters applied. You can adjust them in the filter panel.");
+                filterPanel.current?.focus();
+              }}
+            >
+              Edit filters
+            </Button>
             <Button
               variant="ghost"
-              size="sm"
-              onClick={() => setFilters(EMPTY_FILTERS)}
-              className="text-xs text-muted-foreground"
+              onClick={() => {
+                setPending(null);
+                setAnnouncement("Voice search cancelled. Your filters are unchanged.");
+              }}
             >
-              Reset
+              Cancel
             </Button>
-          )}
+          </div>
+        </section>
+      ) : null}
+
+      {chips.length ? (
+        <div className="mt-4">
+          <h2 className="text-sm font-semibold">Active filters</h2>
+          <ul className="mt-2 flex flex-wrap gap-2">
+            {chips.map((chip) => (
+              <li key={`${chip.group}-${chip.value}`}>
+                <button
+                  type="button"
+                  onClick={() => removeChip(chip)}
+                  className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-border bg-secondary px-3 py-1 text-sm transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  aria-label={`Remove filter ${chip.label}`}
+                >
+                  {chip.label}
+                  <X aria-hidden="true" className="size-3.5" />
+                </button>
+              </li>
+            ))}
+          </ul>
         </div>
+      ) : null}
 
-        {/* Filters Sidebar */}
-        <aside
-          aria-label="Job Search Filters"
-          className={`${showMobileFilters ? "block" : "hidden lg:block"} space-y-6 lg:sticky lg:top-24 rounded-2xl border border-border bg-card p-5 surface-card`}
-        >
-          <div className="flex items-center justify-between pb-3 border-b border-border">
-            <h2 className="text-sm font-bold flex items-center gap-2">
-              <SlidersHorizontal className="size-4 text-brand" />
-              Filter By Needs
-            </h2>
-            {activeFilterCount > 0 && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setFilters(EMPTY_FILTERS)}
-                className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
-              >
-                <RotateCcw className="size-3 mr-1" />
-                Clear
-              </Button>
-            )}
-          </div>
-
-          {/* Work Mode */}
-          <div className="space-y-2.5">
-            <h3 className="text-xs font-semibold text-foreground uppercase tracking-wider">
-              Work Mode
-            </h3>
-            <div className="space-y-2">
-              {WORK_MODES.map((mode) => (
-                <label
-                  key={mode}
-                  className="flex items-center gap-2.5 text-xs text-foreground cursor-pointer hover:text-brand transition-colors"
+      <div className="mt-8 grid gap-8 lg:grid-cols-[300px_1fr]">
+        <aside aria-label="Job filters">
+          <div className="surface-card p-4" tabIndex={-1} ref={filterPanel}>
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold">Filters</h2>
+              {activeCount > 0 ? (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setFilters({ ...EMPTY_FILTERS, q: query })}
                 >
-                  <Checkbox
-                    checked={filters.workModes.includes(mode)}
-                    onCheckedChange={() => toggleFilterItem("workModes", mode)}
-                  />
-                  <span>{mode}</span>
-                </label>
-              ))}
+                  Clear all ({activeCount})
+                </Button>
+              ) : null}
             </div>
-          </div>
-
-          {/* Experience Band */}
-          <div className="space-y-2.5 pt-3 border-t border-border/60">
-            <h3 className="text-xs font-semibold text-foreground uppercase tracking-wider">
-              Experience Level
-            </h3>
-            <div className="space-y-2">
-              {EXPERIENCE_LEVELS.map((exp) => (
-                <label
-                  key={exp}
-                  className="flex items-center gap-2.5 text-xs text-foreground cursor-pointer hover:text-brand transition-colors"
-                >
-                  <Checkbox
-                    checked={filters.experience.includes(exp)}
-                    onCheckedChange={() => toggleFilterItem("experience", exp)}
-                  />
-                  <span>{exp}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-
-          {/* Primary Accessibility Accommodations */}
-          <div className="space-y-2.5 pt-3 border-t border-border/60">
-            <h3 className="text-xs font-semibold text-foreground uppercase tracking-wider flex items-center justify-between">
-              <span>Accommodations</span>
-              <span className="text-[10px] text-brand lowercase font-normal">verified</span>
-            </h3>
-            <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
-              {Object.entries(ACCESS_FEATURES).map(([key, feat]) => (
-                <label
-                  key={key}
-                  className="flex items-center gap-2.5 text-xs text-foreground cursor-pointer hover:text-brand transition-colors"
-                >
-                  <Checkbox
-                    checked={filters.access.includes(key)}
-                    onCheckedChange={() => toggleFilterItem("access", key)}
-                  />
-                  <span className="flex items-center gap-1.5 truncate">
-                    <span aria-hidden="true">✓</span>
-                    <span className="truncate">{feat}</span>
-                  </span>
-                </label>
-              ))}
-            </div>
-          </div>
-
-          {/* Indian Cities / Hubs */}
-          <div className="space-y-2.5 pt-3 border-t border-border/60">
-            <h3 className="text-xs font-semibold text-foreground uppercase tracking-wider">
-              Metro City Hub
-            </h3>
-            <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
-              {CITIES.map((city) => (
-                <label
-                  key={city}
-                  className="flex items-center gap-2.5 text-xs text-foreground cursor-pointer hover:text-brand transition-colors"
-                >
-                  <Checkbox
-                    checked={filters.cities.includes(city)}
-                    onCheckedChange={() => toggleFilterItem("cities", city)}
-                  />
-                  <span>{city}</span>
-                </label>
+            <div className="mt-2 divide-y divide-border">
+              {GROUPS.map((group) => (
+                <fieldset key={group.key} className="py-4">
+                  <legend className="mb-2 text-sm font-semibold">{group.legend}</legend>
+                  <ul className="space-y-2 max-h-64 overflow-y-auto pr-1">
+                    {group.options.map((opt) => {
+                      const id = `${group.key}-${opt.value}`;
+                      const checked = (filters[group.key] as string[]).includes(opt.value);
+                      return (
+                        <li key={id} className="flex items-center gap-2">
+                          <Checkbox
+                            id={id}
+                            checked={checked}
+                            onCheckedChange={() => toggle(group.key, opt.value)}
+                          />
+                          <label htmlFor={id} className="text-sm">
+                            {opt.label}
+                          </label>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </fieldset>
               ))}
             </div>
           </div>
         </aside>
 
-        {/* Results Grid */}
-        <main className="lg:col-span-3 space-y-4">
-          <div className="flex items-center justify-between pb-2 border-b border-border/60">
-            <span className="text-xs text-muted-foreground font-medium">
-              Showing <strong className="text-foreground">{filteredJobs.length}</strong> of {JOBS.length} inclusive positions
-            </span>
-
-            {profile?.accessibilityPreferences?.length > 0 && (
-              <Badge variant="outline" className="text-[11px] gap-1 text-brand border-brand/40">
-                <Sparkles className="size-3" />
-                Accommodation Match Sorting Active
-              </Badge>
-            )}
-          </div>
-
-          {filteredJobs.length === 0 ? (
-            <EmptyState
-              title="No jobs match your selected filters"
-              body="Try loosening your search query or unchecking some of the accommodation filters to view more opportunities."
+        <section aria-labelledby="results-heading">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <h2 id="results-heading" className="text-lg font-semibold" aria-live="polite">
+              {results.length} {results.length === 1 ? "job" : "jobs"} found
+              {query ? ` for “${query}”` : ""}
+            </h2>
+            <div
+              className="inline-flex items-center rounded-lg border border-border bg-card p-1 text-sm shadow-sm"
+              role="radiogroup"
+              aria-label="View mode"
             >
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setFilters(EMPTY_FILTERS)}
-                className="text-xs"
+              <button
+                type="button"
+                role="radio"
+                aria-checked={viewMode === "list"}
+                onClick={() => setViewMode("list")}
+                className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+                  viewMode === "list"
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
               >
-                Reset All Filters
-              </Button>
-            </EmptyState>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {filteredJobs.map((job) => (
-                <JobCard key={job.id} job={job} />
-              ))}
+                <List className="size-3.5" />
+                List View
+              </button>
+              <button
+                type="button"
+                role="radio"
+                aria-checked={viewMode === "map"}
+                onClick={() => setViewMode("map")}
+                className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+                  viewMode === "map"
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <MapPin className="size-3.5" />
+                Map View
+              </button>
             </div>
+          </div>
+          {eyeTrackingConfig.enabled && viewMode === "list" ? (
+            <p
+              data-gaze-job-results="true"
+              className="mt-3 rounded-lg border border-brand/30 bg-brand/5 px-3 py-2 text-sm text-foreground"
+            >
+              <strong>Gaze selection is ready.</strong> Look steadily at the blank area of a job
+              card to open its details, or look at any button on the card to use that action.
+            </p>
+          ) : null}
+          {results.length === 0 ? (
+            <p className="surface-card mt-4 p-6 text-sm text-muted-foreground">
+              No jobs match these filters yet. Try removing a filter or searching a broader term
+              such as “developer” or “support”.
+            </p>
+          ) : viewMode === "map" ? (
+            <div className="mt-4">
+              <JobMapExplorer jobs={results} />
+            </div>
+          ) : (
+            <ul className="mt-4 grid gap-4">
+              {results.map((job) => (
+                <li key={job.id}>
+                  <JobCard job={job} />
+                </li>
+              ))}
+            </ul>
           )}
-        </main>
+        </section>
       </div>
     </div>
   );

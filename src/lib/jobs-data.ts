@@ -137,8 +137,6 @@ export type Job = {
   salary?: string | undefined;
   posted: string;
   about: string;
-  description?: string;
-  transparencyLevel?: "verified" | "employer" | "unspecified";
   responsibilities: string[];
   requiredSkills: string[];
   preferredSkills: string[];

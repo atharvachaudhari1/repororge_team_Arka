@@ -1,71 +1,284 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Lock, ShieldCheck } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { useState } from "react";
+import { Eye, EyeOff, Lock, ShieldCheck } from "lucide-react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { DEFAULT_PRIVACY, useAppState } from "@/lib/app-state";
+import { isShared, privacyPreview, privacyRows } from "@/lib/privacy";
+import { IndiaRightsGuide } from "@/components/india-rights-guide";
 
 export const Route = createFileRoute("/privacy")({
+  head: () => ({
+    meta: [
+      { title: "My Privacy — AccessPath" },
+      {
+        name: "description",
+        content:
+          "Control exactly what employers see on AccessPath. Disability and gender identity are never required, and accessibility preferences stay private by default.",
+      },
+      { property: "og:title", content: "My Privacy — AccessPath" },
+      {
+        property: "og:description",
+        content:
+          "You control what employers see: preferred name, pronouns, accessibility preferences and more.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
   component: PrivacyPage,
 });
 
-function PrivacyPage() {
+function StatusPill({ shared }: { shared: boolean }) {
   return (
-    <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 space-y-8">
-      <div>
-        <h1 className="font-display text-2xl sm:text-3xl font-bold text-foreground">
-          Candidate Privacy &amp; RPwD Legal Rights
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Zero disability inference. Complete candidate control over medical and accommodation disclosure.
-        </p>
-      </div>
+    <span
+      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium ${
+        shared
+          ? "border-brand/40 bg-brand/10 text-foreground"
+          : "border-border bg-secondary text-foreground"
+      }`}
+    >
+      {shared ? (
+        <Eye aria-hidden="true" className="size-3.5" />
+      ) : (
+        <Lock aria-hidden="true" className="size-3.5" />
+      )}
+      {shared ? "Shared" : "Private"}
+    </span>
+  );
+}
 
-      <Card className="surface-card">
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <ShieldCheck className="size-5 text-brand" />
-            <CardTitle className="text-base font-bold">Ableo Privacy Commitment</CardTitle>
-          </div>
-          <CardDescription className="text-xs">
-            Our algorithmic guarantees for job seekers with disabilities.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3 text-xs text-foreground leading-relaxed">
-          <p>
-            1. <strong>No Disability Labeling:</strong> We never infer medical diagnoses or disability classifications. We only measure stated accommodations against candidate-chosen preferences.
-          </p>
-          <p>
-            2. <strong>Private by Default:</strong> Legal name, medical records, UDID status, and accommodation requests are masked from employers until you specifically grant permission during an application.
-          </p>
-          <p>
-            3. <strong>Anti-Bias Algorithms:</strong> Match scores are based solely on professional skills and alignment with declared accommodation needs.
-          </p>
-        </CardContent>
-      </Card>
+function PrivacyPage() {
+  const { profile, saveProfile } = useAppState();
+  const [announcement, setAnnouncement] = useState("");
+  const rows = privacyRows(profile);
+  const preview = privacyPreview(profile);
 
-      {/* RPwD Act 2016 Guide */}
-      <div id="rights" className="surface-card p-6 rounded-2xl">
-        <h2 className="text-lg font-bold font-display mb-3">
-          🇮🇳 India RPwD Act 2016 Employer Obligations
+  const setField = (
+    field: NonNullable<ReturnType<typeof privacyRows>[number]["field"]>,
+    value: boolean,
+    label: string,
+  ) => {
+    saveProfile({ ...profile, [field]: value });
+    setAnnouncement(`${label} is now ${value ? "shared with employers" : "private"}.`);
+  };
+
+  return (
+    <div className="mx-auto max-w-4xl px-4 py-8">
+      <h1 className="text-3xl font-bold">My privacy</h1>
+      <p className="mt-2 flex items-start gap-2 text-lg font-medium">
+        <ShieldCheck aria-hidden="true" className="mt-1 size-5 shrink-0 text-brand" />
+        You control what employers see.
+      </p>
+      <p className="mt-2 max-w-2xl text-muted-foreground">
+        You never have to disclose a disability or a transgender or gender identity to use
+        AccessPath. Nothing on this page changes your job matches — accessibility preferences are
+        used only to show you how well a workplace fits how you work.
+      </p>
+
+      <p aria-live="polite" className="sr-only">
+        {announcement}
+      </p>
+
+      <section aria-labelledby="fields-heading" className="surface-card mt-6 p-5">
+        <h2 id="fields-heading" className="text-xl font-semibold">
+          Profile information
         </h2>
-        <Accordion type="single" collapsible className="w-full">
-          <AccordionItem value="item-1">
-            <AccordionTrigger className="text-sm font-medium">
-              Section 21: Equal Opportunity Policy
-            </AccordionTrigger>
-            <AccordionContent className="text-xs text-muted-foreground">
-              Every private and public establishment with 20 or more employees must formulate and display an Equal Opportunity Policy detailing accommodations provided.
-            </AccordionContent>
-          </AccordionItem>
-          <AccordionItem value="item-2">
-            <AccordionTrigger className="text-sm font-medium">
-              Section 3: Protection from Discrimination
-            </AccordionTrigger>
-            <AccordionContent className="text-xs text-muted-foreground">
-              No person with disability shall be discriminated against in any matter relating to employment, promotion, or training.
-            </AccordionContent>
-          </AccordionItem>
-        </Accordion>
-      </div>
+        <ul className="mt-4 divide-y divide-border">
+          {rows.map((row) => {
+            const shared = isShared(row, profile);
+            const switchId = `privacy-${row.key}`;
+            return (
+              <li key={row.key} className="flex flex-wrap items-start justify-between gap-3 py-4">
+                <div className="min-w-0 flex-1">
+                  <h3 className="font-medium">{row.label}</h3>
+                  <p className="text-sm text-muted-foreground">{row.value}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">{row.help}</p>
+                </div>
+                <div className="flex flex-col items-end gap-2">
+                  <StatusPill shared={shared} />
+                  {row.mode === "toggle" && row.field ? (
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        id={switchId}
+                        checked={shared}
+                        onCheckedChange={(v) => setField(row.field!, v, row.label)}
+                      />
+                      <label htmlFor={switchId} className="text-xs text-muted-foreground">
+                        Share {row.label.toLowerCase()}
+                      </label>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">
+                      {row.mode === "always"
+                        ? "Always shared — this is your professional profile"
+                        : row.mode === "on-apply"
+                          ? "Shared only when you apply"
+                          : "Never collected"}
+                    </p>
+                  )}
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      </section>
+
+      <section aria-labelledby="preview-heading" className="surface-card mt-6 p-5">
+        <h2 id="preview-heading" className="text-xl font-semibold">
+          Privacy preview
+        </h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          An example of what an employer can see if you apply right now.
+        </p>
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          <div className="rounded-lg border border-border p-4">
+            <h3 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide">
+              <Eye aria-hidden="true" className="size-4 text-brand" />
+              Employer will see
+            </h3>
+            <dl className="mt-3 space-y-3 text-sm">
+              {preview.shared.map((item) => (
+                <div key={item.label}>
+                  <dt className="text-muted-foreground">{item.label}</dt>
+                  <dd className="font-medium">{item.value}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+          <div className="rounded-lg border border-border p-4">
+            <h3 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide">
+              <EyeOff aria-hidden="true" className="size-4" />
+              Employer will not see
+            </h3>
+            {preview.hidden.length ? (
+              <dl className="mt-3 space-y-3 text-sm">
+                {preview.hidden.map((item) => (
+                  <div key={item.label}>
+                    <dt className="font-medium">{item.label}</dt>
+                    <dd className="text-muted-foreground">{item.reason}</dd>
+                  </div>
+                ))}
+              </dl>
+            ) : (
+              <p className="mt-3 text-sm text-muted-foreground">
+                Everything on your profile is currently set to shared. You can switch any field back
+                to private above.
+              </p>
+            )}
+          </div>
+        </div>
+      </section>
+
+      <section id="gestures" aria-labelledby="gestures-heading" className="surface-card mt-6 p-5">
+        <div className="flex items-center gap-2">
+          <span className="flex size-7 items-center justify-center rounded-full bg-brand/10 text-brand text-sm font-bold">
+            ✋
+          </span>
+          <h2 id="gestures-heading" className="text-xl font-semibold">
+            Hand-Gesture Navigation & Camera Privacy
+          </h2>
+        </div>
+        <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
+          Ableo includes an optional, hands-free hand gesture navigation system powered by Google
+          MediaPipe Tasks Vision running entirely client-side.
+        </p>
+
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          <div className="rounded-lg border border-border p-3.5 bg-card/60">
+            <h3 className="font-semibold text-sm text-foreground">🔒 100% On-Device Processing</h3>
+            <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
+              Hand detection and landmark tracking run completely in your local browser via
+              WebAssembly. No video frames, camera snapshots, or spatial coordinates are ever
+              transmitted over the internet to any server.
+            </p>
+          </div>
+
+          <div className="rounded-lg border border-border p-3.5 bg-card/60">
+            <h3 className="font-semibold text-sm text-foreground">🚫 Zero Data Stored</h3>
+            <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
+              Video feeds exist solely in volatile browser graphics memory during real-time frame
+              processing. Nothing is ever written to disk, databases, or cookies.
+            </p>
+          </div>
+
+          <div className="rounded-lg border border-border p-3.5 bg-card/60">
+            <h3 className="font-semibold text-sm text-foreground">⚡ Instant Automatic Teardown</h3>
+            <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
+              Your camera hardware tracks are stopped immediately the instant you toggle the feature
+              off, click the persistent &quot;Turn camera off&quot; button, or switch/minimize the
+              browser tab.
+            </p>
+          </div>
+
+          <div className="rounded-lg border border-border p-3.5 bg-card/60">
+            <h3 className="font-semibold text-sm text-foreground">
+              ✨ Strictly Opt-In & Non-Exclusive
+            </h3>
+            <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
+              Gestures are never turned on by default. Camera permission is only requested after you
+              explicitly enable the switch. Full keyboard, touch, and voice equivalents remain
+              available across the entire platform.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section id="rights" aria-labelledby="rights-heading" className="surface-card mt-6 p-5">
+        <h2 id="rights-heading" className="text-xl font-semibold mb-4">
+          Rights & Protections in India (RPwD Act 2016)
+        </h2>
+        <IndiaRightsGuide />
+      </section>
+
+      <section aria-labelledby="reset-heading" className="surface-card mt-6 p-5">
+        <h2 id="reset-heading" className="text-xl font-semibold">
+          Reset privacy settings
+        </h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Return every switch to the private-first defaults. Your profile details are not deleted.
+        </p>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button variant="outline" className="mt-3">
+              Reset privacy settings
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Reset privacy settings?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Pronouns, legal name, accessibility preferences and interview preferences will go
+                back to private. Your preferred name stays shared so employers can address you.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => {
+                  saveProfile({ ...profile, ...DEFAULT_PRIVACY });
+                  setAnnouncement("Privacy settings reset to the private-first defaults.");
+                  toast.success("Privacy settings reset");
+                }}
+              >
+                Reset
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </section>
     </div>
   );
 }

@@ -1,20 +1,22 @@
-import { useState, type ReactNode } from "react";
+import { useState } from "react";
 import {
   Contrast,
   Eye,
   Hand,
   Ear,
   Brain,
+  Mic,
   RotateCcw,
   Subtitles,
   Type,
+  Volume2,
+  BookOpen,
   Moon,
   Sun,
   Accessibility,
   ScanLine,
   AlignJustify,
-  Sliders,
-  Check,
+  Focus,
 } from "lucide-react";
 import {
   useAppState,
@@ -23,6 +25,7 @@ import {
   type MotionPref,
   type AccessibilityPreset,
 } from "@/lib/app-state";
+import { useTextToSpeech } from "@/lib/speech";
 import {
   Sheet,
   SheetContent,
@@ -31,43 +34,25 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
+import { GestureSettingsSection } from "@/components/gesture-settings";
+import { EyeTrackingSettingsSection } from "@/components/eye-tracking-settings";
+import { VoiceSettingsSection } from "@/components/voice-settings";
 
 const SIZES: { value: FontSize; label: string }[] = [
   { value: "medium", label: "Normal" },
   { value: "large", label: "Large" },
-  { value: "x-large", label: "Extra Large" },
+  { value: "x-large", label: "Extra large" },
 ];
 
 const LINE_SPACINGS: { value: LineSpacing; label: string }[] = [
-  { value: "normal", label: "1x Standard" },
-  { value: "relaxed", label: "1.8x Relaxed" },
-  { value: "loose", label: "2.2x Loose" },
+  { value: "normal", label: "1x Line" },
+  { value: "relaxed", label: "1.8x Line" },
+  { value: "loose", label: "2.2x Line" },
 ];
 
-export function AccessibilitySection({
-  title,
-  icon: Icon,
-  description,
-  children,
-}: {
-  title: string;
-  icon: React.ComponentType<{ className?: string }>;
-  description?: string;
-  children: ReactNode;
-}) {
-  return (
-    <div className="space-y-3 rounded-xl border border-border/60 bg-card/60 p-4">
-      <div className="flex items-center gap-2">
-        <Icon className="size-4 text-brand" />
-        <h3 className="font-sans text-sm font-semibold text-foreground">{title}</h3>
-      </div>
-      {description && <p className="text-xs text-muted-foreground">{description}</p>}
-      <div className="pt-1">{children}</div>
-    </div>
-  );
-}
-
+/**
+ * Reusable accessibility controls panel with clean editorial styling.
+ */
 export function AccessibilityControlsContent({ inDrawer = false }: { inDrawer?: boolean }) {
   const {
     theme,
@@ -86,281 +71,424 @@ export function AccessibilityControlsContent({ inDrawer = false }: { inDrawer?: 
     setDyslexiaFont,
     liveCaptions,
     setLiveCaptions,
+    setCaptionText,
     activePreset,
     applyPreset,
     readingRuler,
     setReadingRuler,
-    resetAccessibility,
+    ttsRate,
+    setTtsRate,
   } = useAppState();
 
+  const tts = useTextToSpeech();
+
+  const readPage = () => {
+    const main = document.getElementById("main");
+    const text = (main?.innerText || "").replace(/\s+/g, " ").trim().slice(0, 4000);
+    if (text) {
+      setCaptionText(text.slice(0, 250));
+      tts.play(text, ttsRate);
+    }
+  };
+
   return (
-    <div className="space-y-5">
-      {/* Active preset notification banner */}
+    <div className="space-y-6">
+      {/* Active notification badge if preset is active */}
       {activePreset !== "custom" && (
         <div
           role="status"
-          className="flex items-center justify-between gap-2 rounded-xl border border-brand/40 bg-brand-soft/50 p-3 text-xs text-foreground"
+          className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[#191716]/20 bg-[#7BD3C2]/20 p-3 text-xs text-foreground"
         >
           <div className="flex items-center gap-2">
-            <span className="size-2 rounded-full bg-brand animate-pulse" />
-            <span className="font-medium capitalize">{activePreset} Preset Active</span>
+            <span className="size-2 rounded-full bg-[#191716] animate-pulse" />
+            <span className="font-medium">
+              {activePreset === "blind" &&
+                "Vision mode active: high contrast, extra-large text, reduced motion."}
+              {activePreset === "motor" &&
+                "Motor mode active: enlarged touch targets, voice control enabled."}
+              {activePreset === "deaf" &&
+                "Hearing mode active: live subtitles enabled across audio/video."}
+              {activePreset === "cognitive" &&
+                "Focus mode active: dyslexia-friendly font, reduced animation."}
+            </span>
           </div>
           <button
             type="button"
-            onClick={resetAccessibility}
-            className="text-[11px] underline hover:text-brand"
+            onClick={() => applyPreset("custom")}
+            className="rounded-full bg-background/80 px-2.5 py-0.5 font-semibold text-xs text-destructive hover:bg-background border border-border"
           >
-            Reset
+            Turn off
           </button>
         </div>
       )}
 
-      {/* Quick Assistive Profiles */}
-      <AccessibilitySection
-        title="Assistive Profiles"
-        icon={Sliders}
-        description="Select a curated profile or customize controls individually below."
-      >
-        <div className="grid grid-cols-2 gap-2">
-          <Button
-            variant={activePreset === "blind" ? "default" : "outline"}
-            size="sm"
-            onClick={() => applyPreset("blind")}
-            className="justify-start gap-2 h-9 text-xs"
+      {/* 1. Disability Profiles */}
+      <div className="space-y-2.5">
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-serif italic text-stone-500 tracking-wide uppercase font-semibold">
+            Disability Profiles
+          </span>
+          {activePreset !== "custom" && (
+            <button
+              type="button"
+              onClick={() => applyPreset("custom")}
+              className="inline-flex items-center gap-1 text-xs text-stone-500 hover:text-foreground font-medium"
+            >
+              <RotateCcw className="size-3" />
+              Reset all
+            </button>
+          )}
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => applyPreset(activePreset === "blind" ? "custom" : "blind")}
+            className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs transition-all ${
+              activePreset === "blind"
+                ? "bg-[#7BD3C2] text-[#141817] font-semibold border border-[#191716] shadow-[1px_1px_0px_#141817]"
+                : "border border-stone-300 dark:border-stone-700 bg-card hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-700 dark:text-stone-300"
+            }`}
+            aria-pressed={activePreset === "blind"}
           >
             <Eye className="size-3.5" />
-            Vision / Blind
-          </Button>
-          <Button
-            variant={activePreset === "motor" ? "default" : "outline"}
-            size="sm"
-            onClick={() => applyPreset("motor")}
-            className="justify-start gap-2 h-9 text-xs"
+            Vision
+          </button>
+
+          <button
+            type="button"
+            onClick={() => applyPreset(activePreset === "motor" ? "custom" : "motor")}
+            className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs transition-all ${
+              activePreset === "motor"
+                ? "bg-[#7BD3C2] text-[#141817] font-semibold border border-[#191716] shadow-[1px_1px_0px_#141817]"
+                : "border border-stone-300 dark:border-stone-700 bg-card hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-700 dark:text-stone-300"
+            }`}
+            aria-pressed={activePreset === "motor"}
           >
             <Hand className="size-3.5" />
-            Motor / Mobility
-          </Button>
-          <Button
-            variant={activePreset === "deaf" ? "default" : "outline"}
-            size="sm"
-            onClick={() => applyPreset("deaf")}
-            className="justify-start gap-2 h-9 text-xs"
+            Motor
+          </button>
+
+          <button
+            type="button"
+            onClick={() => applyPreset(activePreset === "deaf" ? "custom" : "deaf")}
+            className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs transition-all ${
+              activePreset === "deaf"
+                ? "bg-[#7BD3C2] text-[#141817] font-semibold border border-[#191716] shadow-[1px_1px_0px_#141817]"
+                : "border border-stone-300 dark:border-stone-700 bg-card hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-700 dark:text-stone-300"
+            }`}
+            aria-pressed={activePreset === "deaf"}
           >
             <Ear className="size-3.5" />
-            Hearing / Deaf
-          </Button>
-          <Button
-            variant={activePreset === "neurodivergent" ? "default" : "outline"}
-            size="sm"
-            onClick={() => applyPreset("neurodivergent")}
-            className="justify-start gap-2 h-9 text-xs"
+            Hearing
+          </button>
+
+          <button
+            type="button"
+            onClick={() => applyPreset(activePreset === "cognitive" ? "custom" : "cognitive")}
+            className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs transition-all ${
+              activePreset === "cognitive"
+                ? "bg-[#7BD3C2] text-[#141817] font-semibold border border-[#191716] shadow-[1px_1px_0px_#141817]"
+                : "border border-stone-300 dark:border-stone-700 bg-card hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-700 dark:text-stone-300"
+            }`}
+            aria-pressed={activePreset === "cognitive"}
           >
             <Brain className="size-3.5" />
-            Neurodivergent / ADHD
-          </Button>
+            Focus
+          </button>
         </div>
-      </AccessibilitySection>
+      </div>
 
-      {/* Contrast & Theme */}
-      <AccessibilitySection
-        title="Color & Contrast (WCAG 2.2 AA)"
-        icon={Contrast}
-        description="Enhance text legibility with calibrated contrast ratios."
-      >
-        <div className="flex flex-col gap-2">
-          <div className="flex gap-2">
-            <Button
-              variant={!highContrast && theme === "light" ? "default" : "outline"}
-              size="sm"
-              onClick={() => {
-                setHighContrast(false);
-                if (theme === "dark") toggleTheme();
-              }}
-              className="flex-1 text-xs"
+      {/* 2. Typography & Contrast */}
+      <div className="space-y-2.5">
+        <span className="text-xs font-serif italic text-stone-500 tracking-wide uppercase font-semibold">
+          Typography & Display
+        </span>
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Text Size */}
+          <div className="inline-flex rounded-full border border-stone-300 dark:border-stone-700 p-0.5 bg-card">
+            {SIZES.map((s) => (
+              <button
+                key={s.value}
+                type="button"
+                onClick={() => setFontSize(s.value)}
+                className={`rounded-full px-3 py-1 text-xs transition-all ${
+                  fontSize === s.value
+                    ? "bg-[#7BD3C2] text-[#141817] font-semibold"
+                    : "text-stone-600 dark:text-stone-400 hover:text-foreground"
+                }`}
+              >
+                {s.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Line Spacing */}
+          <div className="inline-flex rounded-full border border-stone-300 dark:border-stone-700 p-0.5 bg-card items-center">
+            <span className="px-2 text-stone-500 font-sans text-[11px] flex items-center gap-1">
+              <AlignJustify className="size-3" />
+              Spacing:
+            </span>
+            {LINE_SPACINGS.map((ls) => (
+              <button
+                key={ls.value}
+                type="button"
+                onClick={() => setLineSpacing(ls.value)}
+                className={`rounded-full px-2.5 py-1 text-xs transition-all ${
+                  lineSpacing === ls.value
+                    ? "bg-[#7BD3C2] text-[#141817] font-semibold"
+                    : "text-stone-600 dark:text-stone-400 hover:text-foreground"
+                }`}
+              >
+                {ls.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Dyslexia font */}
+          <button
+            type="button"
+            onClick={() => setDyslexiaFont(!dyslexiaFont)}
+            className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs transition-all ${
+              dyslexiaFont
+                ? "bg-[#7BD3C2] text-[#141817] font-semibold border border-[#191716] shadow-[1px_1px_0px_#141817]"
+                : "border border-stone-300 dark:border-stone-700 bg-card hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-700 dark:text-stone-300"
+            }`}
+          >
+            <BookOpen className="size-3.5" />
+            Dyslexia Font
+          </button>
+
+          {/* Reduced Distraction */}
+          <button
+            type="button"
+            onClick={() => setReducedDistraction(!reducedDistraction)}
+            className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs transition-all ${
+              reducedDistraction
+                ? "bg-[#7BD3C2] text-[#141817] font-semibold border border-[#191716] shadow-[1px_1px_0px_#141817]"
+                : "border border-stone-300 dark:border-stone-700 bg-card hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-700 dark:text-stone-300"
+            }`}
+            title="Hide decorative elements and simplify visual layout"
+          >
+            <Focus className="size-3.5" />
+            Distraction-Free
+          </button>
+
+          {/* High contrast */}
+          <button
+            type="button"
+            onClick={() => setHighContrast(!highContrast)}
+            className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs transition-all ${
+              highContrast
+                ? "bg-[#7BD3C2] text-[#141817] font-semibold border border-[#191716] shadow-[1px_1px_0px_#141817]"
+                : "border border-stone-300 dark:border-stone-700 bg-card hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-700 dark:text-stone-300"
+            }`}
+          >
+            <Contrast className="size-3.5" />
+            High Contrast
+          </button>
+
+          {/* Reading Ruler */}
+          <button
+            type="button"
+            onClick={() => setReadingRuler(!readingRuler)}
+            className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs transition-all ${
+              readingRuler
+                ? "bg-[#7BD3C2] text-[#141817] font-semibold border border-[#191716] shadow-[1px_1px_0px_#141817]"
+                : "border border-stone-300 dark:border-stone-700 bg-card hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-700 dark:text-stone-300"
+            }`}
+            title="Toggle focus reading ruler (Alt+Up/Down to resize)"
+          >
+            <ScanLine className="size-3.5" />
+            Reading Ruler
+          </button>
+
+          {/* Theme */}
+          <button
+            type="button"
+            onClick={toggleTheme}
+            className="inline-flex items-center gap-1.5 rounded-full border border-stone-300 dark:border-stone-700 bg-card hover:bg-stone-100 dark:hover:bg-stone-800 px-3.5 py-1.5 text-xs text-stone-700 dark:text-stone-300 transition-all"
+          >
+            {theme === "dark" ? (
+              <Sun className="size-3.5 text-amber-500" />
+            ) : (
+              <Moon className="size-3.5 text-stone-700" />
+            )}
+            {theme === "dark" ? "Light Mode" : "Dark Mode"}
+          </button>
+        </div>
+      </div>
+
+      {/* 3. Audio, Captions & Voice */}
+      <div className="space-y-2.5">
+        <span className="text-xs font-serif italic text-stone-500 tracking-wide uppercase font-semibold">
+          Audio & Speech Assistance
+        </span>
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Subtitles */}
+          <button
+            type="button"
+            onClick={() => setLiveCaptions(!liveCaptions)}
+            className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs transition-all ${
+              liveCaptions
+                ? "bg-[#7BD3C2] text-[#141817] font-semibold border border-[#191716] shadow-[1px_1px_0px_#141817]"
+                : "border border-stone-300 dark:border-stone-700 bg-card hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-700 dark:text-stone-300"
+            }`}
+          >
+            <Subtitles className="size-3.5" />
+            Live Subtitles
+          </button>
+
+          {/* Read Aloud */}
+          {tts.supported && (
+            <button
+              type="button"
+              onClick={tts.state !== "idle" ? tts.stop : readPage}
+              className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs transition-all ${
+                tts.state !== "idle"
+                  ? "bg-destructive text-white font-semibold"
+                  : "border border-stone-300 dark:border-stone-700 bg-card hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-700 dark:text-stone-300"
+              }`}
             >
-              <Sun className="size-3.5 mr-1" />
-              Warm Ivory
-            </Button>
-            <Button
-              variant={!highContrast && theme === "dark" ? "default" : "outline"}
-              size="sm"
-              onClick={() => {
-                setHighContrast(false);
-                if (theme === "light") toggleTheme();
-              }}
-              className="flex-1 text-xs"
-            >
-              <Moon className="size-3.5 mr-1" />
-              Dark Slate
-            </Button>
-          </div>
-          <Button
-            variant={highContrast ? "default" : "outline"}
-            size="sm"
-            onClick={() => setHighContrast((prev) => !prev)}
-            className="w-full text-xs font-semibold"
-          >
-            <Contrast className="size-3.5 mr-1.5" />
-            {highContrast ? "✓ High Contrast (Black & Yellow) Active" : "Enable High Contrast Mode"}
-          </Button>
-        </div>
-      </AccessibilitySection>
+              <Volume2 className="size-3.5" />
+              {tts.state !== "idle" ? "Stop reading" : "Read page aloud"}
+            </button>
+          )}
 
-      {/* Typography & Scaling */}
-      <AccessibilitySection
-        title="Text Scaling & Dyslexia Support"
-        icon={Type}
-        description="Adjust typography size and activate high-legibility dyslexic typefaces."
-      >
-        <div className="space-y-3">
-          <div>
-            <span className="text-xs font-medium text-muted-foreground mb-1.5 block">Text Size</span>
-            <div className="grid grid-cols-3 gap-1.5">
-              {SIZES.map((s) => (
-                <Button
-                  key={s.value}
-                  variant={fontSize === s.value ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setFontSize(s.value)}
-                  className="text-xs"
-                >
-                  {s.label}
-                </Button>
-              ))}
-            </div>
+          {/* Speech Rate */}
+          <div className="inline-flex rounded-full border border-stone-300 dark:border-stone-700 p-0.5 bg-card items-center text-xs">
+            <span className="px-2 text-stone-500 font-sans text-[11px]">Speed:</span>
+            {([0.8, 1.0, 1.25] as const).map((r) => (
+              <button
+                key={r}
+                type="button"
+                onClick={() => setTtsRate(r)}
+                className={`rounded-full px-2.5 py-1 text-xs transition-all ${
+                  ttsRate === r
+                    ? "bg-[#7BD3C2] text-[#141817] font-semibold"
+                    : "text-stone-600 dark:text-stone-400 hover:text-foreground"
+                }`}
+              >
+                {r}x
+              </button>
+            ))}
           </div>
 
-          <div>
-            <span className="text-xs font-medium text-muted-foreground mb-1.5 block">Line Spacing</span>
-            <div className="grid grid-cols-3 gap-1.5">
-              {LINE_SPACINGS.map((l) => (
-                <Button
-                  key={l.value}
-                  variant={lineSpacing === l.value ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setLineSpacing(l.value)}
-                  className="text-xs"
-                >
-                  {l.label}
-                </Button>
-              ))}
-            </div>
-          </div>
-
-          <Button
-            variant={dyslexiaFont ? "default" : "outline"}
-            size="sm"
-            onClick={() => setDyslexiaFont((prev) => !prev)}
-            className="w-full text-xs"
+          {/* Voice Control */}
+          <button
+            type="button"
+            onClick={() => applyPreset(activePreset === "motor" ? "custom" : "motor")}
+            aria-pressed={activePreset === "motor"}
+            className="inline-flex items-center gap-1.5 rounded-full border border-[#191716] bg-[#7BD3C2] px-3.5 py-1.5 text-xs font-semibold text-[#141817] shadow-[1px_1px_0px_#141817] transition-all hover:bg-[#6ec2b1]"
           >
-            {dyslexiaFont ? "✓ Dyslexia-Friendly Font Active" : "Enable Dyslexia-Friendly Font"}
-          </Button>
+            <Mic className="size-3.5" />
+            {activePreset === "motor" ? "Stop Voice Control" : "Start Voice Control"}
+          </button>
         </div>
-      </AccessibilitySection>
+      </div>
 
-      {/* Cognitive & Focus Tools */}
-      <AccessibilitySection
-        title="Cognitive & Reading Focus"
-        icon={AlignJustify}
-        description="Tools to assist reading comprehension, reduce ADHD distractions, and suppress motion."
-      >
-        <div className="space-y-2">
-          <Button
-            variant={readingRuler ? "default" : "outline"}
-            size="sm"
-            onClick={() => setReadingRuler((prev) => !prev)}
-            className="w-full justify-start text-xs"
-          >
-            <ScanLine className="size-3.5 mr-2" />
-            {readingRuler ? "✓ Reading Ruler Active" : "Enable Reading Focus Ruler"}
-          </Button>
+      {/* 4. Hand Gesture Navigation */}
+      <div className="space-y-2.5">
+        <span className="text-xs font-serif italic text-stone-500 tracking-wide uppercase font-semibold">
+          Touchless & Motion Control
+        </span>
+        <GestureSettingsSection />
+        <EyeTrackingSettingsSection />
+      </div>
 
-          <Button
-            variant={reducedDistraction ? "default" : "outline"}
-            size="sm"
-            onClick={() => setReducedDistraction((prev) => !prev)}
-            className="w-full justify-start text-xs"
-          >
-            <Check className="size-3.5 mr-2" />
-            {reducedDistraction ? "✓ Reduced Distraction Active" : "Reduce Visual Distractions & Shadows"}
-          </Button>
-
-          <Button
-            variant={motion === "reduced" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setMotion(motion === "reduced" ? "normal" : "reduced")}
-            className="w-full justify-start text-xs"
-          >
-            <AlignJustify className="size-3.5 mr-2" />
-            {motion === "reduced" ? "✓ Reduced Motion Active" : "Pause / Reduce UI Animations"}
-          </Button>
-
-          <Button
-            variant={liveCaptions ? "default" : "outline"}
-            size="sm"
-            onClick={() => setLiveCaptions((prev) => !prev)}
-            className="w-full justify-start text-xs"
-          >
-            <Subtitles className="size-3.5 mr-2" />
-            {liveCaptions ? "✓ Live Captions Overlay Active" : "Enable Real-Time Live Captions"}
-          </Button>
-        </div>
-      </AccessibilitySection>
-
-      {/* Reset */}
-      <div className="pt-2">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={resetAccessibility}
-          className="w-full text-xs text-muted-foreground hover:text-foreground"
-        >
-          <RotateCcw className="size-3.5 mr-1.5" />
-          Reset All Accessibility Settings to Default
-        </Button>
+      <div className="space-y-2.5">
+        <span className="text-xs font-serif italic text-stone-500 tracking-wide uppercase font-semibold">
+          Hands-Free Voice Navigation
+        </span>
+        <VoiceSettingsSection />
       </div>
     </div>
   );
 }
 
+/**
+ * Dedicated Section component to embed on the Dashboard or Landing Page.
+ */
+export function AccessibilitySection({ className = "" }: { className?: string }) {
+  return (
+    <section
+      aria-labelledby="a11y-section-heading"
+      className={`rounded-2xl border border-[#191716]/15 dark:border-stone-800 bg-[#FAF7F2] dark:bg-[#1C1A18] p-6 shadow-[0_2px_12px_rgba(0,0,0,0.03)] ${className}`}
+    >
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6 pb-4 border-b border-[#191716]/10 dark:border-stone-800">
+        <div>
+          <div className="inline-flex items-center gap-1.5 rounded-full border border-[#191716]/20 bg-[#7BD3C2]/20 px-3 py-0.5 text-xs font-serif italic text-stone-800 dark:text-stone-200 mb-2">
+            <Accessibility className="size-3.5 text-[#191716] dark:text-stone-200" />
+            <span>Multi-Modal Assistive Suite</span>
+          </div>
+          <h2
+            id="a11y-section-heading"
+            className="font-serif text-xl sm:text-2xl font-normal text-stone-900 dark:text-stone-100"
+          >
+            Accessibility & Adaptive Workspace
+          </h2>
+          <p className="mt-1 text-xs sm:text-sm text-stone-600 dark:text-stone-400 font-sans">
+            Customize Ableo for your comfort — choose assistive disability presets, resize text,
+            enable high contrast, activate reading ruler, or control via voice.
+          </p>
+        </div>
+      </div>
+
+      <AccessibilityControlsContent />
+    </section>
+  );
+}
+
+/**
+ * Clean Slide-over Sheet / Drawer trigger for the Site Header.
+ */
 export function AccessibilitySheetTrigger() {
   const [open, setOpen] = useState(false);
+  const { activePreset } = useAppState();
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
         <button
           type="button"
-          aria-label="Open Accessibility Toolbar (WCAG Controls)"
-          className="flex size-9 items-center justify-center rounded-lg border border-border bg-card text-foreground transition-all hover:bg-secondary hover:border-brand focus-visible:outline-2 focus-visible:outline-brand"
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-border bg-secondary/80 px-3 py-1.5 text-xs font-medium text-foreground transition-all hover:bg-secondary hover:border-foreground/40 active:scale-95 whitespace-nowrap"
+          aria-label="Open accessibility and display preferences"
+          title="Open accessibility preferences"
         >
-          <Accessibility className="size-4 text-brand" />
+          <Accessibility className="size-3.5 text-foreground" />
+          <span className="font-sans font-semibold">A11y</span>
+          {activePreset !== "custom" && (
+            <span className="size-1.5 rounded-full bg-[#191716] dark:bg-white" />
+          )}
         </button>
       </SheetTrigger>
-      <SheetContent side="right" className="w-[380px] sm:w-[440px] overflow-y-auto p-6">
-        <SheetHeader className="mb-5">
-          <SheetTitle className="flex items-center gap-2 font-display text-lg">
-            <Accessibility className="size-5 text-brand" />
-            Accessibility &amp; Sensory Suite
-          </SheetTitle>
-          <SheetDescription className="text-xs text-muted-foreground">
-            Customise contrast, text scaling, dyslexia support, focus guides, and assistive profiles.
+      <SheetContent
+        side="right"
+        className="w-full sm:max-w-md overflow-y-auto bg-[#FAF7F2] dark:bg-[#1C1A18] border-l border-border p-6"
+      >
+        <SheetHeader className="mb-6 pb-4 border-b border-border text-left">
+          <div className="flex items-center gap-2">
+            <span className="flex size-7 items-center justify-center rounded-full bg-[#7BD3C2] text-[#141817] font-bold text-xs">
+              ♿
+            </span>
+            <SheetTitle className="font-serif text-xl font-normal text-foreground">
+              Accessibility Settings
+            </SheetTitle>
+          </div>
+          <SheetDescription className="text-xs text-muted-foreground mt-1 font-sans">
+            Adjust visual contrast, font sizes, screen reading, reading ruler, and disability
+            accommodation presets.
           </SheetDescription>
         </SheetHeader>
-        <AccessibilityControlsContent inDrawer={true} />
+
+        <AccessibilityControlsContent inDrawer />
       </SheetContent>
     </Sheet>
   );
 }
 
+/**
+ * Backward compatibility stub: does not render the disruptive top banner anymore.
+ */
 export function AccessibilityToolbar() {
-  return (
-    <div
-      role="region"
-      aria-label="Quick Accessibility Controls"
-      className="fixed bottom-6 right-6 z-40 hidden md:block"
-    >
-      <AccessibilitySheetTrigger />
-    </div>
-  );
+  return null;
 }

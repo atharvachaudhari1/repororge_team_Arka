@@ -2,15 +2,13 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 type SpeechRecognitionInstance = {
   lang: string;
-  continuous: boolean;
   interimResults: boolean;
   maxAlternatives: number;
-  onresult: ((e: any) => void) | null;
-  onend: (() => void) | null;
-  onerror: ((e: any) => void) | null;
+  onresult: (e: { results: ArrayLike<ArrayLike<{ transcript?: string }>> }) => void;
+  onend: () => void;
+  onerror: () => void;
   start: () => void;
-  stop: () => void;
-  abort?: () => void;
+  stop?: () => void;
 };
 
 type SpeechRecognitionConstructor = new () => SpeechRecognitionInstance;
@@ -20,97 +18,98 @@ type WindowWithSpeech = {
   webkitSpeechRecognition?: SpeechRecognitionConstructor;
 };
 
-/**
- * Normalises spoken utterances by trimming conversational phrases.
- */
-export function normaliseSpokenQuery(text: string): string {
-  return text
-    .replace(/^(search for|find me a job for|find jobs for|show me|jobs for|look for)\s+/i, "")
-    .trim();
-}
-
-/**
- * Hook for speech recognition in modern browsers with graceful fallback.
- */
+/** Simple wrapper over the Web Speech API with graceful fallback. */
 export function useVoiceSearch(onResult: (text: string) => void) {
   const [listening, setListening] = useState(false);
   const [supported, setSupported] = useState(false);
   const recRef = useRef<SpeechRecognitionInstance | null>(null);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    const win = window as unknown as WindowWithSpeech;
-    const SR = win.SpeechRecognition || win.webkitSpeechRecognition;
+    const win = typeof window !== "undefined" ? (window as unknown as WindowWithSpeech) : null;
+    const SR = win?.SpeechRecognition || win?.webkitSpeechRecognition;
     setSupported(Boolean(SR));
   }, []);
 
   const start = useCallback(() => {
-    if (typeof window === "undefined") return;
-    const win = window as unknown as WindowWithSpeech;
-    const SR = win.SpeechRecognition || win.webkitSpeechRecognition;
+    const win = typeof window !== "undefined" ? (window as unknown as WindowWithSpeech) : null;
+    const SR = win?.SpeechRecognition || win?.webkitSpeechRecognition;
     if (!SR) return;
-
-    try {
-      const recognition = new SR();
-      recognition.lang = "en-IN";
-      recognition.continuous = false;
-      recognition.interimResults = false;
-      recognition.maxAlternatives = 1;
-
-      recognition.onresult = (e: any) => {
-        const transcript = e.results?.[0]?.[0]?.transcript;
-        if (transcript) {
-          onResult(transcript);
-        }
-      };
-
-      recognition.onend = () => {
-        setListening(false);
-        recRef.current = null;
-      };
-
-      recognition.onerror = () => {
-        setListening(false);
-        recRef.current = null;
-      };
-
-      recRef.current = recognition;
-      recognition.start();
-      setListening(true);
-    } catch (err) {
-      console.warn("Speech recognition error:", err);
-      setListening(false);
-    }
+    const rec = new SR();
+    recRef.current = rec;
+    rec.lang = "en-IN";
+    rec.interimResults = false;
+    rec.maxAlternatives = 1;
+    rec.onresult = (e: { results: ArrayLike<ArrayLike<{ transcript?: string }>> }) =>
+      onResult(String(e.results[0]?.[0]?.transcript || ""));
+    rec.onend = () => setListening(false);
+    rec.onerror = () => setListening(false);
+    setListening(true);
+    rec.start();
   }, [onResult]);
 
   const stop = useCallback(() => {
-    if (recRef.current) {
-      try {
-        recRef.current.stop();
-      } catch (err) {
-        // ignore
-      }
-      recRef.current = null;
-    }
+    recRef.current?.stop?.();
     setListening(false);
   }, []);
 
+  return { supported, listening, start, stop };
+}
+
+/** Strips filler words from a spoken query like "Find remote developer jobs in Chennai". */
+export function normaliseSpokenQuery(text: string) {
+  return text
+    .toLowerCase()
+    .replace(
+      /\b(find|search|show|me|please|for|the|a|an|jobs?|job|openings?|vacancy|vacancies|in|at|near)\b/g,
+      " ",
+    )
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+export type SpeechState = "idle" | "speaking" | "paused";
+
+export function useTextToSpeech() {
+  const [state, setState] = useState<SpeechState>("idle");
+  const [supported, setSupported] = useState(false);
+
   useEffect(() => {
+    setSupported(typeof window !== "undefined" && "speechSynthesis" in window);
     return () => {
-      if (recRef.current) {
-        try {
-          recRef.current.stop();
-        } catch {
-          // ignore
-        }
+      if (typeof window !== "undefined" && "speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
       }
     };
   }, []);
 
-  return {
-    supported,
-    listening,
-    start,
-    stop,
-  };
+  const play = useCallback(
+    (text: string, rate = 1) => {
+      if (!("speechSynthesis" in window)) return;
+      if (state === "paused") {
+        window.speechSynthesis.resume();
+        setState("speaking");
+        return;
+      }
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = "en-IN";
+      u.rate = Math.max(0.5, Math.min(2, rate));
+      u.onend = () => setState("idle");
+      window.speechSynthesis.speak(u);
+      setState("speaking");
+    },
+    [state],
+  );
+
+  const pause = useCallback(() => {
+    window.speechSynthesis.pause();
+    setState("paused");
+  }, []);
+
+  const stop = useCallback(() => {
+    window.speechSynthesis.cancel();
+    setState("idle");
+  }, []);
+
+  return { supported, state, play, pause, stop };
 }
