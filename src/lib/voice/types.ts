@@ -72,6 +72,7 @@ export type VoiceNavStatus =
 
 export type VoiceNavConfig = {
   enabled: boolean;
+  wakeWord: string;
   wakeWordRequired: boolean; // if true, commands must start with "Jarvis" or "Hey Jarvis"
   speechFeedback: boolean; // whether JARVIS speaks verbal confirmations aloud
   showNumberedBadges: boolean; // displays interactive numbered overlays on all clickable elements
@@ -82,6 +83,7 @@ export type VoiceNavConfig = {
 
 export const DEFAULT_VOICE_NAV_CONFIG: VoiceNavConfig = {
   enabled: false,
+  wakeWord: "Jarvis",
   // Explicitly addressing JARVIS prevents ordinary conversation from becoming a command.
   wakeWordRequired: true,
   speechFeedback: true,

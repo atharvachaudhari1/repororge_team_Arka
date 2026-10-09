@@ -20,6 +20,8 @@ import { type EyeTrackingConfig, DEFAULT_EYE_TRACKING_CONFIG } from "./eye-track
 import { type VoiceNavConfig, DEFAULT_VOICE_NAV_CONFIG } from "./voice";
 import { type CandidateCommuteProfile, DEFAULT_COMMUTE_PROFILE } from "./commute";
 
+export { DEFAULT_VOICE_NAV_CONFIG } from "./voice";
+
 export type FontSize = "small" | "medium" | "large" | "x-large";
 export type MotionPref = "normal" | "reduced";
 export type LineSpacing = "normal" | "relaxed" | "loose";
