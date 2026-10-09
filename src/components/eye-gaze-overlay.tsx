@@ -63,7 +63,10 @@ export function EyeGazeOverlay() {
   const showPreviewBox =
     eyeTrackingConfig.showCameraPreview &&
     !collapsed &&
-    (status === "tracking" || status === "paused" || status === "initializing" || status === "loading_model");
+    (status === "tracking" ||
+      status === "paused" ||
+      status === "initializing" ||
+      status === "loading_model");
 
   return (
     <>
@@ -186,10 +189,16 @@ export function EyeGazeOverlay() {
               type="button"
               onClick={() => setCollapsed((c) => !c)}
               className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
-              aria-label={collapsed ? "Expand eye tracking preview" : "Collapse eye tracking preview"}
+              aria-label={
+                collapsed ? "Expand eye tracking preview" : "Collapse eye tracking preview"
+              }
               title={collapsed ? "Expand" : "Collapse"}
             >
-              {collapsed ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
+              {collapsed ? (
+                <ChevronUp className="size-3.5" />
+              ) : (
+                <ChevronDown className="size-3.5" />
+              )}
             </button>
             <button
               type="button"
@@ -275,7 +284,9 @@ export function EyeGazeOverlay() {
             )}
 
             {/* Model / Camera Loading Progress Indicator */}
-            {(status === "loading_model" || status === "requesting_permission" || status === "initializing") && (
+            {(status === "loading_model" ||
+              status === "requesting_permission" ||
+              status === "initializing") && (
               <div className="flex items-center gap-2 text-xs text-muted-foreground py-1">
                 <span className="size-3 animate-spin rounded-full border-2 border-brand border-t-transparent" />
                 <span>

@@ -119,7 +119,8 @@ export async function checkMongoConnection(): Promise<{
   if (Date.now() < mongoUnavailableUntil) {
     return {
       connected: false,
-      error: "MongoDB Atlas is temporarily unavailable. The app is using SQLite and will retry automatically.",
+      error:
+        "MongoDB Atlas is temporarily unavailable. The app is using SQLite and will retry automatically.",
     };
   }
 

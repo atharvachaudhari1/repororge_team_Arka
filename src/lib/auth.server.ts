@@ -294,7 +294,10 @@ function webAuthnOrigins(clientOrigin?: string): string[] {
 
 function webAuthnRp() {
   const origin =
-    process.env["WEBAUTHN_ORIGIN"] || getRequestHeader("origin") || process.env["APP_URL"] || "http://localhost:8080";
+    process.env["WEBAUTHN_ORIGIN"] ||
+    getRequestHeader("origin") ||
+    process.env["APP_URL"] ||
+    "http://localhost:8080";
   try {
     const url = new URL(origin);
     return { origin: url.origin, rpID: process.env["WEBAUTHN_RP_ID"] || url.hostname };
@@ -336,13 +339,18 @@ export async function beginPasskeyRegistrationHandler() {
     .all(session.user.email) as { credential_id: string; transports: string }[];
   try {
     const webCreds = db
-      .prepare(`
+      .prepare(
+        `
         SELECT c.credential_id, c.transports
         FROM webauthn_credentials c
         JOIN users u ON u.id = c.user_id
         WHERE lower(trim(u.email)) = ?
-      `)
-      .all(session.user.email.toLowerCase().trim()) as { credential_id: string; transports: string }[];
+      `,
+      )
+      .all(session.user.email.toLowerCase().trim()) as {
+      credential_id: string;
+      transports: string;
+    }[];
     for (const wc of webCreds) {
       if (!existing.some((e) => e.credential_id === wc.credential_id)) {
         existing.push(wc);
@@ -417,16 +425,12 @@ export async function finishPasskeyRegistrationHandler(data: { response: unknown
   );
 
   try {
-    db.prepare(`
+    db.prepare(
+      `
       INSERT OR REPLACE INTO webauthn_credentials (user_id, credential_id, public_key, counter, transports)
       VALUES (?, ?, ?, ?, ?)
-    `).run(
-      String(session.user.id),
-      credential.id,
-      b64Key,
-      credential.counter,
-      transportsJson,
-    );
+    `,
+    ).run(String(session.user.id), credential.id, b64Key, credential.counter, transportsJson);
   } catch {}
 
   return { ok: true as const };
@@ -441,19 +445,22 @@ export async function beginPasskeyLoginHandler(data: { email: string }) {
   if (!credentials.length) {
     try {
       credentials = db
-        .prepare(`
+        .prepare(
+          `
           SELECT c.credential_id, c.transports
           FROM webauthn_credentials c
           JOIN users u ON u.id = c.user_id
           WHERE lower(trim(u.email)) = ?
-        `)
+        `,
+        )
         .all(email) as { credential_id: string; transports: string }[];
     } catch {}
   }
   if (!credentials.length)
     return {
       ok: false as const,
-      error: "No biometric sign-in is set up for this email. Sign in with your password to set up fingerprint sign-in on this device.",
+      error:
+        "No biometric sign-in is set up for this email. Sign in with your password to set up fingerprint sign-in on this device.",
     };
   const { generateAuthenticationOptions } = await import("@simplewebauthn/server");
   const rp = webAuthnRp();
@@ -489,14 +496,17 @@ export async function finishPasskeyLoginHandler(data: {
   if (!stored) {
     try {
       stored = db
-        .prepare(`
+        .prepare(
+          `
           SELECT c.credential_id, c.public_key, c.counter, c.transports
           FROM webauthn_credentials c
           JOIN users u ON u.id = c.user_id
           WHERE lower(trim(u.email)) = ? AND c.credential_id = ?
-        `)
+        `,
+        )
         .get(email, credentialId) as
-        { credential_id: string; public_key: string; counter: number; transports: string } | undefined;
+        | { credential_id: string; public_key: string; counter: number; transports: string }
+        | undefined;
     } catch {}
   }
   if (!stored) return { ok: false as const, error: "Biometric credential not found." };
@@ -556,7 +566,7 @@ export async function finishPasskeyLoginHandler(data: {
       }
       if (
         isEmailVerificationRequired() &&
-        !Boolean(mongoUser["emailVerified"] ?? mongoUser["email_verified"]) &&
+        !(mongoUser["emailVerified"] ?? mongoUser["email_verified"]) &&
         !isUserAdmin(mongoUser)
       ) {
         return { ok: false as const, error: "Verify your email before using biometric sign-in." };
@@ -584,7 +594,7 @@ export async function finishPasskeyLoginHandler(data: {
   }
   if (!user || (user.role !== data.role && !isUserAdmin(user)))
     return { ok: false as const, error: "Incorrect email or portal." };
-  if (isEmailVerificationRequired() && !Boolean(user.email_verified) && !isUserAdmin(user))
+  if (isEmailVerificationRequired() && !user.email_verified && !isUserAdmin(user))
     return { ok: false as const, error: "Verify your email before using biometric sign-in." };
   const effectiveRole: AccountRole = isUserAdmin(user) ? data.role : user.role;
   const token = await createSession(db, user.id, effectiveRole);
@@ -595,7 +605,6 @@ export async function finishPasskeyLoginHandler(data: {
     token,
   };
 }
-
 
 export function getClientIp(): string {
   try {

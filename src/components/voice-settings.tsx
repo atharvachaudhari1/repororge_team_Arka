@@ -96,14 +96,14 @@ export function VoiceSettingsSection() {
                   "Hey Janvi" Wake Word Required
                 </div>
                 <p className="text-[11px] text-muted-foreground">
-                  Commands only run after you say "Hey Janvi", so normal conversation cannot
-                  control the website.
+                  Commands only run after you say "Hey Janvi", so normal conversation cannot control
+                  the website.
                 </p>
               </div>
               <Switch
                 checked={voiceNavConfig.wakeWordRequired}
                 disabled
-                  aria-label="Hey Janvi wake word is required"
+                aria-label="Hey Janvi wake word is required"
               />
             </div>
 
@@ -209,8 +209,7 @@ export function VoiceSettingsSection() {
       ) : (
         <div className="rounded-xl border border-dashed border-border/80 bg-background/30 p-4 text-center">
           <p className="text-xs text-muted-foreground">
-            Activate Janvi Voice Navigation to control Ableo completely hands-free using your
-            voice.
+            Activate Janvi Voice Navigation to control Ableo completely hands-free using your voice.
           </p>
         </div>
       )}

@@ -60,7 +60,10 @@ export const DEFAULT_EYE_TRACKING_CONFIG: EyeTrackingConfig = {
   calibrationMode: "9-point",
 };
 
-export const SENSITIVITY_SCALES: Record<GazeSensitivity, { multiplierX: number; multiplierY: number }> = {
+export const SENSITIVITY_SCALES: Record<
+  GazeSensitivity,
+  { multiplierX: number; multiplierY: number }
+> = {
   low: { multiplierX: 2.2, multiplierY: 2.6 },
   medium: { multiplierX: 3.2, multiplierY: 3.6 },
   high: { multiplierX: 4.5, multiplierY: 4.8 },

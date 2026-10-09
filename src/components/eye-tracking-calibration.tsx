@@ -1,6 +1,11 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { X, CheckCircle2, Target, Sparkles, RefreshCw, Volume2, VolumeX } from "lucide-react";
-import type { GazePoint, CalibrationSample, CalibrationMode, CalibrationMetrics } from "@/lib/eye-tracking";
+import type {
+  GazePoint,
+  CalibrationSample,
+  CalibrationMode,
+  CalibrationMetrics,
+} from "@/lib/eye-tracking";
 import { Button } from "@/components/ui/button";
 
 /**
@@ -8,13 +13,13 @@ import { Button } from "@/components/ui/button";
  */
 const POINTS_9: Array<{ fx: number; fy: number; label: string }> = [
   { fx: 0.12, fy: 0.15, label: "Top-Left" },
-  { fx: 0.50, fy: 0.15, label: "Top-Center" },
+  { fx: 0.5, fy: 0.15, label: "Top-Center" },
   { fx: 0.88, fy: 0.15, label: "Top-Right" },
-  { fx: 0.12, fy: 0.50, label: "Middle-Left" },
-  { fx: 0.50, fy: 0.50, label: "Screen Center" },
-  { fx: 0.88, fy: 0.50, label: "Middle-Right" },
+  { fx: 0.12, fy: 0.5, label: "Middle-Left" },
+  { fx: 0.5, fy: 0.5, label: "Screen Center" },
+  { fx: 0.88, fy: 0.5, label: "Middle-Right" },
   { fx: 0.12, fy: 0.85, label: "Bottom-Left" },
-  { fx: 0.50, fy: 0.85, label: "Bottom-Center" },
+  { fx: 0.5, fy: 0.85, label: "Bottom-Center" },
   { fx: 0.88, fy: 0.85, label: "Bottom-Right" },
 ];
 
@@ -22,17 +27,22 @@ const POINTS_9: Array<{ fx: number; fy: number; label: string }> = [
  * 5-Point Quick Cross — fast calibration
  */
 const POINTS_5: Array<{ fx: number; fy: number; label: string }> = [
-  { fx: 0.50, fy: 0.50, label: "Center" },
-  { fx: 0.50, fy: 0.15, label: "Top" },
-  { fx: 0.88, fy: 0.50, label: "Right" },
-  { fx: 0.50, fy: 0.85, label: "Bottom" },
-  { fx: 0.12, fy: 0.50, label: "Left" },
+  { fx: 0.5, fy: 0.5, label: "Center" },
+  { fx: 0.5, fy: 0.15, label: "Top" },
+  { fx: 0.88, fy: 0.5, label: "Right" },
+  { fx: 0.5, fy: 0.85, label: "Bottom" },
+  { fx: 0.12, fy: 0.5, label: "Left" },
 ];
 
 const SETTLE_MS = 650; // fixation stabilization (samples discarded)
 const COLLECT_MS = 1450; // sample collection window
 
-function playTone(freq: number, type: OscillatorType = "sine", duration: number = 0.1, gainVal = 0.1) {
+function playTone(
+  freq: number,
+  type: OscillatorType = "sine",
+  duration: number = 0.1,
+  gainVal = 0.1,
+) {
   if (typeof window === "undefined") return;
   try {
     const AudioCtx =
@@ -64,7 +74,7 @@ function playCompletionFanfare() {
   // C-major fanfare: C5, E5, G5, C6
   playTone(523.25, "triangle", 0.15, 0.12);
   setTimeout(() => playTone(659.25, "triangle", 0.15, 0.12), 120);
-  setTimeout(() => playTone(783.99, "triangle", 0.20, 0.15), 240);
+  setTimeout(() => playTone(783.99, "triangle", 0.2, 0.15), 240);
   setTimeout(() => playTone(1046.5, "triangle", 0.35, 0.18), 380);
 }
 
@@ -260,12 +270,14 @@ export function EyeTrackingCalibration({
 
           <div className="space-y-4 py-4">
             <p className="text-xs text-white/80 leading-relaxed">
-              Sit comfortably at normal viewing distance. When calibration starts, look at each target dot
-              and hold your gaze steady until the circular ring fills up.
+              Sit comfortably at normal viewing distance. When calibration starts, look at each
+              target dot and hold your gaze steady until the circular ring fills up.
             </p>
 
             <div className="space-y-2">
-              <label className="text-xs font-semibold text-white/70">Select Calibration Mode:</label>
+              <label className="text-xs font-semibold text-white/70">
+                Select Calibration Mode:
+              </label>
               <div className="grid grid-cols-2 gap-3">
                 <button
                   type="button"
@@ -308,21 +320,32 @@ export function EyeTrackingCalibration({
             <div className="flex items-center justify-between text-xs text-white/60 pt-1">
               <span className="flex items-center gap-1">
                 Estimated duration:{" "}
-                <strong className="text-white">{mode === "9-point" ? "~18 seconds" : "~10 seconds"}</strong>
+                <strong className="text-white">
+                  {mode === "9-point" ? "~18 seconds" : "~10 seconds"}
+                </strong>
               </span>
               <button
                 type="button"
                 onClick={() => setSoundEnabled((s) => !s)}
                 className="flex items-center gap-1 text-white/70 hover:text-white transition-colors"
               >
-                {soundEnabled ? <Volume2 className="size-4 text-emerald-400" /> : <VolumeX className="size-4 text-white/40" />}
+                {soundEnabled ? (
+                  <Volume2 className="size-4 text-emerald-400" />
+                ) : (
+                  <VolumeX className="size-4 text-white/40" />
+                )}
                 {soundEnabled ? "Audio Cues On" : "Audio Cues Off"}
               </button>
             </div>
           </div>
 
           <div className="flex items-center justify-end gap-3 pt-3 border-t border-white/10">
-            <Button variant="ghost" size="sm" onClick={onCancel} className="text-white/70 hover:text-white">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onCancel}
+              className="text-white/70 hover:text-white"
+            >
               Cancel
             </Button>
             <Button
@@ -353,7 +376,9 @@ export function EyeTrackingCalibration({
             <div className="my-2 flex items-center gap-6 rounded-xl border border-white/10 bg-white/5 px-6 py-3">
               <div>
                 <p className="text-[11px] uppercase tracking-wider text-white/50">Accuracy Score</p>
-                <p className="text-2xl font-black text-emerald-400">{calculatedMetrics.qualityScore}%</p>
+                <p className="text-2xl font-black text-emerald-400">
+                  {calculatedMetrics.qualityScore}%
+                </p>
               </div>
               <div className="h-8 w-px bg-white/10" />
               <div>
@@ -368,8 +393,8 @@ export function EyeTrackingCalibration({
             </div>
 
             <p className="text-xs text-white/70 max-w-sm">
-              Your gaze coordinates are now mapped using a 2D bi-quadratic polynomial regression with 1-Euro adaptive
-              smoothing.
+              Your gaze coordinates are now mapped using a 2D bi-quadratic polynomial regression
+              with 1-Euro adaptive smoothing.
             </p>
 
             <div className="flex items-center gap-3 mt-4 w-full justify-center">
@@ -445,7 +470,11 @@ export function EyeTrackingCalibration({
         aria-label="Toggle sound cues"
         title={soundEnabled ? "Mute audio cues" : "Enable audio cues"}
       >
-        {soundEnabled ? <Volume2 className="size-5 text-emerald-400" /> : <VolumeX className="size-5 text-white/40" />}
+        {soundEnabled ? (
+          <Volume2 className="size-5 text-emerald-400" />
+        ) : (
+          <VolumeX className="size-5 text-white/40" />
+        )}
       </button>
 
       {/* High-Precision Calibration Target */}

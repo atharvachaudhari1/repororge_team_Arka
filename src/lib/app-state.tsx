@@ -16,10 +16,7 @@ import {
   DEFAULT_GESTURE_CONFIG,
   SENSITIVITY_SETTINGS,
 } from "./gestures";
-import {
-  type EyeTrackingConfig,
-  DEFAULT_EYE_TRACKING_CONFIG,
-} from "./eye-tracking";
+import { type EyeTrackingConfig, DEFAULT_EYE_TRACKING_CONFIG } from "./eye-tracking";
 import { type VoiceNavConfig, DEFAULT_VOICE_NAV_CONFIG } from "./voice";
 import { type CandidateCommuteProfile, DEFAULT_COMMUTE_PROFILE } from "./commute";
 

@@ -14,16 +14,9 @@ import {
   generateAuthenticationOptions,
   verifyAuthenticationResponse,
 } from "@simplewebauthn/server";
-import type {
-  RegistrationResponseJSON,
-  AuthenticationResponseJSON,
-} from "@simplewebauthn/server";
+import type { RegistrationResponseJSON, AuthenticationResponseJSON } from "@simplewebauthn/server";
 import { getRequestHeader } from "@tanstack/react-start/server";
-import {
-  getDatabase,
-  setSessionCookie,
-  isUserAdmin,
-} from "./auth.server";
+import { getDatabase, setSessionCookie, isUserAdmin } from "./auth.server";
 import { isMongoConfigured, getMongoDb } from "./mongodb.server";
 import type { AccountRole, AuthUser } from "./auth.functions";
 
@@ -36,7 +29,9 @@ export function getRpId(customHost?: string): string {
   }
   if (customHost) {
     try {
-      const hostname = customHost.includes("://") ? new URL(customHost).hostname : customHost.split(":")[0];
+      const hostname = customHost.includes("://")
+        ? new URL(customHost).hostname
+        : customHost.split(":")[0];
       if (hostname) return hostname;
     } catch {
       // ignore
@@ -264,14 +259,19 @@ async function storeCredential(userId: string, cred: StoredCredential) {
   );
 
   try {
-    const userRow = db.prepare("SELECT email FROM users WHERE id = ?").get(userId) as { email: string } | undefined;
+    const userRow = db.prepare("SELECT email FROM users WHERE id = ?").get(userId) as
+      { email: string } | undefined;
     if (userRow?.email) {
       const isB64Url = cred.publicKey.includes("-") || cred.publicKey.includes("_");
-      const b64url = isB64Url ? cred.publicKey : Buffer.from(cred.publicKey, "base64").toString("base64url");
-      db.prepare(`
+      const b64url = isB64Url
+        ? cred.publicKey
+        : Buffer.from(cred.publicKey, "base64").toString("base64url");
+      db.prepare(
+        `
         INSERT OR REPLACE INTO passkeys (credential_id, email, public_key, counter, transports)
         VALUES (?, ?, ?, ?, ?)
-      `).run(
+      `,
+      ).run(
         cred.credentialId,
         userRow.email.toLowerCase().trim(),
         b64url,
@@ -286,10 +286,7 @@ async function getCredentialsForUser(userId: string): Promise<StoredCredential[]
   if (isMongoConfigured()) {
     try {
       const mongo = await getMongoDb();
-      const docs = await mongo
-        .collection("webauthn_credentials")
-        .find({ userId })
-        .toArray();
+      const docs = await mongo.collection("webauthn_credentials").find({ userId }).toArray();
       if (docs.length > 0) {
         return docs.map((d) => ({
           credentialId: d["credentialId"] as string,
@@ -317,9 +314,12 @@ async function getCredentialsForUser(userId: string): Promise<StoredCredential[]
   }>;
 
   try {
-    const userRow = db.prepare("SELECT email FROM users WHERE id = ?").get(userId) as { email: string } | undefined;
+    const userRow = db.prepare("SELECT email FROM users WHERE id = ?").get(userId) as
+      { email: string } | undefined;
     if (userRow?.email) {
-      const pRows = db.prepare("SELECT * FROM passkeys WHERE lower(trim(email)) = ?").all(userRow.email.toLowerCase().trim()) as Array<{
+      const pRows = db
+        .prepare("SELECT * FROM passkeys WHERE lower(trim(email)) = ?")
+        .all(userRow.email.toLowerCase().trim()) as Array<{
         credential_id: string;
         public_key: string;
         counter: number;
@@ -329,7 +329,9 @@ async function getCredentialsForUser(userId: string): Promise<StoredCredential[]
       for (const pr of pRows) {
         if (!rows.some((r) => r.credential_id === pr.credential_id)) {
           const isB64Url = pr.public_key.includes("-") || pr.public_key.includes("_");
-          const b64 = isB64Url ? Buffer.from(pr.public_key, "base64url").toString("base64") : pr.public_key;
+          const b64 = isB64Url
+            ? Buffer.from(pr.public_key, "base64url").toString("base64")
+            : pr.public_key;
           rows.push({
             credential_id: pr.credential_id,
             public_key: b64,
@@ -351,15 +353,13 @@ async function getCredentialsForUser(userId: string): Promise<StoredCredential[]
   }));
 }
 
-async function getCredentialById(credentialId: string): Promise<
-  (StoredCredential & { userId: string }) | null
-> {
+async function getCredentialById(
+  credentialId: string,
+): Promise<(StoredCredential & { userId: string }) | null> {
   if (isMongoConfigured()) {
     try {
       const mongo = await getMongoDb();
-      const doc = await mongo
-        .collection("webauthn_credentials")
-        .findOne({ credentialId });
+      const doc = await mongo.collection("webauthn_credentials").findOne({ credentialId });
       if (doc) {
         return {
           credentialId: doc["credentialId"] as string,
@@ -392,23 +392,31 @@ async function getCredentialById(credentialId: string): Promise<
 
   if (!row) {
     try {
-      const pRow = db.prepare(`
+      const pRow = db
+        .prepare(
+          `
         SELECT p.credential_id, p.public_key, p.counter, p.transports, p.created_at, u.id as user_id
         FROM passkeys p
         JOIN users u ON lower(trim(u.email)) = lower(trim(p.email))
         WHERE p.credential_id = ?
-      `).get(credentialId) as {
-        credential_id: string;
-        public_key: string;
-        counter: number;
-        transports: string;
-        created_at: string;
-        user_id: string | number;
-      } | undefined;
+      `,
+        )
+        .get(credentialId) as
+        | {
+            credential_id: string;
+            public_key: string;
+            counter: number;
+            transports: string;
+            created_at: string;
+            user_id: string | number;
+          }
+        | undefined;
 
       if (pRow) {
         const isB64Url = pRow.public_key.includes("-") || pRow.public_key.includes("_");
-        const b64 = isB64Url ? Buffer.from(pRow.public_key, "base64url").toString("base64") : pRow.public_key;
+        const b64 = isB64Url
+          ? Buffer.from(pRow.public_key, "base64url").toString("base64")
+          : pRow.public_key;
         row = {
           user_id: String(pRow.user_id),
           credential_id: pRow.credential_id,
@@ -596,7 +604,10 @@ export async function generateBiometricRegistrationOptionsHandler() {
   const { readSessionHandler } = await import("./auth.server");
   const session = await readSessionHandler({});
   if (!session.user) {
-    return { ok: false as const, error: "You must be signed in to register biometric credentials." };
+    return {
+      ok: false as const,
+      error: "You must be signed in to register biometric credentials.",
+    };
   }
 
   const userId = String(session.user.id);
@@ -639,7 +650,10 @@ export async function verifyBiometricRegistrationHandler(data: {
   const { readSessionHandler } = await import("./auth.server");
   const session = await readSessionHandler({});
   if (!session.user) {
-    return { ok: false as const, error: "You must be signed in to register biometric credentials." };
+    return {
+      ok: false as const,
+      error: "You must be signed in to register biometric credentials.",
+    };
   }
 
   const userId = String(session.user.id);
@@ -705,7 +719,8 @@ export async function generateBiometricAuthOptionsHandler(data: {
     // Don't reveal whether the account exists
     return {
       ok: false as const,
-      error: "No biometric credentials found. Please sign in with your password first and register biometrics in your profile.",
+      error:
+        "No biometric credentials found. Please sign in with your password first and register biometrics in your profile.",
     };
   }
 
@@ -713,7 +728,8 @@ export async function generateBiometricAuthOptionsHandler(data: {
   if (credentials.length === 0) {
     return {
       ok: false as const,
-      error: "No biometric credentials registered for this account. Sign in with your password and register biometrics in Settings.",
+      error:
+        "No biometric credentials registered for this account. Sign in with your password and register biometrics in Settings.",
     };
   }
 

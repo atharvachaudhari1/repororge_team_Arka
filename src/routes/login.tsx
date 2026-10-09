@@ -482,9 +482,7 @@ function LoginPage() {
               onClick={finishBiometricSetup}
               disabled={isSubmitting}
             >
-              {isSubmitting
-                ? "Opening secure prompt…"
-                : "Continue to device biometric prompt"}
+              {isSubmitting ? "Opening secure prompt…" : "Continue to device biometric prompt"}
             </Button>
             <button
               type="button"
@@ -577,8 +575,8 @@ function LoginPage() {
               <fieldset className="rounded-xl border border-border bg-secondary/20 p-3">
                 <legend className="px-1 text-sm font-medium">Set up biometric sign-in</legend>
                 <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-                  Enable fingerprint or device biometric to unlock this account quickly. You can skip
-                  this and add it later.
+                  Enable fingerprint or device biometric to unlock this account quickly. You can
+                  skip this and add it later.
                 </p>
                 <div className="mt-3 flex items-center gap-3 rounded-lg border border-foreground bg-[#7BD3C2]/30 p-3">
                   <Fingerprint className="size-5" />
@@ -591,10 +589,14 @@ function LoginPage() {
                 </div>
                 <button
                   type="button"
-                  onClick={() => setBiometricChoice(biometricChoice === "skip" ? "fingerprint" : "skip")}
+                  onClick={() =>
+                    setBiometricChoice(biometricChoice === "skip" ? "fingerprint" : "skip")
+                  }
                   className="mt-2 text-xs font-medium text-muted-foreground underline hover:text-foreground"
                 >
-                  {biometricChoice === "skip" ? "Enable biometric sign-in" : "Skip biometric sign-in for now"}
+                  {biometricChoice === "skip"
+                    ? "Enable biometric sign-in"
+                    : "Skip biometric sign-in for now"}
                 </button>
                 {mode === "login" && (
                   <button
@@ -607,7 +609,8 @@ function LoginPage() {
                 )}
                 <p className="mt-2 flex items-start gap-1.5 text-xs leading-relaxed text-muted-foreground">
                   <ShieldCheck className="mt-0.5 size-3.5 shrink-0" />
-                  Your device verifies your identity locally; Ableo never receives the biometric data.
+                  Your device verifies your identity locally; Ableo never receives the biometric
+                  data.
                 </p>
               </fieldset>
             )}
@@ -643,7 +646,8 @@ function LoginPage() {
             )}
             {mode === "register" && biometricChoice !== "skip" && (
               <p className="text-center text-xs text-muted-foreground">
-                After account creation, your device will show its secure biometric prompt for fingerprint or screen-lock.
+                After account creation, your device will show its secure biometric prompt for
+                fingerprint or screen-lock.
               </p>
             )}
           </form>

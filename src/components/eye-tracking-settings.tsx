@@ -1,4 +1,13 @@
-import { Eye, EyeOff, Sliders, ShieldCheck, Crosshair, ArrowUpDown, Target, Sparkles } from "lucide-react";
+import {
+  Eye,
+  EyeOff,
+  Sliders,
+  ShieldCheck,
+  Crosshair,
+  ArrowUpDown,
+  Target,
+  Sparkles,
+} from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import {
@@ -41,7 +50,10 @@ export function EyeTrackingSettingsSection() {
 
         {/* Master Toggle */}
         <div className="flex items-center gap-2.5 self-start sm:self-center bg-secondary/80 px-3 py-1.5 rounded-full border border-border">
-          <Label htmlFor="eye-tracking-master-toggle" className="text-xs font-semibold cursor-pointer">
+          <Label
+            htmlFor="eye-tracking-master-toggle"
+            className="text-xs font-semibold cursor-pointer"
+          >
             {eyeTrackingConfig.enabled ? "Enabled" : "Disabled"}
           </Label>
           <Switch
@@ -125,7 +137,10 @@ export function EyeTrackingSettingsSection() {
 
             {/* Calibration Mode */}
             <div className="space-y-1.5">
-              <Label htmlFor="eye-calib-mode" className="text-xs font-medium text-foreground flex items-center gap-1">
+              <Label
+                htmlFor="eye-calib-mode"
+                className="text-xs font-medium text-foreground flex items-center gap-1"
+              >
                 <Target className="size-3 text-brand" />
                 Default Calibration Grid
               </Label>
@@ -139,7 +154,9 @@ export function EyeTrackingSettingsSection() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="9-point">9-Point Precision (3×3 Grid - Recommended)</SelectItem>
+                  <SelectItem value="9-point">
+                    9-Point Precision (3×3 Grid - Recommended)
+                  </SelectItem>
                   <SelectItem value="5-point">5-Point Quick (Cross Pattern)</SelectItem>
                 </SelectContent>
               </Select>
@@ -148,11 +165,16 @@ export function EyeTrackingSettingsSection() {
             {/* Edge Scrolling Toggle */}
             <div className="flex items-center justify-between p-2 rounded-lg border border-border/60 bg-secondary/30">
               <div className="space-y-0.5">
-                <Label htmlFor="eye-edge-scroll" className="text-xs font-medium cursor-pointer flex items-center gap-1">
+                <Label
+                  htmlFor="eye-edge-scroll"
+                  className="text-xs font-medium cursor-pointer flex items-center gap-1"
+                >
                   <ArrowUpDown className="size-3 text-brand" />
                   Edge Auto-Scroll
                 </Label>
-                <p className="text-[10px] text-muted-foreground">Look at top/bottom of screen to scroll</p>
+                <p className="text-[10px] text-muted-foreground">
+                  Look at top/bottom of screen to scroll
+                </p>
               </div>
               <Switch
                 id="eye-edge-scroll"
@@ -166,11 +188,16 @@ export function EyeTrackingSettingsSection() {
             {/* Camera Preview Box Toggle */}
             <div className="flex items-center justify-between p-2 rounded-lg border border-border/60 bg-secondary/30">
               <div className="space-y-0.5">
-                <Label htmlFor="eye-preview-box" className="text-xs font-medium cursor-pointer flex items-center gap-1">
+                <Label
+                  htmlFor="eye-preview-box"
+                  className="text-xs font-medium cursor-pointer flex items-center gap-1"
+                >
                   <Eye className="size-3 text-brand" />
                   Live Iris & Camera Preview Box
                 </Label>
-                <p className="text-[10px] text-muted-foreground">Floating video feed with eye mesh tracking</p>
+                <p className="text-[10px] text-muted-foreground">
+                  Floating video feed with eye mesh tracking
+                </p>
               </div>
               <Switch
                 id="eye-preview-box"
@@ -186,7 +213,8 @@ export function EyeTrackingSettingsSection() {
           <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground pt-1">
             <ShieldCheck className="size-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
             <span>
-              Zero video frames or eye landmarks are saved or uploaded. All processing happens 100% locally.
+              Zero video frames or eye landmarks are saved or uploaded. All processing happens 100%
+              locally.
             </span>
           </div>
         </div>

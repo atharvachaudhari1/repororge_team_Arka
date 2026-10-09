@@ -74,9 +74,7 @@ function BiometricEnrollmentSection() {
           : "Register your device biometrics for fast, passwordless sign-in. Supports Touch ID, Face ID, Windows Hello, and more."}
       </p>
 
-      {bio.error && (
-        <p className="text-sm text-destructive">{bio.error}</p>
-      )}
+      {bio.error && <p className="text-sm text-destructive">{bio.error}</p>}
       {bio.success && (
         <p className="text-sm text-emerald-600 dark:text-emerald-400">{bio.success}</p>
       )}

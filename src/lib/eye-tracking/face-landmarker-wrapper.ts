@@ -7,8 +7,12 @@ export type FaceLandmark = {
 };
 
 // Key landmarks for eye & iris tracking
-export const LEFT_EYE_CONTOUR = [33, 7, 163, 144, 145, 153, 154, 155, 133, 173, 157, 158, 159, 160, 161, 246];
-export const RIGHT_EYE_CONTOUR = [362, 382, 381, 380, 374, 373, 390, 249, 263, 466, 388, 387, 386, 385, 384, 398];
+export const LEFT_EYE_CONTOUR = [
+  33, 7, 163, 144, 145, 153, 154, 155, 133, 173, 157, 158, 159, 160, 161, 246,
+];
+export const RIGHT_EYE_CONTOUR = [
+  362, 382, 381, 380, 374, 373, 390, 249, 263, 466, 388, 387, 386, 385, 384, 398,
+];
 export const LEFT_EYEBROW = [70, 63, 105, 66, 107];
 export const RIGHT_EYEBROW = [336, 296, 334, 293, 300];
 export const LEFT_IRIS_CENTER = 468;
@@ -78,7 +82,10 @@ export async function getFaceLandmarker(): Promise<
           outputFacialTransformationMatrixes: false,
         });
       } catch (gpuError) {
-        console.warn("GPU delegate initialization failed for FaceLandmarker, falling back to CPU:", gpuError);
+        console.warn(
+          "GPU delegate initialization failed for FaceLandmarker, falling back to CPU:",
+          gpuError,
+        );
         // Fallback to CPU delegate on unsupported GPU environments
         landmarkerInstance = await vision.FaceLandmarker.createFromOptions(wasmFileset, {
           baseOptions: {

@@ -7,10 +7,7 @@ import type {
   CalibrationSample,
   CalibrationMetrics,
 } from "./types";
-import {
-  getFaceLandmarker,
-  drawEyeGazeSkeleton,
-} from "./face-landmarker-wrapper";
+import { getFaceLandmarker, drawEyeGazeSkeleton } from "./face-landmarker-wrapper";
 import { GazeEngine } from "./gaze-engine";
 
 export type { CalibrationSample, CalibrationMetrics, CalibrationMode };
@@ -79,7 +76,9 @@ export function useEyeTracking({
   const [isPaused, setIsPaused] = useState(false);
   const [restartCounter, setRestartCounter] = useState(0);
   const [isCalibrating, setIsCalibrating] = useState(false);
-  const gazeEngineRef = useRef<GazeEngine>(new GazeEngine(config.smoothingFactor, config.sensitivity));
+  const gazeEngineRef = useRef<GazeEngine>(
+    new GazeEngine(config.smoothingFactor, config.sensitivity),
+  );
   const [isCalibrated, setIsCalibrated] = useState(() => gazeEngineRef.current.isCalibrated);
   const [calibrationMetrics, setCalibrationMetrics] = useState<CalibrationMetrics | null>(
     () => gazeEngineRef.current.metrics,
@@ -428,7 +427,11 @@ export function useEyeTracking({
                           if (elemToClick) {
                             elemToClick.click();
                             playClickSound();
-                            onGazeClickRef.current?.(elemToClick, currentGaze.clientX, currentGaze.clientY);
+                            onGazeClickRef.current?.(
+                              elemToClick,
+                              currentGaze.clientX,
+                              currentGaze.clientY,
+                            );
                           }
                           setLastClickTime(now);
                           dwellProgressRef.current = 0;
@@ -453,7 +456,11 @@ export function useEyeTracking({
                           if (elemToClick) {
                             elemToClick.click();
                             playClickSound();
-                            onGazeClickRef.current?.(elemToClick, currentGaze.clientX, currentGaze.clientY);
+                            onGazeClickRef.current?.(
+                              elemToClick,
+                              currentGaze.clientX,
+                              currentGaze.clientY,
+                            );
                           }
                           setLastClickTime(now);
                           blinkStartRef.current = null;

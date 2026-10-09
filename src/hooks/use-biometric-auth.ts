@@ -145,7 +145,11 @@ export function useBiometricAuth(): BiometricState {
       return true;
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
-      if (msg.includes("cancelled") || msg.includes("AbortError") || msg.includes("NotAllowedError")) {
+      if (
+        msg.includes("cancelled") ||
+        msg.includes("AbortError") ||
+        msg.includes("NotAllowedError")
+      ) {
         setError("Biometric registration was cancelled.");
       } else {
         setError(`Biometric registration failed: ${msg}`);
@@ -198,7 +202,11 @@ export function useBiometricAuth(): BiometricState {
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err);
         let errMsg: string;
-        if (msg.includes("cancelled") || msg.includes("AbortError") || msg.includes("NotAllowedError")) {
+        if (
+          msg.includes("cancelled") ||
+          msg.includes("AbortError") ||
+          msg.includes("NotAllowedError")
+        ) {
           errMsg = "Biometric authentication was cancelled.";
         } else {
           errMsg = `Biometric authentication failed: ${msg}`;

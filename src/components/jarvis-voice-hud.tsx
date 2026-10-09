@@ -97,7 +97,7 @@ export function JarvisVoiceHud() {
   return (
     <>
       {/* ARIA Live Region for Screen Readers */}
-        <div aria-live="polite" aria-atomic="true" className="sr-only">
+      <div aria-live="polite" aria-atomic="true" className="sr-only">
         {announcement}
       </div>
 
@@ -322,8 +322,8 @@ export function JarvisVoiceHud() {
           </DialogHeader>
 
           <p className="text-xs text-muted-foreground">
-              Janvi gives people with zero motor function (no hands) complete, hands-free mastery
-            over Ableo. Speak naturally into your microphone.
+            Janvi gives people with zero motor function (no hands) complete, hands-free mastery over
+            Ableo. Speak naturally into your microphone.
           </p>
 
           <div className="space-y-4 pt-2 text-xs">

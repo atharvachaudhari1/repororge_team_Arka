@@ -1064,7 +1064,13 @@ const rows: Tuple[] = [
       "Collaborate with engineering teams during sprint planning to ensure accessible component architecture",
       "Participate in user-testing sessions with screen-reader users and PwD focus groups",
     ],
-    ["Screen Readers (NVDA/JAWS)", "WCAG 2.1 / 2.2", "WAI-ARIA", "HTML5 Semantics", "Manual Testing"],
+    [
+      "Screen Readers (NVDA/JAWS)",
+      "WCAG 2.1 / 2.2",
+      "WAI-ARIA",
+      "HTML5 Semantics",
+      "Manual Testing",
+    ],
     ["Axe-core", "Lighthouse", "JavaScript", "VoiceOver iOS/macOS", "Issue Tracking (Jira)"],
     [
       "screen_reader",
@@ -1096,7 +1102,13 @@ const rows: Tuple[] = [
       "Coordinate with technical support on customer escalation and bug reporting",
       "Maintain 95%+ first-contact resolution on text-first communication channels",
     ],
-    ["Indian Sign Language (ISL)", "Written English / Hindi", "Customer Empathy", "Text Communication", "Ticketing Systems"],
+    [
+      "Indian Sign Language (ISL)",
+      "Written English / Hindi",
+      "Customer Empathy",
+      "Text Communication",
+      "Ticketing Systems",
+    ],
     ["Zendesk", "Video Relay Services", "Knowledge Base Authoring", "Problem Solving"],
     [
       "sign_interpreter",
@@ -1160,7 +1172,13 @@ const rows: Tuple[] = [
       "Coach hiring managers on reducing sensory stressors, eliminating trick questions, and evaluating skills objectively",
       "Track candidate satisfaction and retention metrics across neuroinclusive cohorts",
     ],
-    ["Inclusive Recruiting", "Candidate Experience", "Structured Interviewing", "Stakeholder Coaching", "HR Operations"],
+    [
+      "Inclusive Recruiting",
+      "Candidate Experience",
+      "Structured Interviewing",
+      "Stakeholder Coaching",
+      "HR Operations",
+    ],
     ["Neurodiversity Advocacy", "RPwD Act Guidelines", "ATS Management", "Employee Relations"],
     [
       "plain_language",
@@ -1224,7 +1242,13 @@ const rows: Tuple[] = [
       "Generate monthly financial variance reports for finance controllers",
       "Ensure compliance with statutory audit checklists and internal accounting controls",
     ],
-    ["Financial Accounting", "MS Excel", "Analytical Skills", "Billing Reconciliation", "Basic Tally / ERP"],
+    [
+      "Financial Accounting",
+      "MS Excel",
+      "Analytical Skills",
+      "Billing Reconciliation",
+      "Basic Tally / ERP",
+    ],
     ["SAP FICO", "Financial Reporting", "Data Validation", "Communication"],
     [
       "step_free_access",
@@ -1255,8 +1279,19 @@ const rows: Tuple[] = [
       "Collaborate with software engineers to explain complex concepts in plain, unambiguous language",
       "Maintain documentation readability scores and glossary definitions",
     ],
-    ["Technical Writing", "Markdown", "Plain Language Drafting", "Documentation Tools (GitBook/Docusaurus)", "English Fluency"],
-    ["Basic Code Understanding (API/JSON)", "Accessibility Standards (Plain English)", "Git", "SEO Basics"],
+    [
+      "Technical Writing",
+      "Markdown",
+      "Plain Language Drafting",
+      "Documentation Tools (GitBook/Docusaurus)",
+      "English Fluency",
+    ],
+    [
+      "Basic Code Understanding (API/JSON)",
+      "Accessibility Standards (Plain English)",
+      "Git",
+      "SEO Basics",
+    ],
     [
       "plain_language",
       "written_instructions",
@@ -1286,7 +1321,13 @@ const rows: Tuple[] = [
       "Log annotation feedback and taxonomy edge cases to data science leads",
       "Meet consistent data quality and accuracy benchmarks at a self-managed, comfortable pace",
     ],
-    ["Attention to Detail", "Computer Proficiency", "Basic English Comprehension", "Pattern Recognition", "Data Tagging"],
+    [
+      "Attention to Detail",
+      "Computer Proficiency",
+      "Basic English Comprehension",
+      "Pattern Recognition",
+      "Data Tagging",
+    ],
     ["Basic Python or Spreadsheets", "Annotation Tooling", "Critical Thinking"],
     [
       "quiet_workspace",
@@ -1318,7 +1359,13 @@ const rows: Tuple[] = [
       "Audit published digital media for color contrast, readable typography, and screen-reader accessibility",
       "Analyze engagement metrics across inclusive campaigns to optimize audience reach",
     ],
-    ["Social Media Management", "Captioning / Subtitling", "Copywriting", "Alt-Text Writing", "Content Strategy"],
+    [
+      "Social Media Management",
+      "Captioning / Subtitling",
+      "Copywriting",
+      "Alt-Text Writing",
+      "Content Strategy",
+    ],
     ["Canva / Premiere Basics", "WCAG Color Contrast", "SEO", "Hootsuite / Buffer"],
     [
       "accessible_application",
@@ -1349,8 +1396,19 @@ const rows: Tuple[] = [
       "Partner with HR and facilities leaders to establish reasonable accommodation budgets and fast-track fulfillment",
       "Publish annual disability inclusion audits and ESG governance disclosures",
     ],
-    ["RPwD Act 2016", "Accessibility Governance", "Corporate Policy", "Workplace Inclusion", "Audit & Risk"],
-    ["CPACC / WAS Certification", "VPAT Assessment", "Senior Stakeholder Management", "Legal & Compliance"],
+    [
+      "RPwD Act 2016",
+      "Accessibility Governance",
+      "Corporate Policy",
+      "Workplace Inclusion",
+      "Audit & Risk",
+    ],
+    [
+      "CPACC / WAS Certification",
+      "VPAT Assessment",
+      "Senior Stakeholder Management",
+      "Legal & Compliance",
+    ],
     [
       "accessible_workplace",
       "step_free_access",
@@ -1381,7 +1439,13 @@ const rows: Tuple[] = [
       "Document frequent questions and contribute clear solutions to the customer knowledge base",
       "Escalate unresolved technical issues to Tier 2 support engineers with clean reproduction notes",
     ],
-    ["Written Communication", "Live Chat", "Customer Patience", "Fast Typing Speed", "Basic Troubleshooting"],
+    [
+      "Written Communication",
+      "Live Chat",
+      "Customer Patience",
+      "Fast Typing Speed",
+      "Basic Troubleshooting",
+    ],
     ["Freshdesk / Zendesk", "Knowledge Base Maintenance", "CRM Navigation"],
     [
       "chat_interviews",
@@ -1508,7 +1572,13 @@ const rows: Tuple[] = [
       "Draft structured audit reports with actionable code remediation snippets",
       "Test digital web forms and document files (PDF/ePub) for accessibility barriers",
     ],
-    ["Accessibility Standards (WCAG)", "Screen Reader Testing", "HTML5 Semantics", "Report Writing", "Quality Assurance"],
+    [
+      "Accessibility Standards (WCAG)",
+      "Screen Reader Testing",
+      "HTML5 Semantics",
+      "Report Writing",
+      "Quality Assurance",
+    ],
     ["Axe DevTools", "WAI-ARIA", "Section 508", "PDF Accessibility"],
     [
       "screen_reader",
@@ -1540,7 +1610,13 @@ const rows: Tuple[] = [
       "Maintain confidential accommodation records in accordance with RPwD Act guidelines",
       "Gather post-onboarding feedback to improve workplace accessibility scores",
     ],
-    ["Human Resources Basics", "Communication", "Organizational Skills", "Empathy & Discretion", "MS Office"],
+    [
+      "Human Resources Basics",
+      "Communication",
+      "Organizational Skills",
+      "Empathy & Discretion",
+      "MS Office",
+    ],
     ["RPwD Act Knowledge", "HRIS Software", "Disability Etiquette", "Problem Solving"],
     [
       "plain_language",
@@ -1604,7 +1680,13 @@ const rows: Tuple[] = [
       "Tag digital content with consistent keywords and accessibility alt-text descriptions",
       "Participate in asynchronous text-only team check-ins via Slack / Notion",
     ],
-    ["Research Skills", "Written English", "Attention to Detail", "Plain Language", "Fact Checking"],
+    [
+      "Research Skills",
+      "Written English",
+      "Attention to Detail",
+      "Plain Language",
+      "Fact Checking",
+    ],
     ["Content Management Systems (CMS)", "SEO Basics", "Metadata Tagging"],
     [
       "plain_language",

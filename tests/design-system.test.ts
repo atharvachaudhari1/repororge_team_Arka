@@ -6,7 +6,7 @@ import { EMPTY_PROFILE, DEFAULT_VOICE_NAV_CONFIG } from "../src/lib/app-state";
 describe("Phase 1: Design System & Foundation", () => {
   describe("Utility Classnames (cn)", () => {
     it("merges Tailwind and standard class names correctly", () => {
-      const result = cn("p-4", "text-sm", false && "hidden", "p-2");
+      const result = cn("p-4", "text-sm", undefined, "p-2");
       expect(result).toBe("text-sm p-2");
     });
   });

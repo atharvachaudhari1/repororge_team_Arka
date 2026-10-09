@@ -292,7 +292,9 @@ function Dashboard() {
         <div className="rounded-2xl border border-border bg-card p-5 transition-all hover:border-[#191716]/40 shadow-[0_2px_8px_rgba(0,0,0,0.02)] flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between text-muted-foreground">
-              <span className="text-[11px] font-serif tracking-wider uppercase">Accessibility Fit</span>
+              <span className="text-[11px] font-serif tracking-wider uppercase">
+                Accessibility Fit
+              </span>
               <Briefcase className="size-4 text-brand" />
             </div>
             <div className="mt-2 flex items-baseline gap-2">
@@ -315,7 +317,9 @@ function Dashboard() {
         <div className="rounded-2xl border border-border bg-card p-5 transition-all hover:border-[#191716]/40 shadow-[0_2px_8px_rgba(0,0,0,0.02)] flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between text-muted-foreground">
-              <span className="text-[11px] font-serif tracking-wider uppercase">Profile Readiness</span>
+              <span className="text-[11px] font-serif tracking-wider uppercase">
+                Profile Readiness
+              </span>
               <UserCheck className="size-4 text-emerald-600 dark:text-emerald-400" />
             </div>
             <p className="mt-2 font-serif text-3xl font-normal text-foreground">
@@ -340,7 +344,9 @@ function Dashboard() {
         <div className="rounded-2xl border border-border bg-card p-5 transition-all hover:border-[#191716]/40 shadow-[0_2px_8px_rgba(0,0,0,0.02)] flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between text-muted-foreground">
-              <span className="text-[11px] font-serif tracking-wider uppercase">Active Applications</span>
+              <span className="text-[11px] font-serif tracking-wider uppercase">
+                Active Applications
+              </span>
               <FileCheck2 className="size-4 text-sky-600 dark:text-sky-400" />
             </div>
             <p className="mt-2 font-serif text-3xl font-normal text-foreground">
@@ -359,10 +365,14 @@ function Dashboard() {
         <div className="rounded-2xl border border-border bg-card p-5 transition-all hover:border-[#191716]/40 shadow-[0_2px_8px_rgba(0,0,0,0.02)] flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between text-muted-foreground">
-              <span className="text-[11px] font-serif tracking-wider uppercase">Bookmarked Roles</span>
+              <span className="text-[11px] font-serif tracking-wider uppercase">
+                Bookmarked Roles
+              </span>
               <Bookmark className="size-4 text-amber-500" />
             </div>
-            <p className="mt-2 font-serif text-3xl font-normal text-foreground">{savedJobs.length}</p>
+            <p className="mt-2 font-serif text-3xl font-normal text-foreground">
+              {savedJobs.length}
+            </p>
           </div>
           <Link
             to="/saved"

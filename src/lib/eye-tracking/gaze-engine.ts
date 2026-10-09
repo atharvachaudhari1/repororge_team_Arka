@@ -1,4 +1,10 @@
-import type { GazePoint, GazeSensitivity, CalibrationSample, CalibrationMetrics, CalibrationMode } from "./types";
+import type {
+  GazePoint,
+  GazeSensitivity,
+  CalibrationSample,
+  CalibrationMetrics,
+  CalibrationMode,
+} from "./types";
 import { SENSITIVITY_SCALES } from "./types";
 
 export type LandmarkPoint = { x: number; y: number; z?: number };
@@ -17,7 +23,7 @@ class OneEuroFilter {
 
   constructor(
     private minCutoff: number = 0.8, // Low cutoff for solid dwell fixation
-    private beta: number = 0.02,     // High speed factor for instant saccades
+    private beta: number = 0.02, // High speed factor for instant saccades
     private dCutoff: number = 1.0,
   ) {}
 
@@ -419,10 +425,7 @@ export class GazeEngine {
   /**
    * Estimates screen gaze point from face landmarks and facial blendshapes.
    */
-  public estimateGaze(
-    landmarks: LandmarkPoint[],
-    blendshapes: BlendshapeItem[] = [],
-  ): GazePoint {
+  public estimateGaze(landmarks: LandmarkPoint[], blendshapes: BlendshapeItem[] = []): GazePoint {
     const now = performance.now();
     const width = typeof window !== "undefined" ? window.innerWidth : 1200;
     const height = typeof window !== "undefined" ? window.innerHeight : 800;
@@ -440,7 +443,7 @@ export class GazeEngine {
     const blinkLeft = blendMap["eyeBlinkLeft"] ?? 0;
     const blinkRight = blendMap["eyeBlinkRight"] ?? 0;
     const avgBlink = (blinkLeft + blinkRight) / 2;
-    const isBlinking = avgBlink > 0.60;
+    const isBlinking = avgBlink > 0.6;
 
     // Blendshape gaze vectors
     const lookOutLeft = blendMap["eyeLookOutLeft"] ?? 0;
@@ -456,8 +459,7 @@ export class GazeEngine {
     const avgLookDown = (lookDownLeft + lookDownRight) / 2;
 
     // Horizontal: mirrored webcam convention
-    const rawBlendX =
-      (lookOutRight - lookInRight + (lookInLeft - lookOutLeft)) / 2;
+    const rawBlendX = (lookOutRight - lookInRight + (lookInLeft - lookOutLeft)) / 2;
     // Vertical: scale up naturally-attenuated upward scores
     const rawBlendY = avgLookDown * 1.0 - avgLookUp * 2.2;
 
@@ -486,13 +488,25 @@ export class GazeEngine {
       // Eye center axes
       const leftMidX = (leftOuter.x + leftInner.x) / 2;
       const leftMidY = (leftOuter.y + leftInner.y) / 2;
-      const leftEyeWidth = Math.max(0.005, Math.hypot(leftInner.x - leftOuter.x, leftInner.y - leftOuter.y));
-      const leftEyeHeight = Math.max(0.003, Math.hypot(leftUpper.x - leftLower.x, leftUpper.y - leftLower.y));
+      const leftEyeWidth = Math.max(
+        0.005,
+        Math.hypot(leftInner.x - leftOuter.x, leftInner.y - leftOuter.y),
+      );
+      const leftEyeHeight = Math.max(
+        0.003,
+        Math.hypot(leftUpper.x - leftLower.x, leftUpper.y - leftLower.y),
+      );
 
       const rightMidX = (rightOuter.x + rightInner.x) / 2;
       const rightMidY = (rightOuter.y + rightInner.y) / 2;
-      const rightEyeWidth = Math.max(0.005, Math.hypot(rightOuter.x - rightInner.x, rightOuter.y - rightInner.y));
-      const rightEyeHeight = Math.max(0.003, Math.hypot(rightUpper.x - rightLower.x, rightUpper.y - rightLower.y));
+      const rightEyeWidth = Math.max(
+        0.005,
+        Math.hypot(rightOuter.x - rightInner.x, rightOuter.y - rightInner.y),
+      );
+      const rightEyeHeight = Math.max(
+        0.003,
+        Math.hypot(rightUpper.x - rightLower.x, rightUpper.y - rightLower.y),
+      );
 
       // Head roll angle (rotation of inter-canthus vector)
       const rollAngle = Math.atan2(rightOuter.y - leftOuter.y, rightOuter.x - leftOuter.x);
@@ -600,7 +614,10 @@ export class GazeEngine {
     let filteredY = this.filterY.filter(clampedY, now);
 
     // Micro-fixation deadband (suppress jitter < 4px during fixation)
-    const distFromSmoothed = Math.hypot(filteredX - this.smoothedClientX, filteredY - this.smoothedClientY);
+    const distFromSmoothed = Math.hypot(
+      filteredX - this.smoothedClientX,
+      filteredY - this.smoothedClientY,
+    );
     if (distFromSmoothed < 3.5) {
       // Deadband anchor: heavily dampen micro tremor
       filteredX = this.smoothedClientX * 0.9 + filteredX * 0.1;

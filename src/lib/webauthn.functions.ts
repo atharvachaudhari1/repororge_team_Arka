@@ -13,7 +13,12 @@ import { z } from "zod";
 type AnyJSON = any;
 
 export const generateBiometricRegistrationOptions = createServerFn({ method: "POST" })
-  .validator((data: unknown) => z.object({}).default({}).parse(data ?? {}))
+  .validator((data: unknown) =>
+    z
+      .object({})
+      .default({})
+      .parse(data ?? {}),
+  )
   .handler(async (): Promise<AnyJSON> => {
     const { generateBiometricRegistrationOptionsHandler } = await import("./webauthn.server");
     const result = await generateBiometricRegistrationOptionsHandler();
@@ -68,16 +73,19 @@ export const verifyBiometricAuth = createServerFn({ method: "POST" })
   });
 
 export const hasBiometricCredentials = createServerFn({ method: "POST" })
-  .validator((data: unknown) =>
-    z.object({ email: z.string().trim().email() }).parse(data),
-  )
+  .validator((data: unknown) => z.object({ email: z.string().trim().email() }).parse(data))
   .handler(async ({ data }): Promise<AnyJSON> => {
     const { hasBiometricCredentialsHandler } = await import("./webauthn.server");
     return hasBiometricCredentialsHandler(data);
   });
 
 export const myBiometricStatus = createServerFn({ method: "POST" })
-  .validator((data: unknown) => z.object({}).default({}).parse(data ?? {}))
+  .validator((data: unknown) =>
+    z
+      .object({})
+      .default({})
+      .parse(data ?? {}),
+  )
   .handler(async (): Promise<AnyJSON> => {
     const { myBiometricStatusHandler } = await import("./webauthn.server");
     return myBiometricStatusHandler();
