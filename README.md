@@ -923,16 +923,18 @@ This project is licensed under the **MIT License**. See the [LICENSE](./LICENSE)
 
 ## 👥 Team
 
-| Member             | Role        |
-| ------------------ | ----------- |
-| _Add team members_ | _Add roles_ |
+**Team name: Arkaa**
+
+| Member |
+| ------ |
+| Atharva Chaudhari |
+| Allan Fernandes |
 
 ---
 
 ## 🏆 Hackathon
 
-> **International Hackathon 2026**
-> Theme: _Inclusive Technology / Employment Accessibility_
+> **HHGoa Hackathon**
 
 ---
 
