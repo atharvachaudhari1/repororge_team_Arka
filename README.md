@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="./public/repowin.jpg" alt="Team at the RepoForge event" width="100%"/>
+
 <img src="https://img.shields.io/badge/♿-Ableo-149187?style=for-the-badge&labelColor=0f172a&color=149187" alt="Ableo" height="40"/>
 
 # Ableo
