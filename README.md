@@ -7,8 +7,6 @@ html
 
   <img
     src="https://img.shields.io/badge/%E2%99%BF-Ableo-149187?style=for-the-badge&labelColor=0f172a"
-    alt="ARKA!_WINS"
-    height="40"
-  />
+    />
 
 </div>
